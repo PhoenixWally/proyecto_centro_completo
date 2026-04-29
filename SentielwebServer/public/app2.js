@@ -133,7 +133,10 @@ const layout3D = {
     font: { color: '#ffffff' },
     scene: {
         camera: {
-            eye: { x: -1.0, y: -1.0, z: 0.8 }, // Zoom más cercano y centrado
+            // eye controla la cámara por defecto. 
+            // x e y controlan la rotación (para intercambiar izquierda/derecha).
+            // z controla la altura o inclinación vertical.
+            eye: { x: 1.2, y: -1.2, z: 0.8 }, 
             projection: { type: 'orthographic' }
         },
         xaxis: { title: 'Frecuencia', backgroundcolor: "black", showbackground: true, color: "#ffffff" },
