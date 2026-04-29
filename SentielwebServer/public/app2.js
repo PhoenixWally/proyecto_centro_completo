@@ -138,13 +138,13 @@ const layout3D = {
         },
         xaxis: { title: 'Frecuencia', backgroundcolor: "black", showbackground: true, color: "#ffffff" },
         yaxis: { 
-            title: 'Tiempo (1 Fotograma ≈ 500ms)', 
+            title: 'Tiempo (1 Fotograma ≈ 500ms)<br>', 
             backgroundcolor: "black", 
             showbackground: true, 
             color: "#ffffff",
             tickmode: 'array',
-            tickvals: Array.from({length: 25}, (_, i) => -12.0 + i * 0.5),
-            ticktext: Array.from({length: 25}, (_, i) => `${i}-${(12.0 - i * 0.5).toFixed(1).replace('.0','')}sg`)
+            tickvals: Array.from({length: 13}, (_, j) => -12.0 + (j * 2) * 0.5),
+            ticktext: Array.from({length: 13}, (_, j) => { let i = j * 2; return `${i}-${(12.0 - i * 0.5).toFixed(1).replace('.0','')}sg`; })
         },
         zaxis: { 
             title: 'dBµV', 
