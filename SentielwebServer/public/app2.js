@@ -137,8 +137,25 @@ const layout3D = {
             projection: { type: 'orthographic' }
         },
         xaxis: { title: 'Frecuencia', backgroundcolor: "black", showbackground: true, color: "#ffffff" },
-        yaxis: { title: 'Tiempo (1 Fotograma ≈ 500ms)', backgroundcolor: "black", showbackground: true, color: "#ffffff" },
-        zaxis: { title: 'dBµV', backgroundcolor: "black", showbackground: true, range: [-10, 80], color: "#ffffff" },
+        yaxis: { 
+            title: 'Tiempo (1 Fotograma ≈ 500ms)', 
+            backgroundcolor: "black", 
+            showbackground: true, 
+            color: "#ffffff",
+            tickmode: 'array',
+            tickvals: Array.from({length: 25}, (_, i) => -12.0 + i * 0.5),
+            ticktext: Array.from({length: 25}, (_, i) => `${i}-${(12.0 - i * 0.5).toFixed(1).replace('.0','')}sg`)
+        },
+        zaxis: { 
+            title: 'dBµV', 
+            backgroundcolor: "black", 
+            showbackground: true, 
+            range: [-10, 80], 
+            color: "#ffffff",
+            tickmode: 'linear',
+            tick0: -10,
+            dtick: 10
+        },
         aspectratio: { x: 1.5, y: 1.5, z: 0.5 } // Cúbico y equilibrado
     }
 };
