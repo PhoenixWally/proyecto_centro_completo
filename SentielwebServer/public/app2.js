@@ -1,9 +1,11 @@
 let ws = null;
 let currentSource = "UMA";
 
-// Elet ws;
 let isConnected = false;
 let autoCaptureCounter = 0; // Contador de tramas para la red
+
+let latestRadarData = null; // Buffer para el Game Loop
+let isRenderLoopRunning = false;
 
 const btnStart = document.getElementById('btn-start');
 const btnStop = document.getElementById('btn-stop');
@@ -294,7 +296,21 @@ async function doFullCapture() {
     return canvas;
 }
 
-// Guardado automático en el servidor (Rotativo de 100 archivos)
+// Guardado automático rápido sin congelar la web (sin html2canvas)
+window.takeScreenshotAndUploadFast = async function() {
+    try {
+        const p3d = document.getElementById("plot3D");
+        // Capturar solo la gráfica 3D que es lo más importante y es instantáneo
+        const base64Data = await Plotly.toImage(p3d, { format: 'jpeg', width: 800, height: 600 });
+        fetch('/api/captura', {
+            method: 'POST',
+            body: JSON.stringify({ src: currentSource, image: base64Data }),
+            headers: {'Content-Type': 'application/json'}
+        });
+    } catch(e) { console.error("Error en autocaptura rápida:", e); }
+};
+
+// Guardado automático en el servidor (original)
 window.takeScreenshotAndUpload = async function() {
     try {
         const canvas = await doFullCapture();
@@ -340,6 +356,7 @@ btnStart.addEventListener("click", () => {
     };
 
     ws.onclose = () => {
+        isConnected = false;
         lblStatus.innerText = "Estado: DESCONECTADO";
         lblStatus.style.color = "#FF9800";
         btnStart.disabled = false;
@@ -347,6 +364,7 @@ btnStart.addEventListener("click", () => {
     };
 
     ws.onopen = () => {
+        isConnected = true;
         lblStatus.innerText = `Estado: CONECTADO (${currentSource})`;
         lblStatus.style.color = "#4CAF50";
         btnStart.disabled = true;
@@ -358,6 +376,12 @@ btnStart.addEventListener("click", () => {
             source: currentSource
         }));
         updateFilters();
+        
+        // Iniciar Game Loop de renderizado
+        if (!isRenderLoopRunning) {
+            isRenderLoopRunning = true;
+            requestAnimationFrame(renderLoop);
+        }
     };
     
     ws.onmessage = (event) => {
@@ -370,137 +394,11 @@ btnStart.addEventListener("click", () => {
             }
         }
         else if (data.type === "radar_frame") {
-            document.getElementById("lbl-time-sync").innerHTML = data.time;
+            // Guardar para el renderizado asíncrono
+            latestRadarData = data;
             
-            /* 
-            // Procesamiento Inteligente del Footer (Comentado por petición)
-            const fPanel = document.getElementById("argus-footer");
-            if (data.meta_raw && data.meta_raw.trim() !== "") {
-                if(fPanel.style.display === "none") fPanel.style.display = "flex";
-                const mRaw = data.meta_raw;
-                
-                const extract = (regex, def = "-") => {
-                    const m = mRaw.match(regex);
-                    return m ? m[1].trim() : def;
-                };
-
-                const tMed = extract(/Tipo de med\.?\s*=(.*?)[;\]]/i);
-                const fMin = extract(/Frecuencia i[ \w]*l\s*=\s*([\d,.]+\s*[kMGT]*[Hh]z)/i) || 
-                             extract(/Frecuencia m[ \w]*nima\s*=\s*([\d,.]+\s*[kMGT]*[Hh]z)/i, "1,565 GHz");
-                const fMax = extract(/Frecuencia f[ \w]*l\s*=\s*([\d,.]+\s*[kMGT]*[Hh]z)/i) || 
-                             extract(/Frecuencia m[ \w]*xima\s*=\s*([\d,.]+\s*[kMGT]*[Hh]z)/i, "1,582 GHz");
-                const paso = extract(/(?:A\.|Ancho)\s+de\s+paso\s*=\s*([^;\]]+)/i);
-                const squ = extract(/Squelch\s*=\s*([^;\]]+)/i);
-                const pMed = extract(/Par[ \w]*metro de med\.?\s*=\s*([^;\]]+)/i);
-                
-                const nRango = extract(/Nombre\s*=\s*(ENAIRE[^;,\n\]]+)/i, "Generico");
-                const fec = extract(/Fecha\s*=\s*([\d\/-]+)/i);
-                const hor = extract(/Hora\s*=\s*([\d:]+)/i);
-                const subs = extract(/(?:No\.|Num\.?)\s+de\s+subrangos\s*=\s*(\d+)/i);
-                
-                const ant = extract(/Dispos\.\s*1=\[Nombre=([^,\]]+)/i, "HL040");
-                const acim = extract(/Acimut\s*=\s*([^,\]]+)/i);
-                const elev = extract(/Elevaci[ \w]*n\s*=\s*([^,\]]+)/i);
-                
-                const rec = extract(/Dispos\.\s*2=\[Nombre=([^,\]]+)/i, "ESMB");
-                const rbw = extract(/Ancho ban\.?\s*FI\s*=\s*([^,\]]+)/i);
-                const aten = extract(/Atenuaci[ \w]*n\s*FR\s*=\s*([^,\]]+)/i);
-                const dem = extract(/Demodulaci[ \w]*n\s*=\s*([^,\]]+)/i);
-                const det = extract(/Detector\s*=\s*([^,\])]+)/i);
-                
-                const loc = extract(/(EA-\w+|CTER-\w+)/, "EA-MALAGA");
-
-                // Actualizamos rango Eje X automáticamente solo si difiere del auto
-                const curF1 = parseFloat(fMin.replace(",", "."));
-                const curF2 = parseFloat(fMax.replace(",", "."));
-                if (!isNaN(curF1) && !isNaN(curF2)) {
-                    const mul1 = fMin.toLowerCase().includes('ghz') ? 1000 : 1;
-                    const mul2 = fMax.toLowerCase().includes('ghz') ? 1000 : 1;
-                    const limitF1 = curF1 * mul1;
-                    const limitF2 = curF2 * mul2;
-                    window.snap_fmin = Math.min(limitF1, limitF2);
-                    window.snap_fmax = Math.max(limitF1, limitF2);
-                    layout2D.xaxis.range = [window.snap_fmin, window.snap_fmax];
-                }
-
-                fPanel.innerHTML = `
-                    <div style="font-weight:bold; color:#fff; margin-bottom:10px; text-transform:uppercase;">
-                         Base: <span style="color:#00ff66">\${loc}</span>
-                    </div>
-                    <strong style="color:#00ff66;">Datos de Rastreo</strong>
-                    <table>
-                        <tr><td>Frecuencia Mínima</td><td style="color:#00ffff;">\${fMin}</td></tr>
-                        <tr><td>Frecuencia Máxima</td><td style="color:#00ffff;">\${fMax}</td></tr>
-                        <tr><td>Antena</td><td>\${ant}</td></tr>
-                        <tr><td>Receptor</td><td>\${rec}</td></tr>
-                    </table>
-                \`;
-            } else {
-                fPanel.style.display = "none";
-            }
-            */
-            
-            // Render 3D Surface
-            const trace3D = {
-                z: data.z3d,
-                x: data.x3d, 
-                colorscale: 'Jet',
-                type: 'surface',
-                cmin: data.db_min,
-                cmax: data.db_max,
-                showscale: false
-            };
-            
-            // Preservar la orientación de la cámara manual del usuario
-            const plot3DDiv = document.getElementById("plot3D");
-            if (plot3DDiv && plot3DDiv.layout && plot3DDiv.layout.scene && plot3DDiv.layout.scene.camera) {
-                layout3D.scene.camera = plot3DDiv.layout.scene.camera;
-            }
-            
-            Plotly.react('plot3D', [trace3D], layout3D, {displayModeBar: false});
-            
-            // ================= AUTO CAPTURA ROTATIVA =================
-            autoCaptureCounter++;
-            // El usuario pidió capturas de forma rotativa cada vez que entra una lectura.
-            // Para evitar saturar el Main UI Thread del navegador a 2fps, agrupamos cada 10 lecturas (5 segundos).
-            // Si el barrido es lento, esto capturará menos a menudo, pero muy constante y seguro.
-            if (autoCaptureCounter >= 10) {
-                takeScreenshotAndUpload();
-                autoCaptureCounter = 0;
-            }
-            // =========================================================
-            
-            // Render 2D Line & Threshold Line
+            // Algoritmo de Detección de Múltiples Picos Locales (Procesa el 100% de las tramas)
             let thres = parseFloat(entryThreshold.value) || 15;
-            
-            const trace2D = {
-                x: data.x2d,
-                y: data.y2d,
-                type: 'scatter',
-                mode: 'lines+markers',
-                marker: { 
-                    color: data.y2d, 
-                    colorscale: 'Jet',
-                    cmin: data.db_min,
-                    cmax: data.db_max,
-                    size: 4 
-                },
-                line: { color: 'rgba(128, 128, 128, 0.4)', width: 1 }
-            };
-            
-            // Línea umbral punteada amarilla
-            const thres2D = {
-                x: [Math.min(...data.x2d), Math.max(...data.x2d)],
-                y: [thres, thres],
-                type: 'scatter',
-                mode: 'lines',
-                line: { color: '#FFD700', width: 1, dash: 'dash' }
-            };
-            
-            Plotly.react('plot2D', [trace2D, thres2D], layout2D, {displayModeBar: false});
-            
-            // Algoritmo de Detección de Múltiples Picos Locales
-            let picos_detectados = 0;
             for (let i = 1; i < data.y2d.length - 1; i++) {
                 if (data.y2d[i] >= thres) {
                     // Es un pico real si sobresale de su montículo (mayor que los vecinos)
@@ -529,6 +427,7 @@ btnStart.addEventListener("click", () => {
     };
     
     ws.onclose = () => {
+        isConnected = false;
         lblStatus.innerText = "Estado: Desconectado";
         lblStatus.style.color = "#f44336";
         btnStart.disabled = false;
@@ -536,6 +435,77 @@ btnStart.addEventListener("click", () => {
         writeLog("Desconectado del servidor de Trazas.");
     };
 });
+
+// ==== MOTOR DE RENDERIZADO "GAME LOOP" ====
+// Desacopla la recepción de datos de la generación de gráficas
+function renderLoop() {
+    if (!isConnected) {
+        isRenderLoopRunning = false;
+        return;
+    }
+
+    if (latestRadarData) {
+        const data = latestRadarData;
+        latestRadarData = null; // Limpiar para no repintar lo mismo
+
+        document.getElementById("lbl-time-sync").innerHTML = data.time;
+        
+        // Render 3D Surface
+        const trace3D = {
+            z: data.z3d,
+            x: data.x3d, 
+            colorscale: 'Jet',
+            type: 'surface',
+            cmin: data.db_min,
+            cmax: data.db_max,
+            showscale: false
+        };
+        
+        const plot3DDiv = document.getElementById("plot3D");
+        if (plot3DDiv && plot3DDiv.layout && plot3DDiv.layout.scene && plot3DDiv.layout.scene.camera) {
+            layout3D.scene.camera = plot3DDiv.layout.scene.camera;
+        }
+        
+        Plotly.react('plot3D', [trace3D], layout3D, {displayModeBar: false});
+        
+        // Render 2D Line & Threshold Line
+        let thres = parseFloat(entryThreshold.value) || 15;
+        const trace2D = {
+            x: data.x2d,
+            y: data.y2d,
+            type: 'scatter',
+            mode: 'lines+markers',
+            marker: { 
+                color: data.y2d, 
+                colorscale: 'Jet',
+                cmin: data.db_min,
+                cmax: data.db_max,
+                size: 4 
+            },
+            line: { color: 'rgba(128, 128, 128, 0.4)', width: 1 }
+        };
+        const thres2D = {
+            x: [Math.min(...data.x2d), Math.max(...data.x2d)],
+            y: [thres, thres],
+            type: 'scatter',
+            mode: 'lines',
+            line: { color: '#FFD700', width: 1, dash: 'dash' }
+        };
+        Plotly.react('plot2D', [trace2D, thres2D], layout2D, {displayModeBar: false});
+        
+        // ================= AUTO CAPTURA ROTATIVA (Rápida) =================
+        autoCaptureCounter++;
+        if (autoCaptureCounter >= 10) {
+            takeScreenshotAndUploadFast();
+            autoCaptureCounter = 0;
+        }
+        // ==================================================================
+    }
+
+    // Pedir el siguiente frame a la tarjeta gráfica (60 FPS)
+    requestAnimationFrame(renderLoop);
+}
+// ===========================================
 
 btnStop.addEventListener("click", () => {
     if (ws) {
