@@ -137,7 +137,7 @@ const layout3D = {
             projection: { type: 'orthographic' }
         },
         xaxis: { title: 'Frecuencia', backgroundcolor: "black", showbackground: true, color: "#ffffff" },
-        yaxis: { title: 'Tiempo', backgroundcolor: "black", showbackground: true, color: "#ffffff" },
+        yaxis: { title: 'Tiempo (1 Fotograma ≈ 500ms)', backgroundcolor: "black", showbackground: true, color: "#ffffff" },
         zaxis: { title: 'dBµV', backgroundcolor: "black", showbackground: true, range: [-10, 80], color: "#ffffff" },
         aspectratio: { x: 1.5, y: 1.5, z: 0.5 } // Cúbico y equilibrado
     }
@@ -454,6 +454,7 @@ function renderLoop() {
         const trace3D = {
             z: data.z3d,
             x: data.x3d, 
+            y: Array.from({length: 25}, (_, i) => -12.0 + i * 0.5), // Eje Y en segundos
             colorscale: 'Jet',
             type: 'surface',
             cmin: data.db_min,
