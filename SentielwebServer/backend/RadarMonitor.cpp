@@ -234,13 +234,29 @@ void RadarMonitor::threadLoop() {
             std::vector<PuntoRadar> copiabuf;
             {
                 std::lock_guard<std::mutex> lock(data_mtx);
+                
+                // Cálculo Dinámico del tiempo de barrido (Amnesia adaptativa)
+                for (const auto& d : ultimo_barrido) {
+                    if (last_f_for_sweep > 0 && d.f < last_f_for_sweep - 0.5) { 
+                        // Caída abrupta de frecuencia = Nuevo barrido
+                        if (last_sweep_start_t > 0 && d.t_obj >= last_sweep_start_t) {
+                            uint64_t duration = d.t_obj - last_sweep_start_t;
+                            if (duration > 0 && duration < 600) { // Límite de cordura 10 mins
+                                dynamic_amnesia_sec = duration + 2; // +2 segs de margen
+                            }
+                        }
+                        last_sweep_start_t = d.t_obj;
+                    }
+                    last_f_for_sweep = d.f;
+                }
+
                 buffer_raw.insert(buffer_raw.end(), ultimo_barrido.begin(), ultimo_barrido.end());
                 ultimo_barrido.clear();
                 
                 if(!buffer_raw.empty()) {
                     uint64_t max_t = buffer_raw.front().t_obj;
                     for (const auto& d : buffer_raw) if (d.t_obj > max_t) max_t = d.t_obj;
-                    uint64_t corte = max_t - 3; // 3 seconds amnesia
+                    uint64_t corte = (max_t > dynamic_amnesia_sec) ? max_t - dynamic_amnesia_sec : 0; 
                     buffer_raw.erase(std::remove_if(buffer_raw.begin(), buffer_raw.end(), [corte](const PuntoRadar& d) { return d.t_obj < corte; }), buffer_raw.end());
                 }
                 copiabuf = buffer_raw;

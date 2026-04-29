@@ -68,6 +68,11 @@ private:
     
     // Tools
     std::filesystem::file_time_type cache_last_file_time;
+
+    // Adaptative Amnesia
+    double last_f_for_sweep = 0.0;
+    uint64_t last_sweep_start_t = 0;
+    uint64_t dynamic_amnesia_sec = 3;
 };
 
 #endif
