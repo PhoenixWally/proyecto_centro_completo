@@ -1,0 +1,46 @@
+{
+	"sources" : 
+	[
+		{
+			"file" : "D:/jpit/Remotas/argus/traduccion_c++/Sentinel_Proyecto_Qt/build/Desktop_Qt_6_11_0_MSVC2022_64bit-Release/_deps/json-subbuild/CMakeFiles/json-populate"
+		},
+		{
+			"file" : "D:/jpit/Remotas/argus/traduccion_c++/Sentinel_Proyecto_Qt/build/Desktop_Qt_6_11_0_MSVC2022_64bit-Release/_deps/json-subbuild/CMakeFiles/json-populate.rule"
+		},
+		{
+			"file" : "D:/jpit/Remotas/argus/traduccion_c++/Sentinel_Proyecto_Qt/build/Desktop_Qt_6_11_0_MSVC2022_64bit-Release/_deps/json-subbuild/CMakeFiles/json-populate-complete.rule"
+		},
+		{
+			"file" : "D:/jpit/Remotas/argus/traduccion_c++/Sentinel_Proyecto_Qt/build/Desktop_Qt_6_11_0_MSVC2022_64bit-Release/_deps/json-subbuild/json-populate-prefix/src/json-populate-stamp/json-populate-build.rule"
+		},
+		{
+			"file" : "D:/jpit/Remotas/argus/traduccion_c++/Sentinel_Proyecto_Qt/build/Desktop_Qt_6_11_0_MSVC2022_64bit-Release/_deps/json-subbuild/json-populate-prefix/src/json-populate-stamp/json-populate-configure.rule"
+		},
+		{
+			"file" : "D:/jpit/Remotas/argus/traduccion_c++/Sentinel_Proyecto_Qt/build/Desktop_Qt_6_11_0_MSVC2022_64bit-Release/_deps/json-subbuild/json-populate-prefix/src/json-populate-stamp/json-populate-download.rule"
+		},
+		{
+			"file" : "D:/jpit/Remotas/argus/traduccion_c++/Sentinel_Proyecto_Qt/build/Desktop_Qt_6_11_0_MSVC2022_64bit-Release/_deps/json-subbuild/json-populate-prefix/src/json-populate-stamp/json-populate-install.rule"
+		},
+		{
+			"file" : "D:/jpit/Remotas/argus/traduccion_c++/Sentinel_Proyecto_Qt/build/Desktop_Qt_6_11_0_MSVC2022_64bit-Release/_deps/json-subbuild/json-populate-prefix/src/json-populate-stamp/json-populate-mkdir.rule"
+		},
+		{
+			"file" : "D:/jpit/Remotas/argus/traduccion_c++/Sentinel_Proyecto_Qt/build/Desktop_Qt_6_11_0_MSVC2022_64bit-Release/_deps/json-subbuild/json-populate-prefix/src/json-populate-stamp/json-populate-patch.rule"
+		},
+		{
+			"file" : "D:/jpit/Remotas/argus/traduccion_c++/Sentinel_Proyecto_Qt/build/Desktop_Qt_6_11_0_MSVC2022_64bit-Release/_deps/json-subbuild/json-populate-prefix/src/json-populate-stamp/json-populate-test.rule"
+		},
+		{
+			"file" : "D:/jpit/Remotas/argus/traduccion_c++/Sentinel_Proyecto_Qt/build/Desktop_Qt_6_11_0_MSVC2022_64bit-Release/_deps/json-subbuild/json-populate-prefix/src/json-populate-stamp/json-populate-update.rule"
+		}
+	],
+	"target" : 
+	{
+		"labels" : 
+		[
+			"json-populate"
+		],
+		"name" : "json-populate"
+	}
+}

@@ -1,0 +1,10 @@
+^D:\JPIT\REMOTAS\ARGUS\TRADUCCION_C++\SENTINEL_PROYECTO_QT\_DEPS\JSON-SUBBUILD\CMAKEFILES\257C478EB1C0010F07EEEE9F8F2E5FCB\GENERATE.STAMP.RULE
+setlocal
+F:\Qt\Tools\CMake_64\bin\cmake.exe -SD:/jpit/Remotas/argus/traduccion_c++/Sentinel_Proyecto_Qt/_deps/json-subbuild -BD:/jpit/Remotas/argus/traduccion_c++/Sentinel_Proyecto_Qt/_deps/json-subbuild --check-stamp-list CMakeFiles/generate.stamp.list --vs-solution-file D:/jpit/Remotas/argus/traduccion_c++/Sentinel_Proyecto_Qt/_deps/json-subbuild/json-populate.sln
+if %errorlevel% neq 0 goto :cmEnd
+:cmEnd
+endlocal & call :cmErrorLevel %errorlevel% & goto :cmDone
+:cmErrorLevel
+exit /b %1
+:cmDone
+if %errorlevel% neq 0 goto :VCEnd

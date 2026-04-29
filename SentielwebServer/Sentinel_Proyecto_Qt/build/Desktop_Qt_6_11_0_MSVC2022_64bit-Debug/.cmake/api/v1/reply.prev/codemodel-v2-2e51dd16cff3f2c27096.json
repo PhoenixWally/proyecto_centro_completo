@@ -1,0 +1,105 @@
+{
+	"configurations" : 
+	[
+		{
+			"directories" : 
+			[
+				{
+					"build" : ".",
+					"childIndexes" : 
+					[
+						1
+					],
+					"jsonFile" : "directory-.-Debug-d0094a50bb2071803777.json",
+					"minimumCMakeVersion" : 
+					{
+						"string" : "3.16"
+					},
+					"projectIndex" : 0,
+					"source" : ".",
+					"targetIndexes" : 
+					[
+						0,
+						1,
+						2
+					]
+				},
+				{
+					"build" : "_deps/json-build",
+					"jsonFile" : "directory-_deps.json-build-Debug-fe768733779c6b4f9d7e.json",
+					"minimumCMakeVersion" : 
+					{
+						"string" : "3.1"
+					},
+					"parentIndex" : 0,
+					"projectIndex" : 1,
+					"source" : "build/Desktop_Qt_6_11_0_MSVC2022_64bit-Debug/_deps/json-src"
+				}
+			],
+			"name" : "Debug",
+			"projects" : 
+			[
+				{
+					"childIndexes" : 
+					[
+						1
+					],
+					"directoryIndexes" : 
+					[
+						0
+					],
+					"name" : "ArgusSentinel",
+					"targetIndexes" : 
+					[
+						0,
+						1,
+						2
+					]
+				},
+				{
+					"directoryIndexes" : 
+					[
+						1
+					],
+					"name" : "nlohmann_json",
+					"parentIndex" : 0
+				}
+			],
+			"targets" : 
+			[
+				{
+					"directoryIndex" : 0,
+					"id" : "ArgusSentinel::@6890427a1f51a3e7e1df",
+					"jsonFile" : "target-ArgusSentinel-Debug-86712b877dbd510503a6.json",
+					"name" : "ArgusSentinel",
+					"projectIndex" : 0
+				},
+				{
+					"directoryIndex" : 0,
+					"id" : "ArgusSentinel_autogen::@6890427a1f51a3e7e1df",
+					"jsonFile" : "target-ArgusSentinel_autogen-Debug-0fbdb6290874529ba7ab.json",
+					"name" : "ArgusSentinel_autogen",
+					"projectIndex" : 0
+				},
+				{
+					"directoryIndex" : 0,
+					"id" : "ArgusSentinel_autogen_timestamp_deps::@6890427a1f51a3e7e1df",
+					"jsonFile" : "target-ArgusSentinel_autogen_timestamp_deps-Debug-369cdc608d9da91b25d3.json",
+					"name" : "ArgusSentinel_autogen_timestamp_deps",
+					"projectIndex" : 0
+				}
+			]
+		}
+	],
+	"kind" : "codemodel",
+	"paths" : 
+	{
+		"build" : "D:/jpit/Remotas/argus/traduccion_c++/Sentinel_Proyecto_Qt/build/Desktop_Qt_6_11_0_MSVC2022_64bit-Debug",
+		"source" : "D:/jpit/Remotas/argus/traduccion_c++/Sentinel_Proyecto_Qt"
+	},
+	"version" : 
+	{
+		"major" : 2,
+		"minor" : 7
+	}
+}

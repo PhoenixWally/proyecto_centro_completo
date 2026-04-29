@@ -1,0 +1,239 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Panel de Control VNC Web</title>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
+
+        :root {
+            --bg-dark: #0f172a;
+            --panel-bg: #1e293b;
+            --accent: #38bdf8;
+            --accent-hover: #0284c7;
+            --text-main: #f8fafc;
+            --text-muted: #94a3b8;
+            --danger: #ef4444;
+        }
+
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: var(--bg-dark);
+            color: var(--text-main);
+            margin: 0;
+            padding: 40px 20px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            min-height: 100vh;
+        }
+
+        .header {
+            text-align: center;
+            margin-bottom: 40px;
+        }
+
+        .header h1 {
+            color: var(--accent);
+            margin: 0 0 10px 0;
+            font-size: 2.5rem;
+            text-shadow: 0 0 15px rgba(56, 189, 248, 0.4);
+        }
+
+        .header p {
+            color: var(--text-muted);
+            margin: 0;
+            font-size: 1.1rem;
+        }
+
+        .container {
+            width: 100%;
+            max-width: 1000px;
+            background-color: var(--panel-bg);
+            border-radius: 16px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.5);
+            overflow: hidden;
+            border: 1px solid rgba(255, 255, 255, 0.05);
+        }
+
+        .search-bar {
+            padding: 20px;
+            background-color: rgba(0,0,0,0.2);
+            border-bottom: 1px solid rgba(255,255,255,0.05);
+        }
+
+        .search-bar input {
+            width: 100%;
+            padding: 15px 20px;
+            border-radius: 8px;
+            border: 1px solid rgba(255,255,255,0.1);
+            background-color: rgba(255,255,255,0.05);
+            color: white;
+            font-size: 1rem;
+            box-sizing: border-box;
+            outline: none;
+            transition: border-color 0.3s;
+        }
+
+        .search-bar input:focus {
+            border-color: var(--accent);
+        }
+
+        .machine-list {
+            list-style: none;
+            padding: 0;
+            margin: 0;
+            max-height: 60vh;
+            overflow-y: auto;
+        }
+
+        /* Scrollbar track */
+        .machine-list::-webkit-scrollbar {
+            width: 8px;
+        }
+        .machine-list::-webkit-scrollbar-thumb {
+            background-color: rgba(255,255,255,0.2);
+            border-radius: 4px;
+        }
+
+        .machine-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 20px;
+            border-bottom: 1px solid rgba(255,255,255,0.05);
+            transition: background-color 0.2s;
+        }
+
+        .machine-item:hover {
+            background-color: rgba(255,255,255,0.03);
+        }
+
+        .machine-item:last-child {
+            border-bottom: none;
+        }
+
+        .machine-info {
+            display: flex;
+            flex-direction: column;
+            gap: 5px;
+        }
+
+        .machine-name {
+            font-size: 1.2rem;
+            font-weight: 600;
+        }
+
+        .machine-location {
+            color: var(--text-muted);
+            font-size: 0.9rem;
+            display: flex;
+            align-items: center;
+            gap: 5px;
+        }
+
+        .connect-btn {
+            background-color: rgba(56, 189, 248, 0.1);
+            color: var(--accent);
+            border: 1px solid var(--accent);
+            padding: 10px 25px;
+            border-radius: 6px;
+            font-weight: 600;
+            font-size: 1rem;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+
+        .connect-btn:hover {
+            background-color: var(--accent);
+            color: #000;
+            box-shadow: 0 0 15px rgba(56, 189, 248, 0.4);
+        }
+
+        .empty-message {
+            text-align: center;
+            padding: 40px;
+            color: var(--text-muted);
+            display: none;
+        }
+
+    </style>
+</head>
+<body>
+
+    <div class="header">
+        <h1>🌐 VNC Control Center</h1>
+        <p>Panel Seguro de Acceso Remoto Multiplexado</p>
+    </div>
+
+    <div class="container">
+        <div class="search-bar">
+            <input type="text" id="searchInput" placeholder="Despierta para buscar por Nombre de Máquina, IP o Ciudad...">
+        </div>
+
+        <ul class="machine-list" id="machineList">
+            <!-- Cargado por JS -->
+        </ul>
+        <div class="empty-message" id="emptyMessage">No se encontraron máquinas con esos criterios.</div>
+    </div>
+
+    <script>
+        let allMachines = [];
+
+        // Cargar datos del json dinámico creado por Python
+        fetch('data.json')
+            .then(response => response.json())
+            .then(data => {
+                allMachines = data;
+                renderList(allMachines);
+            })
+            .catch(err => {
+                console.error("Error cargando el listado:", err);
+                document.getElementById('machineList').innerHTML = `<li class="machine-item" style="color:var(--danger)">Error de conexión con el Servidor Python.</li>`;
+            });
+
+        function renderList(machines) {
+            const list = document.getElementById('machineList');
+            const emptyMsg = document.getElementById('emptyMessage');
+            list.innerHTML = '';
+            
+            if (machines.length === 0) {
+                emptyMsg.style.display = 'block';
+            } else {
+                emptyMsg.style.display = 'none';
+                machines.forEach(m => {
+                    const li = document.createElement('li');
+                    li.className = 'machine-item';
+                    
+                    li.innerHTML = `
+                        <div class="machine-info">
+                            <span class="machine-name">${m.nombre}</span>
+                            <span class="machine-location">📍 ${m.ciudad} &nbsp;&bull;&nbsp; 🖥️ ${m.ip}</span>
+                        </div>
+                        <button class="connect-btn" onclick="connectVNC('${m.id}')">Conectar</button>
+                    `;
+                    list.appendChild(li);
+                });
+            }
+        }
+
+        document.getElementById('searchInput').addEventListener('input', (e) => {
+            const query = e.target.value.toLowerCase();
+            const filtered = allMachines.filter(m => 
+                m.nombre.toLowerCase().includes(query) || 
+                m.ciudad.toLowerCase().includes(query) ||
+                m.ip.toLowerCase().includes(query)
+            );
+            renderList(filtered);
+        });
+
+        function connectVNC(tokenId) {
+            // Abre noVNC apuntando al plugin Token de websockify
+            // Formato de ruta estandar de novnc: /noVNC/vnc.html?path=websockify?token=xxxxx
+            const url = `/noVNC/vnc.html?path=websockify?token=${tokenId}&autoconnect=true&resize=remote`;
+            window.open(url, '_blank');
+        }
+    </script>
+</body>
+</html>

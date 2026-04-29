@@ -1,0 +1,13 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="17.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ItemGroup>
+    <CustomBuild Include="D:\jpit\Remotas\argus\traduccion_c++\Sentinel_Proyecto_Qt\_deps\json-subbuild\CMakeFiles\257c478eb1c0010f07eeee9f8f2e5fcb\generate.stamp.rule">
+      <Filter>CMake Rules</Filter>
+    </CustomBuild>
+  </ItemGroup>
+  <ItemGroup>
+    <Filter Include="CMake Rules">
+      <UniqueIdentifier>{6174849A-C0CA-33BF-8BA3-16D7E698CFD5}</UniqueIdentifier>
+    </Filter>
+  </ItemGroup>
+</Project>

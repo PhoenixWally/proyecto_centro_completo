@@ -1,0 +1,20 @@
+# CMake generation dependency list for this directory.
+D:/jpit/Remotas/argus/traduccion_c++/Sentinel_Proyecto_Qt/_deps/json-subbuild/CMakeFiles/3.30.5/CMakeSystem.cmake
+D:/jpit/Remotas/argus/traduccion_c++/Sentinel_Proyecto_Qt/_deps/json-subbuild/CMakeLists.txt
+D:/jpit/Remotas/argus/traduccion_c++/Sentinel_Proyecto_Qt/_deps/json-subbuild/json-populate-prefix/tmp/json-populate-mkdirs.cmake
+F:/Qt/Tools/CMake_64/share/cmake-3.30/Modules/CMakeGenericSystem.cmake
+F:/Qt/Tools/CMake_64/share/cmake-3.30/Modules/CMakeInitializeConfigs.cmake
+F:/Qt/Tools/CMake_64/share/cmake-3.30/Modules/CMakeSystemSpecificInformation.cmake
+F:/Qt/Tools/CMake_64/share/cmake-3.30/Modules/CMakeSystemSpecificInitialize.cmake
+F:/Qt/Tools/CMake_64/share/cmake-3.30/Modules/ExternalProject.cmake
+F:/Qt/Tools/CMake_64/share/cmake-3.30/Modules/ExternalProject/PatchInfo.txt.in
+F:/Qt/Tools/CMake_64/share/cmake-3.30/Modules/ExternalProject/RepositoryInfo.txt.in
+F:/Qt/Tools/CMake_64/share/cmake-3.30/Modules/ExternalProject/UpdateInfo.txt.in
+F:/Qt/Tools/CMake_64/share/cmake-3.30/Modules/ExternalProject/cfgcmd.txt.in
+F:/Qt/Tools/CMake_64/share/cmake-3.30/Modules/ExternalProject/gitclone.cmake.in
+F:/Qt/Tools/CMake_64/share/cmake-3.30/Modules/ExternalProject/gitupdate.cmake.in
+F:/Qt/Tools/CMake_64/share/cmake-3.30/Modules/ExternalProject/mkdirs.cmake.in
+F:/Qt/Tools/CMake_64/share/cmake-3.30/Modules/ExternalProject/shared_internal_commands.cmake
+F:/Qt/Tools/CMake_64/share/cmake-3.30/Modules/Platform/Windows-Initialize.cmake
+F:/Qt/Tools/CMake_64/share/cmake-3.30/Modules/Platform/Windows.cmake
+F:/Qt/Tools/CMake_64/share/cmake-3.30/Modules/Platform/WindowsPaths.cmake

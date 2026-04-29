@@ -1,0 +1,170 @@
+<!DOCTYPE html>
+<html lang="es">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Portal Intranet | JPIT</title>
+    <!-- Icono de pestaña (Favicon) -->
+    <link rel="icon" type="image/png" href="LOGOJPITMALAGAFARO.png">
+
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
+
+        :root {
+            --bg-dark: #0f172a;
+            --panel-bg: rgba(30, 41, 59, 0.85);
+            --accent: #38bdf8;
+            --accent-hover: #7dd3fc;
+            --text-main: #f8fafc;
+            --text-muted: #94a3b8;
+            --blur: blur(16px);
+        }
+
+        body, html {
+            margin: 0;
+            padding: 0;
+            width: 100vw;
+            height: 100vh;
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+            background-color: var(--bg-dark);
+            /* Sutiles gradientes de luz de fondo para dar más profundidad */
+            background-image: 
+                radial-gradient(circle at 15% 50%, rgba(56, 189, 248, 0.08), transparent 25%),
+                radial-gradient(circle at 85% 30%, rgba(139, 92, 246, 0.08), transparent 25%);
+            color: var(--text-main);
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+        }
+
+        /* BARRA SUPERIOR (HEADER) */
+        .topbar {
+            height: 70px;
+            background-color: var(--panel-bg);
+            backdrop-filter: var(--blur);
+            -webkit-backdrop-filter: var(--blur);
+            border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+            display: flex;
+            align-items: center;
+            padding: 0 40px;
+            box-shadow: 0 10px 30px -10px rgba(0, 0, 0, 0.5);
+            z-index: 10;
+        }
+
+        /* CONTENEDOR LOGO IZQUIERDO */
+        .logo-container {
+            display: flex;
+            align-items: center;
+            margin-right: 50px;
+        }
+
+        .logo-container img {
+            height: 45px;
+            object-fit: contain;
+            filter: drop-shadow(0 0 8px rgba(255,255,255,0.1));
+            transition: transform 0.3s ease;
+        }
+        
+        .logo-container img:hover {
+            transform: scale(1.02);
+        }
+
+        /* NAVEGACIÓN (BOTONES) */
+        .nav-links {
+            display: flex;
+            gap: 15px;
+        }
+
+        .nav-btn {
+            background: transparent;
+            border: 1px solid transparent;
+            color: var(--text-muted);
+            padding: 10px 22px;
+            font-size: 14px;
+            font-weight: 600;
+            border-radius: 10px;
+            cursor: pointer;
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            letter-spacing: 0.5px;
+        }
+
+        .nav-btn:hover {
+            color: var(--text-main);
+            background-color: rgba(255, 255, 255, 0.05);
+            transform: translateY(-2px);
+        }
+
+        .nav-btn.active {
+            background-color: rgba(56, 189, 248, 0.1);
+            color: var(--accent);
+            border: 1px solid rgba(56, 189, 248, 0.3);
+            box-shadow: 0 0 20px rgba(56, 189, 248, 0.15), inset 0 0 10px rgba(56, 189, 248, 0.05);
+        }
+        
+        /* Iconos de los botones */
+        .nav-btn i {
+            font-style: normal;
+            font-size: 16px;
+        }
+
+        /* ÁREA DEL IFRAME */
+        .content-area {
+            flex-grow: 1;
+            width: 100%;
+            position: relative;
+            background-color: #050505; /* Fondo más puro para que el iframe empalme perfecto */
+        }
+
+        iframe {
+            width: 100%;
+            height: 100%;
+            border: none;
+            display: block;
+        }
+    </style>
+</head>
+
+<body>
+
+    <header class="topbar">
+        <div class="logo-container">
+            <img src="LogoJPITMALAGATEXTO.png" alt="Logotipo JPIT">
+        </div>
+        
+        <nav class="nav-links">
+            <button class="nav-btn active" onclick="loadService('http://192.168.29.12:3000', this)">
+                <i>⚡</i> Monitor CTER
+            </button>
+            <button class="nav-btn" onclick="loadService('http://192.168.29.12:8080', this)">
+                <i>🛡️</i> SentinelWeb
+            </button>
+            <button class="nav-btn" onclick="loadService('http://192.168.29.12:8082', this)">
+                <i>📊</i> Centro Analítico
+            </button>
+            <button class="nav-btn" onclick="loadService('http://192.168.29.12:8085', this)">
+                <i>🖥️</i> Control VNC
+            </button>
+        </nav>
+    </header>
+
+    <div class="content-area">
+        <iframe id="main-frame" src="http://192.168.29.12:3000" title="Servicio Central"></iframe>
+    </div>
+
+    <script>
+        function loadService(url, btnElement) {
+            document.getElementById('main-frame').src = url;
+            
+            const buttons = document.querySelectorAll('.nav-btn');
+            buttons.forEach(btn => btn.classList.remove('active'));
+            
+            btnElement.classList.add('active');
+        }
+    </script>
+
+</body>
+</html>

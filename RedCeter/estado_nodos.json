@@ -1,0 +1,1123 @@
+{
+  "192-168-101-11": {
+    "argus": {
+      "status": false,
+      "msg": "Apagado"
+    },
+    "ping": false,
+    "rdp": false,
+    "vnc": false,
+    "pdu": {
+      "status": false,
+      "msg": "Offline"
+    }
+  },
+  "192-168-103-11": {
+    "argus": {
+      "status": false,
+      "msg": "Apagado"
+    },
+    "ping": false,
+    "rdp": false,
+    "vnc": false,
+    "pdu": {
+      "status": false,
+      "msg": "Offline"
+    }
+  },
+  "192-168-33-101": {
+    "argus": {
+      "status": false,
+      "msg": "Apagado"
+    },
+    "ping": false,
+    "rdp": false,
+    "vnc": false,
+    "pdu": {
+      "status": false,
+      "msg": "Offline"
+    }
+  },
+  "192-168-33-71": {
+    "argus": {
+      "status": false,
+      "msg": "Apagado"
+    },
+    "ping": false,
+    "rdp": false,
+    "vnc": false,
+    "pdu": {
+      "status": false,
+      "msg": "Offline"
+    }
+  },
+  "192-168-7-31": {
+    "argus": {
+      "status": false,
+      "msg": "Apagado"
+    },
+    "ping": false,
+    "rdp": false,
+    "vnc": false,
+    "pdu": {
+      "status": false,
+      "msg": "Offline"
+    }
+  },
+  "192-168-7-21": {
+    "argus": {
+      "status": false,
+      "msg": "Apagado"
+    },
+    "ping": false,
+    "rdp": false,
+    "vnc": false,
+    "pdu": {
+      "status": false,
+      "msg": "Offline"
+    }
+  },
+  "192-168-207-11": {
+    "argus": {
+      "status": false,
+      "msg": "Apagado"
+    },
+    "ping": false,
+    "rdp": false,
+    "vnc": false,
+    "pdu": {
+      "status": false,
+      "msg": "Offline"
+    }
+  },
+  "192-168-107-11": {
+    "argus": {
+      "status": false,
+      "msg": "Apagado"
+    },
+    "ping": false,
+    "rdp": false,
+    "vnc": false,
+    "pdu": {
+      "status": false,
+      "msg": "Offline"
+    }
+  },
+  "192-168-8-21": {
+    "argus": {
+      "status": false,
+      "msg": "Apagado"
+    },
+    "ping": false,
+    "rdp": false,
+    "vnc": false,
+    "pdu": {
+      "status": false,
+      "msg": "Offline"
+    }
+  },
+  "192-168-8-101": {
+    "argus": {
+      "status": false,
+      "msg": "Apagado"
+    },
+    "ping": false,
+    "rdp": false,
+    "vnc": false,
+    "pdu": {
+      "status": false,
+      "msg": "Offline"
+    }
+  },
+  "192-168-8-131": {
+    "argus": {
+      "status": false,
+      "msg": "Apagado"
+    },
+    "ping": false,
+    "rdp": false,
+    "vnc": false,
+    "pdu": {
+      "status": false,
+      "msg": "Offline"
+    }
+  },
+  "192-168-8-41": {
+    "argus": {
+      "status": false,
+      "msg": "Apagado"
+    },
+    "ping": false,
+    "rdp": false,
+    "vnc": false,
+    "pdu": {
+      "status": false,
+      "msg": "Offline"
+    }
+  },
+  "192-168-148-11": {
+    "argus": {
+      "status": false,
+      "msg": "Apagado"
+    },
+    "ping": false,
+    "rdp": false,
+    "vnc": false,
+    "pdu": {
+      "status": false,
+      "msg": "Offline"
+    }
+  },
+  "192-168-148-21": {
+    "argus": {
+      "status": false,
+      "msg": "Apagado"
+    },
+    "ping": false,
+    "rdp": false,
+    "vnc": false,
+    "pdu": {
+      "status": false,
+      "msg": "Offline"
+    }
+  },
+  "192-168-10-41": {
+    "argus": {
+      "status": false,
+      "msg": "Apagado"
+    },
+    "ping": false,
+    "rdp": false,
+    "vnc": false,
+    "pdu": {
+      "status": false,
+      "msg": "Offline"
+    }
+  },
+  "192-168-111-11": {
+    "argus": {
+      "status": false,
+      "msg": "Apagado"
+    },
+    "ping": false,
+    "rdp": false,
+    "vnc": false,
+    "pdu": {
+      "status": false,
+      "msg": "Offline"
+    }
+  },
+  "192-168-12-21": {
+    "argus": {
+      "status": false,
+      "msg": "Apagado"
+    },
+    "ping": false,
+    "rdp": false,
+    "vnc": false
+  },
+  "192-168-51-21": {
+    "argus": {
+      "status": false,
+      "msg": "Apagado"
+    },
+    "ping": false,
+    "rdp": false,
+    "vnc": false,
+    "pdu": {
+      "status": false,
+      "msg": "Offline"
+    }
+  },
+  "192-168-13-41": {
+    "argus": {
+      "status": false,
+      "msg": "Apagado"
+    },
+    "ping": false,
+    "rdp": false,
+    "vnc": false,
+    "pdu": {
+      "status": false,
+      "msg": "Offline"
+    }
+  },
+  "192-168-14-41": {
+    "argus": {
+      "status": false,
+      "msg": "Apagado"
+    },
+    "ping": false,
+    "rdp": false,
+    "vnc": false,
+    "pdu": {
+      "status": false,
+      "msg": "Offline"
+    }
+  },
+  "192-168-117-11": {
+    "argus": {
+      "status": false,
+      "msg": "Apagado"
+    },
+    "ping": false,
+    "rdp": false,
+    "vnc": false,
+    "pdu": {
+      "status": false,
+      "msg": "Offline"
+    }
+  },
+  "192-168-35-21": {
+    "argus": {
+      "status": false,
+      "msg": "Apagado"
+    },
+    "ping": false,
+    "rdp": false,
+    "vnc": false,
+    "pdu": {
+      "status": false,
+      "msg": "Offline"
+    }
+  },
+  "192-168-235-101": {
+    "argus": {
+      "status": false,
+      "msg": "Apagado"
+    },
+    "ping": false,
+    "rdp": false,
+    "vnc": false,
+    "pdu": {
+      "status": false,
+      "msg": "Offline"
+    }
+  },
+  "192-168-235-71": {
+    "argus": {
+      "status": false,
+      "msg": "Apagado"
+    },
+    "ping": false,
+    "rdp": false,
+    "vnc": false,
+    "pdu": {
+      "status": false,
+      "msg": "Offline"
+    }
+  },
+  "192-168-235-11": {
+    "argus": {
+      "status": false,
+      "msg": "Apagado"
+    },
+    "ping": false,
+    "rdp": false,
+    "vnc": false,
+    "pdu": {
+      "status": false,
+      "msg": "Offline"
+    }
+  },
+  "192-168-119-21": {
+    "argus": {
+      "status": false,
+      "msg": "Apagado"
+    },
+    "ping": false,
+    "rdp": false,
+    "vnc": false,
+    "pdu": {
+      "status": false,
+      "msg": "Offline"
+    }
+  },
+  "192-168-23-21": {
+    "argus": {
+      "status": false,
+      "msg": "Apagado"
+    },
+    "ping": false,
+    "rdp": false,
+    "vnc": false,
+    "pdu": {
+      "status": false,
+      "msg": "Offline"
+    }
+  },
+  "192-168-24-21": {
+    "argus": {
+      "status": false,
+      "msg": "Apagado"
+    },
+    "ping": false,
+    "rdp": false,
+    "vnc": false,
+    "pdu": {
+      "status": false,
+      "msg": "Offline"
+    }
+  },
+  "192-168-25-21": {
+    "argus": {
+      "status": false,
+      "msg": "Apagado"
+    },
+    "ping": false,
+    "rdp": false,
+    "vnc": false,
+    "pdu": {
+      "status": false,
+      "msg": "Offline"
+    }
+  },
+  "192-168-27-11": {
+    "argus": {
+      "status": false,
+      "msg": "Apagado"
+    },
+    "ping": false,
+    "rdp": false,
+    "vnc": false,
+    "pdu": {
+      "status": false,
+      "msg": "Offline"
+    }
+  },
+  "192-168-128-101": {
+    "argus": {
+      "status": false,
+      "msg": "Apagado"
+    },
+    "ping": false,
+    "rdp": false,
+    "vnc": false,
+    "pdu": {
+      "status": false,
+      "msg": "Offline"
+    }
+  },
+  "192-168-128-51": {
+    "argus": {
+      "status": false,
+      "msg": "Apagado"
+    },
+    "ping": false,
+    "rdp": false,
+    "vnc": false,
+    "pdu": {
+      "status": false,
+      "msg": "Offline"
+    }
+  },
+  "192-168-128-111": {
+    "argus": {
+      "status": false,
+      "msg": "Apagado"
+    },
+    "ping": false,
+    "rdp": false,
+    "vnc": false,
+    "pdu": {
+      "status": false,
+      "msg": "Offline"
+    }
+  },
+  "192-168-128-91": {
+    "argus": {
+      "status": false,
+      "msg": "Apagado"
+    },
+    "ping": false,
+    "rdp": false,
+    "vnc": false,
+    "pdu": {
+      "status": false,
+      "msg": "Offline"
+    }
+  },
+  "192-168-29-11": {
+    "argus": {
+      "status": false,
+      "msg": "Carpeta Vacía"
+    },
+    "ping": true,
+    "rdp": true,
+    "vnc": true
+  },
+  "192-168-29-41": {
+    "argus": {
+      "status": false,
+      "msg": "Carpeta Vacía"
+    },
+    "ping": true,
+    "rdp": true,
+    "vnc": true,
+    "pdu": {
+      "status": false,
+      "msg": "Offline"
+    }
+  },
+  "192-168-29-21": {
+    "argus": {
+      "status": false,
+      "msg": "Carpeta Vacía"
+    },
+    "ping": true,
+    "rdp": true,
+    "vnc": true,
+    "pdu": {
+      "status": false,
+      "msg": "Offline"
+    }
+  },
+  "192-168-29-15": {
+    "argus": {
+      "status": false,
+      "msg": "Apagado"
+    },
+    "ping": false,
+    "rdp": false,
+    "vnc": false,
+    "pdu": {
+      "status": true,
+      "ports": [
+        {
+          "id": 0,
+          "name": "PC",
+          "status": 1
+        },
+        {
+          "id": 1,
+          "name": "Receptor",
+          "status": 1
+        },
+        {
+          "id": 2,
+          "name": "Radiogoniometro",
+          "status": 1
+        },
+        {
+          "id": 3,
+          "name": "ZS129A1",
+          "status": 1
+        }
+      ],
+      "type": "pse544",
+      "used_user": "admin",
+      "used_pass": "admin"
+    }
+  },
+  "192-168-29-71": {
+    "argus": {
+      "status": false,
+      "msg": "Carpeta Vacía"
+    },
+    "ping": true,
+    "rdp": true,
+    "vnc": true,
+    "pdu": {
+      "status": false,
+      "msg": "Offline"
+    }
+  },
+  "192-168-29-81": {
+    "argus": {
+      "status": false,
+      "msg": "Carpeta Vacía"
+    },
+    "ping": true,
+    "rdp": true,
+    "vnc": true,
+    "pdu": {
+      "status": true,
+      "ports": [
+        {
+          "id": 1,
+          "name": "PC",
+          "status": 1
+        },
+        {
+          "id": 2,
+          "name": "GONIO",
+          "status": 1
+        },
+        {
+          "id": 3,
+          "name": "ESMB",
+          "status": 1
+        },
+        {
+          "id": 4,
+          "name": "ZS129",
+          "status": 1
+        }
+      ],
+      "type": "legacy",
+      "used_user": "Administrador",
+      "used_pass": "admin"
+    }
+  },
+  "192-168-29-101": {
+    "argus": {
+      "status": false,
+      "msg": "Carpeta Vacía"
+    },
+    "ping": true,
+    "rdp": true,
+    "vnc": true,
+    "pdu": {
+      "status": false,
+      "msg": "Offline"
+    }
+  },
+  "192-168-230-11": {
+    "argus": {
+      "status": false,
+      "msg": "Apagado"
+    },
+    "ping": false,
+    "rdp": false,
+    "vnc": false,
+    "pdu": {
+      "status": false,
+      "msg": "Offline"
+    }
+  },
+  "192-168-130-11": {
+    "argus": {
+      "status": false,
+      "msg": "Apagado"
+    },
+    "ping": false,
+    "rdp": false,
+    "vnc": false,
+    "pdu": {
+      "status": false,
+      "msg": "Offline"
+    }
+  },
+  "192-168-34-11": {
+    "argus": {
+      "status": false,
+      "msg": "Apagado"
+    },
+    "ping": false,
+    "rdp": false,
+    "vnc": false,
+    "pdu": {
+      "status": false,
+      "msg": "Offline"
+    }
+  },
+  "192-168-136-11": {
+    "argus": {
+      "status": false,
+      "msg": "Apagado"
+    },
+    "ping": false,
+    "rdp": false,
+    "vnc": false,
+    "pdu": {
+      "status": false,
+      "msg": "Offline"
+    }
+  },
+  "192-168-26-61": {
+    "argus": {
+      "status": false,
+      "msg": "Apagado"
+    },
+    "ping": false,
+    "rdp": false,
+    "vnc": false
+  },
+  "192-168-37-41": {
+    "argus": {
+      "status": false,
+      "msg": "Apagado"
+    },
+    "ping": false,
+    "rdp": false,
+    "vnc": false
+  },
+  "192-168-41-11": {
+    "argus": {
+      "status": false,
+      "msg": "Apagado"
+    },
+    "ping": false,
+    "rdp": false,
+    "vnc": false
+  },
+  "192-168-141-31": {
+    "argus": {
+      "status": false,
+      "msg": "Apagado"
+    },
+    "ping": false,
+    "rdp": false,
+    "vnc": false,
+    "pdu": {
+      "status": false,
+      "msg": "Offline"
+    }
+  },
+  "192-168-241-71": {
+    "argus": {
+      "status": false,
+      "msg": "Apagado"
+    },
+    "ping": false,
+    "rdp": false,
+    "vnc": false,
+    "pdu": {
+      "status": false,
+      "msg": "Offline"
+    }
+  },
+  "192-168-241-41": {
+    "argus": {
+      "status": false,
+      "msg": "Apagado"
+    },
+    "ping": false,
+    "rdp": false,
+    "vnc": false,
+    "pdu": {
+      "status": false,
+      "msg": "Offline"
+    }
+  },
+  "192-168-138-11": {
+    "argus": {
+      "status": false,
+      "msg": "Apagado"
+    },
+    "ping": false,
+    "rdp": false,
+    "vnc": false,
+    "pdu": {
+      "status": false,
+      "msg": "Offline"
+    }
+  },
+  "192-168-38-41": {
+    "argus": {
+      "status": false,
+      "msg": "Apagado"
+    },
+    "ping": false,
+    "rdp": false,
+    "vnc": false,
+    "pdu": {
+      "status": false,
+      "msg": "Offline"
+    }
+  },
+  "192-168-46-41": {
+    "argus": {
+      "status": false,
+      "msg": "Apagado"
+    },
+    "ping": false,
+    "rdp": false,
+    "vnc": false,
+    "pdu": {
+      "status": false,
+      "msg": "Offline"
+    }
+  },
+  "192-168-250-11": {
+    "argus": {
+      "status": false,
+      "msg": "Apagado"
+    },
+    "ping": false,
+    "rdp": false,
+    "vnc": false,
+    "pdu": {
+      "status": false,
+      "msg": "Offline"
+    }
+  },
+  "192-168-1-11": {
+    "ping": false,
+    "rdp": false,
+    "vnc": false,
+    "argus": {
+      "status": false,
+      "msg": "Apagado"
+    }
+  },
+  "192-168-3-11": {
+    "ping": false,
+    "rdp": false,
+    "vnc": false,
+    "argus": {
+      "status": false,
+      "msg": "Apagado"
+    }
+  },
+  "192-168-33-11": {
+    "ping": false,
+    "rdp": false,
+    "vnc": false,
+    "argus": {
+      "status": false,
+      "msg": "Apagado"
+    }
+  },
+  "192-168-7-11": {
+    "ping": false,
+    "rdp": false,
+    "vnc": false,
+    "argus": {
+      "status": false,
+      "msg": "Apagado"
+    }
+  },
+  "192-168-8-11": {
+    "ping": false,
+    "rdp": false,
+    "vnc": false,
+    "argus": {
+      "status": false,
+      "msg": "Apagado"
+    }
+  },
+  "192-168-8-71": {
+    "ping": false,
+    "rdp": false,
+    "vnc": false,
+    "argus": {
+      "status": false,
+      "msg": "Apagado"
+    },
+    "pdu": {
+      "status": false,
+      "msg": "Offline"
+    }
+  },
+  "192-168-48-11": {
+    "ping": false,
+    "rdp": false,
+    "vnc": false,
+    "argus": {
+      "status": false,
+      "msg": "Apagado"
+    }
+  },
+  "192-168-10-11": {
+    "ping": false,
+    "rdp": false,
+    "vnc": false,
+    "argus": {
+      "status": false,
+      "msg": "Apagado"
+    }
+  },
+  "192-168-11-11": {
+    "ping": false,
+    "rdp": false,
+    "vnc": false,
+    "argus": {
+      "status": false,
+      "msg": "Apagado"
+    },
+    "pdu": {
+      "status": false,
+      "msg": "Offline"
+    }
+  },
+  "192-168-12-11": {
+    "ping": false,
+    "rdp": false,
+    "vnc": false,
+    "argus": {
+      "status": false,
+      "msg": "Apagado"
+    }
+  },
+  "192-168-51-11": {
+    "ping": false,
+    "rdp": false,
+    "vnc": false,
+    "argus": {
+      "status": false,
+      "msg": "Apagado"
+    }
+  },
+  "192-168-13-11": {
+    "ping": false,
+    "rdp": false,
+    "vnc": false,
+    "argus": {
+      "status": false,
+      "msg": "Apagado"
+    }
+  },
+  "192-168-14-11": {
+    "argus": {
+      "status": false,
+      "msg": "Apagado"
+    },
+    "ping": false,
+    "rdp": false,
+    "vnc": false
+  },
+  "192-168-15-11": {
+    "argus": {
+      "status": false,
+      "msg": "Apagado"
+    },
+    "ping": false,
+    "rdp": false,
+    "vnc": false
+  },
+  "192-168-15-41": {
+    "argus": {
+      "status": false,
+      "msg": "Apagado"
+    },
+    "ping": false,
+    "rdp": false,
+    "vnc": false,
+    "pdu": {
+      "status": false,
+      "msg": "Offline"
+    }
+  },
+  "192-168-15-71": {
+    "argus": {
+      "status": false,
+      "msg": "Apagado"
+    },
+    "ping": false,
+    "rdp": false,
+    "vnc": false,
+    "pdu": {
+      "status": false,
+      "msg": "Offline"
+    }
+  },
+  "192-168-17-11": {
+    "argus": {
+      "status": false,
+      "msg": "Apagado"
+    },
+    "ping": false,
+    "rdp": false,
+    "vnc": false
+  },
+  "192-168-35-11": {
+    "argus": {
+      "status": false,
+      "msg": "Apagado"
+    },
+    "ping": false,
+    "rdp": false,
+    "vnc": false
+  },
+  "192-168-35-30": {
+    "argus": {
+      "status": false,
+      "msg": "Apagado"
+    },
+    "ping": false,
+    "rdp": false,
+    "vnc": false,
+    "pdu": {
+      "status": false,
+      "msg": "Offline"
+    }
+  },
+  "192-168-19-35": {
+    "argus": {
+      "status": false,
+      "msg": "Apagado"
+    },
+    "ping": false,
+    "rdp": false,
+    "vnc": false
+  },
+  "192-168-119-11": {
+    "argus": {
+      "status": false,
+      "msg": "Apagado"
+    },
+    "ping": false,
+    "rdp": false,
+    "vnc": false
+  },
+  "192-168-23-11": {
+    "argus": {
+      "status": false,
+      "msg": "Apagado"
+    },
+    "ping": false,
+    "rdp": false,
+    "vnc": false
+  },
+  "192-168-24-11": {
+    "argus": {
+      "status": false,
+      "msg": "Apagado"
+    },
+    "ping": false,
+    "rdp": false,
+    "vnc": false
+  },
+  "192-168-25-11": {
+    "argus": {
+      "status": false,
+      "msg": "Apagado"
+    },
+    "ping": false,
+    "rdp": false,
+    "vnc": false
+  },
+  "192-168-26-11": {
+    "argus": {
+      "status": false,
+      "msg": "Apagado"
+    },
+    "ping": false,
+    "rdp": false,
+    "vnc": false
+  },
+  "192-168-26-41": {
+    "argus": {
+      "status": false,
+      "msg": "Apagado"
+    },
+    "ping": false,
+    "rdp": false,
+    "vnc": false,
+    "pdu": {
+      "status": false,
+      "msg": "Offline"
+    }
+  },
+  "192-168-128-1": {
+    "argus": {
+      "status": false,
+      "msg": "Apagado"
+    },
+    "ping": false,
+    "rdp": false,
+    "vnc": false
+  },
+  "192-168-128-11": {
+    "argus": {
+      "status": false,
+      "msg": "Apagado"
+    },
+    "ping": false,
+    "rdp": false,
+    "vnc": false
+  },
+  "192-168-30-11": {
+    "argus": {
+      "status": false,
+      "msg": "Apagado"
+    },
+    "ping": false,
+    "rdp": false,
+    "vnc": false
+  },
+  "192-168-34-2": {
+    "argus": {
+      "status": false,
+      "msg": "Apagado"
+    },
+    "ping": false,
+    "rdp": false,
+    "vnc": false
+  },
+  "192-168-36-11": {
+    "argus": {
+      "status": false,
+      "msg": "Apagado"
+    },
+    "ping": false,
+    "rdp": false,
+    "vnc": false
+  },
+  "192-168-45-11": {
+    "argus": {
+      "status": false,
+      "msg": "Apagado"
+    },
+    "ping": false,
+    "rdp": false,
+    "vnc": false
+  },
+  "192-168-38-21": {
+    "argus": {
+      "status": false,
+      "msg": "Apagado"
+    },
+    "ping": false,
+    "rdp": false,
+    "vnc": false,
+    "pdu": {
+      "status": false,
+      "msg": "Offline"
+    }
+  },
+  "192-168-38-35": {
+    "argus": {
+      "status": false,
+      "msg": "Apagado"
+    },
+    "ping": false,
+    "rdp": false,
+    "vnc": false,
+    "pdu": {
+      "status": false,
+      "msg": "Offline"
+    }
+  },
+  "192-168-38-111": {
+    "argus": {
+      "status": false,
+      "msg": "Apagado"
+    },
+    "ping": false,
+    "rdp": false,
+    "vnc": false
+  },
+  "192-168-46-11": {
+    "argus": {
+      "status": false,
+      "msg": "Apagado"
+    },
+    "ping": false,
+    "rdp": false,
+    "vnc": false
+  },
+  "192-168-46-71": {
+    "argus": {
+      "status": false,
+      "msg": "Apagado"
+    },
+    "ping": false,
+    "rdp": false,
+    "vnc": false,
+    "pdu": {
+      "status": false,
+      "msg": "Offline"
+    }
+  },
+  "192-168-50-11": {
+    "argus": {
+      "status": false,
+      "msg": "Apagado"
+    },
+    "ping": false,
+    "rdp": false,
+    "vnc": false
+  }
+}

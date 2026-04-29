@@ -1,0 +1,121 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Argus Sentinel V3 - Web</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="style2.css?v=14">
+    <script src="plotly-2.27.0.min.js"></script>
+    <script src="html2canvas.min.js"></script>
+</head>
+<body>
+
+<div class="app-container">
+    <!-- PANEL IZQUIERDO: Controles replicados de Qt -->
+    <div class="left-panel">
+        <h2 class="title">Sentinel V3 Web</h2>
+        
+        <!-- Origen de Datos -->
+        <fieldset>
+            <legend>📡 Origen de Datos</legend>
+            <div class="flex-row" style="margin-bottom:10px;">
+                <select id="combo-fuentes" style="margin-bottom:0;"></select>
+                <button id="btn-config-fuentes" class="btn-small" title="Configurar Fuentes UNC">⚙️</button>
+                <button id="btn-theme-toggle" class="btn-small" title="Cambiar Tema" onclick="toggleTheme()">☀️</button>
+            </div>
+            <div class="flex-row">
+                <button id="btn-start" class="btn btn-green">▶ Iniciar</button>
+                <button id="btn-stop" class="btn btn-red" disabled>⏹ Detener</button>
+            </div>
+            <div id="lbl-status" class="status-msg">Estado: Desconectado</div>
+        </fieldset>
+
+        <!-- Filtros de Frecuencia -->
+        <fieldset>
+            <legend>🎛 Rango Frecuencias</legend>
+            <div class="flex-row">
+                <input type="number" id="entry-fmin" placeholder="F. Min (MHz)">
+                <input type="number" id="entry-fmax" placeholder="F. Max (MHz)">
+            </div>
+            <label class="check-container">
+                <input type="checkbox" id="chk-filtro-2d">
+                <span>Aplicar a Gráfica 2D</span>
+            </label>
+        </fieldset>
+
+        <!-- Detección de Niveles -->
+        <fieldset>
+            <legend>📊 Niveles Ruido (dB)</legend>
+            <input type="number" id="entry-threshold" value="15" placeholder="Umbral (dB)">
+            <label class="check-container">
+                <input type="checkbox" id="chk-alarm">
+                <span>🔊 Alarma Sonora</span>
+            </label>
+            <div class="flex-row">
+                <button id="btn-manual-capture" class="btn btn-green" onclick="captureManual()">📸 Guardar Captura</button>
+                <button id="btn-clear-peaks" class="btn-small" title="Limpiar Picos" style="padding: 10px 15px; font-size:1.1em;" onclick="document.getElementById('txt-detections').innerHTML=''">🗑️</button>
+            </div>
+            <div id="txt-detections" class="log-box" style="margin-top:10px;"></div>
+        </fieldset>
+
+        <!-- Consola Sistema -->
+        <fieldset class="system-console" style="position: relative; max-height: 250px; display: flex; flex-direction: column;">
+            <legend>🖥️ Consola de Sistema</legend>
+            <button class="btn-small" style="position: absolute; top: -10px; right: 10px; padding: 4px;" onclick="document.getElementById('sys-log').innerHTML='[INFO] Consola limpiada al instante.<br>'">🗑️</button>
+            <div id="sys-log" class="log-box flex-grow" style="overflow-y:auto; flex: 1;">
+                [INFO] Esperando inicio...<br>
+            </div>
+        </fieldset>
+    </div>
+
+    <!-- PANEL DERECHO: Visores WebGL -->
+    <div class="right-panel">
+        <div class="view-controls">
+            <button id="btn-reset-cam" class="btn-small" onclick="resetCamera3D()">👁️ Vista 3D</button>
+            <button id="btn-reset-zoom" class="btn-small" onclick="resetZoom2D()">🔎 Zoom 2D</button>
+            <button id="btn-clear-plots" class="btn-small" onclick="clearPlots()">🧹 Limpiar Gráficas</button>
+            <span id="lbl-time-sync" class="time-tag">--:--:--</span>
+        </div>
+        
+
+        <!-- Panel Independiente Metadata ARGUS (Comentado por petición)
+        <div id="argus-footer" class="meta-panel" style="display:none;"></div>
+        -->
+
+        <!-- Contenedor 3D Superficie -->
+        <div id="plot3D" class="plot-container-3d"></div>
+        <!-- Contenedor 2D Referencia -->
+        <div id="plot2D" class="plot-container-2d"></div>
+    </div>
+</div>
+
+<!-- Modal Configuración Fuentes -->
+<div id="modal-fuentes" class="modal">
+    <div class="modal-content">
+        <h2 style="margin-bottom:15px; color:#4CAF50;">Gestor de Fuentes UNC</h2>
+        <div style="overflow-x:auto;">
+            <table id="table-fuentes" class="styled-table">
+                <thead>
+                    <tr><th>ID</th><th>Ruta Local/Red</th><th>Usuario</th><th>Contraseña</th><th>Acción</th></tr>
+                </thead>
+                <tbody id="tbody-fuentes"></tbody>
+            </table>
+        </div>
+        <div class="flex-row" style="margin-top:15px;">
+            <input type="text" id="new-id" placeholder="Nombre (Ej: UMA)" style="margin:0;">
+            <input type="text" id="new-path" placeholder="//192.168.1.1/argus_db" style="margin:0;">
+            <input type="text" id="new-user" placeholder="Usuario" style="margin:0;">
+            <input type="password" id="new-pass" placeholder="Clave" style="margin:0;">
+            <button id="btn-add-fuente" class="btn btn-green" onclick="addFuente()">Añadir</button>
+        </div>
+        <div style="margin-top:20px; text-align:right;">
+            <button id="btn-close-modal" class="btn btn-red" onclick="document.getElementById('modal-fuentes').style.display='none';">Cerrar</button>
+        </div>
+    </div>
+</div>
+
+<link rel="stylesheet" href="style2.css?v=20">
+<script src="app2.js?v=20"></script>
+</body>
+</html>

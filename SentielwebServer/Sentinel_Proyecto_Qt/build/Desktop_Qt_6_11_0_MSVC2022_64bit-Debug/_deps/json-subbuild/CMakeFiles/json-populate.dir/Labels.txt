@@ -1,0 +1,14 @@
+# Target labels
+ json-populate
+# Source files and their labels
+D:/jpit/Remotas/argus/traduccion_c++/Sentinel_Proyecto_Qt/build/Desktop_Qt_6_11_0_MSVC2022_64bit-Debug/_deps/json-subbuild/CMakeFiles/json-populate
+D:/jpit/Remotas/argus/traduccion_c++/Sentinel_Proyecto_Qt/build/Desktop_Qt_6_11_0_MSVC2022_64bit-Debug/_deps/json-subbuild/CMakeFiles/json-populate.rule
+D:/jpit/Remotas/argus/traduccion_c++/Sentinel_Proyecto_Qt/build/Desktop_Qt_6_11_0_MSVC2022_64bit-Debug/_deps/json-subbuild/CMakeFiles/json-populate-complete.rule
+D:/jpit/Remotas/argus/traduccion_c++/Sentinel_Proyecto_Qt/build/Desktop_Qt_6_11_0_MSVC2022_64bit-Debug/_deps/json-subbuild/json-populate-prefix/src/json-populate-stamp/json-populate-build.rule
+D:/jpit/Remotas/argus/traduccion_c++/Sentinel_Proyecto_Qt/build/Desktop_Qt_6_11_0_MSVC2022_64bit-Debug/_deps/json-subbuild/json-populate-prefix/src/json-populate-stamp/json-populate-configure.rule
+D:/jpit/Remotas/argus/traduccion_c++/Sentinel_Proyecto_Qt/build/Desktop_Qt_6_11_0_MSVC2022_64bit-Debug/_deps/json-subbuild/json-populate-prefix/src/json-populate-stamp/json-populate-download.rule
+D:/jpit/Remotas/argus/traduccion_c++/Sentinel_Proyecto_Qt/build/Desktop_Qt_6_11_0_MSVC2022_64bit-Debug/_deps/json-subbuild/json-populate-prefix/src/json-populate-stamp/json-populate-install.rule
+D:/jpit/Remotas/argus/traduccion_c++/Sentinel_Proyecto_Qt/build/Desktop_Qt_6_11_0_MSVC2022_64bit-Debug/_deps/json-subbuild/json-populate-prefix/src/json-populate-stamp/json-populate-mkdir.rule
+D:/jpit/Remotas/argus/traduccion_c++/Sentinel_Proyecto_Qt/build/Desktop_Qt_6_11_0_MSVC2022_64bit-Debug/_deps/json-subbuild/json-populate-prefix/src/json-populate-stamp/json-populate-patch.rule
+D:/jpit/Remotas/argus/traduccion_c++/Sentinel_Proyecto_Qt/build/Desktop_Qt_6_11_0_MSVC2022_64bit-Debug/_deps/json-subbuild/json-populate-prefix/src/json-populate-stamp/json-populate-test.rule
+D:/jpit/Remotas/argus/traduccion_c++/Sentinel_Proyecto_Qt/build/Desktop_Qt_6_11_0_MSVC2022_64bit-Debug/_deps/json-subbuild/json-populate-prefix/src/json-populate-stamp/json-populate-update.rule

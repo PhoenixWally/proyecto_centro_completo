@@ -1,0 +1,10 @@
+# CMake generation dependency list for this directory.
+D:/jpit/Remotas/argus/traduccion_c++/Sentinel_Proyecto_Qt/_deps/json-src/CMakeLists.txt
+D:/jpit/Remotas/argus/traduccion_c++/Sentinel_Proyecto_Qt/_deps/json-src/cmake/config.cmake.in
+D:/jpit/Remotas/argus/traduccion_c++/Sentinel_Proyecto_Qt/_deps/json-src/cmake/nlohmann_jsonConfigVersion.cmake.in
+D:/jpit/Remotas/argus/traduccion_c++/Sentinel_Proyecto_Qt/_deps/json-src/cmake/pkg-config.pc.in
+F:/Qt/Tools/CMake_64/share/cmake-3.30/Modules/CMakePackageConfigHelpers.cmake
+F:/Qt/Tools/CMake_64/share/cmake-3.30/Modules/ExternalProject.cmake
+F:/Qt/Tools/CMake_64/share/cmake-3.30/Modules/ExternalProject/shared_internal_commands.cmake
+F:/Qt/Tools/CMake_64/share/cmake-3.30/Modules/GNUInstallDirs.cmake
+F:/Qt/Tools/CMake_64/share/cmake-3.30/Modules/WriteBasicConfigVersionFile.cmake

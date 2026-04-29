@@ -1,0 +1,60 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="17.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ItemGroup>
+    <ClCompile Include="D:\jpit\Remotas\argus\traduccion_c++\Sentinel_Proyecto_Qt\ArgusSentinel_autogen\mocs_compilation_Debug.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="D:\jpit\Remotas\argus\traduccion_c++\Sentinel_Proyecto_Qt\main.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="D:\jpit\Remotas\argus\traduccion_c++\Sentinel_Proyecto_Qt\ArgusSentinel.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="D:\jpit\Remotas\argus\traduccion_c++\Sentinel_Proyecto_Qt\VisorCapturas.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="D:\jpit\Remotas\argus\traduccion_c++\Sentinel_Proyecto_Qt\ConfiguradorFuentes.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="D:\jpit\Remotas\argus\traduccion_c++\Sentinel_Proyecto_Qt\qcustomplot.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="D:\jpit\Remotas\argus\traduccion_c++\Sentinel_Proyecto_Qt\ArgusSentinel_autogen\mocs_compilation_Release.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="D:\jpit\Remotas\argus\traduccion_c++\Sentinel_Proyecto_Qt\ArgusSentinel_autogen\mocs_compilation_MinSizeRel.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="D:\jpit\Remotas\argus\traduccion_c++\Sentinel_Proyecto_Qt\ArgusSentinel_autogen\mocs_compilation_RelWithDebInfo.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="D:\jpit\Remotas\argus\traduccion_c++\Sentinel_Proyecto_Qt\ArgusSentinel.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="D:\jpit\Remotas\argus\traduccion_c++\Sentinel_Proyecto_Qt\VisorCapturas.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="D:\jpit\Remotas\argus\traduccion_c++\Sentinel_Proyecto_Qt\ConfiguradorFuentes.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="D:\jpit\Remotas\argus\traduccion_c++\Sentinel_Proyecto_Qt\qcustomplot.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+  </ItemGroup>
+  <ItemGroup>
+    <CustomBuild Include="D:\jpit\Remotas\argus\traduccion_c++\Sentinel_Proyecto_Qt\CMakeLists.txt" />
+  </ItemGroup>
+  <ItemGroup>
+    <Natvis Include="D:\jpit\Remotas\argus\traduccion_c++\Sentinel_Proyecto_Qt\_deps\json-src\nlohmann_json.natvis" />
+  </ItemGroup>
+  <ItemGroup>
+    <Filter Include="Header Files">
+      <UniqueIdentifier>{B7DA5B3B-4D2A-3C67-81A6-EE9EF26537B2}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source Files">
+      <UniqueIdentifier>{1AC9D5A7-F359-3848-8B6A-6D0401B8C656}</UniqueIdentifier>
+    </Filter>
+  </ItemGroup>
+</Project>

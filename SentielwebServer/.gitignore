@@ -1,0 +1,30 @@
+# Build directories
+backend/CMakeFiles/
+backend/_deps/
+backend/x64/
+backend/Debug/
+backend/Release/
+backend/aRelease/
+backend/abuild/
+backend/build/
+backend/ipch/
+backend/*.dir/
+backend/*.vcxproj
+backend/*.vcxproj.filters
+backend/*.sln
+backend/*.user
+backend/*.stamp
+backend/*.list
+backend/*.depend
+backend/CMakeCache.txt
+backend/cmake_install.cmake
+
+# Qt artifacts
+backend/SentinelWebServer_autogen/
+
+# Python wheels
+*.whl
+
+# OS files
+.DS_Store
+Thumbs.db

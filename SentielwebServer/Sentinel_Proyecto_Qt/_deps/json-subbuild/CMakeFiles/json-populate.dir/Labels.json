@@ -1,0 +1,46 @@
+{
+	"sources" : 
+	[
+		{
+			"file" : "D:/jpit/Remotas/argus/traduccion_c++/Sentinel_Proyecto_Qt/_deps/json-subbuild/CMakeFiles/json-populate"
+		},
+		{
+			"file" : "D:/jpit/Remotas/argus/traduccion_c++/Sentinel_Proyecto_Qt/_deps/json-subbuild/CMakeFiles/257c478eb1c0010f07eeee9f8f2e5fcb/json-populate.rule"
+		},
+		{
+			"file" : "D:/jpit/Remotas/argus/traduccion_c++/Sentinel_Proyecto_Qt/_deps/json-subbuild/CMakeFiles/d2ac9921ec5e0bf758ac35db4fbec402/json-populate-complete.rule"
+		},
+		{
+			"file" : "D:/jpit/Remotas/argus/traduccion_c++/Sentinel_Proyecto_Qt/_deps/json-subbuild/CMakeFiles/e5149ba6dcf9b9b7e1b27eedb5509968/json-populate-build.rule"
+		},
+		{
+			"file" : "D:/jpit/Remotas/argus/traduccion_c++/Sentinel_Proyecto_Qt/_deps/json-subbuild/CMakeFiles/e5149ba6dcf9b9b7e1b27eedb5509968/json-populate-configure.rule"
+		},
+		{
+			"file" : "D:/jpit/Remotas/argus/traduccion_c++/Sentinel_Proyecto_Qt/_deps/json-subbuild/CMakeFiles/e5149ba6dcf9b9b7e1b27eedb5509968/json-populate-download.rule"
+		},
+		{
+			"file" : "D:/jpit/Remotas/argus/traduccion_c++/Sentinel_Proyecto_Qt/_deps/json-subbuild/CMakeFiles/e5149ba6dcf9b9b7e1b27eedb5509968/json-populate-install.rule"
+		},
+		{
+			"file" : "D:/jpit/Remotas/argus/traduccion_c++/Sentinel_Proyecto_Qt/_deps/json-subbuild/CMakeFiles/e5149ba6dcf9b9b7e1b27eedb5509968/json-populate-mkdir.rule"
+		},
+		{
+			"file" : "D:/jpit/Remotas/argus/traduccion_c++/Sentinel_Proyecto_Qt/_deps/json-subbuild/CMakeFiles/e5149ba6dcf9b9b7e1b27eedb5509968/json-populate-patch.rule"
+		},
+		{
+			"file" : "D:/jpit/Remotas/argus/traduccion_c++/Sentinel_Proyecto_Qt/_deps/json-subbuild/CMakeFiles/e5149ba6dcf9b9b7e1b27eedb5509968/json-populate-test.rule"
+		},
+		{
+			"file" : "D:/jpit/Remotas/argus/traduccion_c++/Sentinel_Proyecto_Qt/_deps/json-subbuild/CMakeFiles/e5149ba6dcf9b9b7e1b27eedb5509968/json-populate-update.rule"
+		}
+	],
+	"target" : 
+	{
+		"labels" : 
+		[
+			"json-populate"
+		],
+		"name" : "json-populate"
+	}
+}

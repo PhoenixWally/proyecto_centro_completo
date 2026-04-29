@@ -1,0 +1,340 @@
+<!DOCTYPE html>
+<html lang="es">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Monitor CTER</title>
+    <!-- FAVICON -->
+    <link rel="icon" type="image/png" href="LOGOJPITMALAGAFARO.png">
+
+    <link rel="stylesheet" href="leaflet/leaflet.css" />
+    <script src="leaflet/leaflet.js"></script>
+    <script src="xlsx.full.min.js"></script>
+    <link rel="stylesheet" href="style.css">
+    <style>
+        .status-cell {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            font-weight: 600;
+        }
+
+        .color-icon {
+            width: 14px;
+            height: 14px;
+            border-radius: 50%;
+            box-shadow: 0 0 5px rgba(255, 255, 255, 0.3);
+        }
+
+        .color-icon svg {
+            filter: drop-shadow(0px 3px 2px rgba(0, 0, 0, 0.4));
+        }
+    </style>
+</head>
+
+<body>
+    <!-- MENÚ LATERAL -->
+    <div class="sidebar">
+        <!-- LOGO CORPORATIVO (IMAGEN) -->
+        <div style="text-align: center; margin-bottom: 40px; padding: 10px;">
+            <img src="LogoJPITMALAGATEXTO.png" alt="Logo JPIT"
+                style="max-width: 100%; height: auto; filter: drop-shadow(0 0 10px rgba(255,255,255,0.1));">
+        </div>
+        <ul class="nav-links">
+            <li><button class="nav-btn active" onclick="openTab('tab-inicio')">🏠 Estado</button></li>
+            <li><button class="nav-btn" onclick="openTab('tab-mapa')">🗺️ Mapa y Estado</button></li>
+            <li><button class="nav-btn" onclick="openTab('tab-historico')">📅 Histórico</button></li>
+            <li class="admin-only" style="display: none;"><button class="nav-btn" onclick="openTab('tab-admin')">⚙️
+                    Administración DB</button></li>
+            <li><button class="nav-btn" onclick="openLoginModal()"
+                    style="margin-top: 20px; border-top: 1px solid var(--panel-border); padding-top: 10px;">🔐
+                    Config</button></li>
+
+            <li style="margin-top: auto; padding-top: 30px;">
+                <p
+                    style="color:var(--text-secondary); font-size:12px; font-weight:bold; text-transform:uppercase; margin-bottom:10px; padding-left:15px;">
+                    Visual</p>
+                <button id="theme-toggle-btn" class="nav-btn" onclick="toggleTheme()">☀️ Modo Claro</button>
+                <div
+                    style="display:flex; align-items:center; gap:10px; margin-top:10px; padding: 10px 15px; background: rgba(128,128,128,0.1); border-radius: 8px;">
+                    <label for="accent-picker"
+                        style="font-size:13px; font-weight:600; cursor:pointer; flex: 1; color: var(--text-primary);">Color
+                        de texto:</label>
+                    <input type="color" id="accent-picker" value="#3b82f6" onchange="setAccentColor(this.value)"
+                        style="border:none; width:25px; height:25px; padding:0; cursor:pointer; background:none; border-radius:50%; overflow:hidden;">
+                </div>
+            </li>
+        </ul>
+    </div>
+
+    <!-- CONTENIDO PRINCIPAL -->
+    <div class="content">
+
+        <!-- PESTAÑA: INICIO/PRESENTACIÓN -->
+        <div id="tab-inicio" class="tab-content active">
+            <div class="tab-header" style="text-align: center; margin-bottom: 40px;">
+                <h1
+                    style="color: var(--accent); font-size: 38px; font-weight: 800; letter-spacing: 2px; text-shadow: 0 0 25px var(--accent); transition: color 0.3s, text-shadow 0.3s;">
+                    ⚡ MONITOR CTER</h1>
+                <p style="font-size: 16px; margin-top: 5px;">Resumen global de la Red de Estaciones JPIT</p>
+            </div>
+
+            <div class="kpi-dashboard">
+                <div class="kpi-col">
+                    <div class="kpi-circle-wrapper" onclick="openTab('tab-mapa')">
+                        <svg class="kpi-svg">
+                            <circle class="kpi-bg" />
+                            <circle class="kpi-ring" id="ring-ok" style="stroke: var(--success);" />
+                        </svg>
+                        <div class="kpi-number" id="kpi-ok" style="color: var(--success);">0</div>
+                        <p>Operativas</p>
+                    </div>
+                    <div class="kpi-circle-wrapper" onclick="openTab('tab-mapa')">
+                        <svg class="kpi-svg">
+                            <circle class="kpi-bg" />
+                            <circle class="kpi-ring" id="ring-warning" style="stroke: orange;" />
+                        </svg>
+                        <div class="kpi-number" id="kpi-warning" style="color: orange;">0</div>
+                        <p>Limitadas</p>
+                    </div>
+                </div>
+
+                <div class="kpi-col kpi-main-col" onclick="openTab('tab-mapa')">
+                    <div class="kpi-multi-ring" id="circle-total">
+                        <div class="kpi-multi-hole"></div>
+                        <h2 id="kpi-total">0</h2>
+                    </div>
+                    <p>TOTAL REGISTRADAS</p>
+                </div>
+
+                <div class="kpi-col">
+                    <div class="kpi-circle-wrapper" onclick="openTab('tab-mapa')">
+                        <svg class="kpi-svg">
+                            <circle class="kpi-bg" />
+                            <circle class="kpi-ring" id="ring-danger" style="stroke: #ef4444;" />
+                        </svg>
+                        <div class="kpi-number" id="kpi-danger" style="color: #ef4444;">0</div>
+                        <p>Caídas</p>
+                    </div>
+                    <div class="kpi-circle-wrapper" onclick="openTab('tab-mapa')">
+                        <svg class="kpi-svg">
+                            <circle class="kpi-bg" />
+                            <circle class="kpi-ring" id="ring-recording" style="stroke: #a855f7;" />
+                        </svg>
+                        <div class="kpi-number" id="kpi-recording" style="color: #a855f7;">0</div>
+                        <p>Grabando</p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- AUDIT CHART (SVG NATIVO) -->
+            <div class="chart-container" onclick="openTab('tab-historico')"
+                style="margin-top: 30px; padding: 25px; background: var(--panel-bg); border-radius: 16px; border: 1px solid var(--panel-border); backdrop-filter: blur(8px); box-shadow: var(--shadow); cursor: pointer; transition: transform 0.2s;">
+                <div style="display:flex; justify-content:space-between; margin-bottom: 20px;">
+                    <h3 style="color:var(--text-primary); font-size: 16px;">Evolución de Estados (Solo Día Actual)</h3>
+                    <div style="display:flex; gap:15px; font-size:12px; font-weight:bold;">
+                        <span style="color: var(--success); text-shadow: 0 0 5px var(--success);">● Operativas</span>
+                        <span style="color: #ef4444; text-shadow: 0 0 5px #ef4444;">● Caídas</span>
+                        <span style="color: #a855f7; text-shadow: 0 0 5px #a855f7;">● Grabando</span>
+                    </div>
+                </div>
+                <div style="position:relative; height: 220px; width: 100%;">
+                    <svg id="history-svg" width="100%" height="100%" style="overflow:visible;">
+                        <!-- Grid and paths drawn via app.js -->
+                    </svg>
+                    <!-- Tooltip flotante -->
+                    <div id="chart-tooltip"
+                        style="position:absolute; display:none; background:rgba(0,0,0,0.8); border:1px solid rgba(255,255,255,0.2); padding:10px; border-radius:8px; color:white; font-size:12px; transform:translate(-50%, -120%); pointer-events:none; z-index:10;">
+                    </div>
+                </div>
+            </div>
+
+            <!-- OCULTO: Analizador de Fondo (Mantenido solo en consola) -->
+            <div
+                style="display: none; margin-top: 30px; padding: 20px; background: var(--panel-bg); border-radius: 12px; border: 1px solid var(--panel-border); backdrop-filter: blur(8px); box-shadow: var(--shadow);">
+                <h3>⚙️ Analizador de Fondo (Motor Python)</h3>
+                <p style="color: var(--text-secondary); margin-top: 10px;">El sistema está inspeccionando todos los
+                    servicios mediante hilos silenciosos para visualización instantánea.</p>
+                <div style="margin-top: 15px; background: rgba(0,0,0,0.4); padding: 15px; border-radius: 8px; font-family: monospace;"
+                    id="scanner-log">
+                    Cargando escáner...
+                </div>
+            </div>
+        </div>
+
+        <!-- PESTAÑA: MAPA Y ESTADO -->
+        <div id="tab-mapa" class="tab-content">
+            <div class="tab-header">
+                <h1>Monitor de Estaciones Remotas</h1>
+                <p>Visualización semafórica de la conectividad y estado en tiempo real.</p>
+            </div>
+
+            <div
+                style="margin-bottom: 15px; background: var(--panel-bg); padding: 15px; border-radius: 12px; display: flex; gap: 10px; flex-wrap: wrap; align-items: center; border: 1px solid var(--panel-border); backdrop-filter: blur(8px); box-shadow: var(--shadow);">
+                <input type="text" id="map-filter-input" placeholder="🔍 Filtrar por nombre, IP, provincia, ciudad..."
+                    style="flex: 1; min-width: 250px; font-size: 14px;">
+                <button onclick="clearMapFilter()"
+                    style="padding: 8px 16px; background: #9ca3af; color: white; border: none; border-radius: 6px; cursor: pointer;">Limpiar</button>
+                <span id="map-filter-results" style="padding: 8px 12px; color: #6b7280; font-size: 14px;"></span>
+            </div>
+
+            <div id="map-container"
+                style="height: calc(100vh - 200px); width: 100%; border-radius: 8px; overflow: hidden; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.1);">
+                <!-- El mapa de Leaflet se renderiza aquí -->
+            </div>
+        </div>
+
+        <!-- PESTAÑA: HISTORICO -->
+        <div id="tab-historico" class="tab-content">
+            <div class="tab-header" style="margin-bottom: 20px;">
+                <h1 style="color: var(--accent); font-size: 32px;">Navegador Histórico</h1>
+                <p>Análisis temporal de estados y disponibilidad en la Red</p>
+            </div>
+
+            <div
+                style="background: var(--panel-bg); padding: 25px; border-radius: 16px; border: 1px solid var(--panel-border); margin-bottom: 20px; box-shadow: var(--shadow);">
+                <div
+                    style="display:flex; justify-content:space-between; align-items:center; margin-bottom:15px; flex-wrap: wrap; gap: 10px;">
+                    <h3 style="color:var(--text-primary); margin:0;">Evolución Segmentada</h3>
+                    <div style="display:flex; gap:10px; align-items:center;">
+                        <input type="date" id="hist-date-start" /> <input type="time" id="hist-time-start" />
+                        <span style="color:var(--text-secondary)">a</span>
+                        <input type="date" id="hist-date-end" /> <input type="time" id="hist-time-end" />
+                        <button onclick="renderLargeHistory()" class="action-btn"
+                            style="padding: 6px 16px;">Filtrar</button>
+                    </div>
+                </div>
+
+                <div
+                    style="width: 100%; overflow-x: auto; background: rgba(0,0,0,0.1); border-radius: 8px; padding-top: 20px; border: 1px solid rgba(255,255,255,0.05);">
+                    <div id="large-history-container"
+                        style="position:relative; height: 350px; min-width: 800px; padding-bottom: 30px;">
+                        <svg id="history-svg-large" width="100%" height="100%" style="overflow:visible;"></svg>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Calendario Resumen -->
+            <div
+                style="background: var(--panel-bg); padding: 25px; border-radius: 16px; border: 1px solid var(--panel-border); box-shadow: var(--shadow);">
+                <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:20px;">
+                    <h3 style="color:var(--text-primary); margin:0;">Calendario Mensual</h3>
+                    <div style="display:flex; gap:15px; align-items:center;">
+                        <button onclick="changeMonth(-1)" class="action-btn"
+                            style="padding:4px 12px; font-size:16px;">&lt;</button>
+                        <span id="calendar-month-label"
+                            style="font-weight:bold; font-size:16px; color:var(--accent); min-width:120px; text-align:center; text-transform:capitalize;">Mes
+                            Actual</span>
+                        <button onclick="changeMonth(1)" class="action-btn"
+                            style="padding:4px 12px; font-size:16px;">&gt;</button>
+                    </div>
+                </div>
+
+                <div
+                    style="display:grid; grid-template-columns: repeat(7, 1fr); gap:10px; margin-bottom:10px; text-align:center; font-weight:bold; color:var(--text-secondary); font-size: 14px;">
+                    <div>L</div>
+                    <div>M</div>
+                    <div>X</div>
+                    <div>J</div>
+                    <div>V</div>
+                    <div>S</div>
+                    <div>D</div>
+                </div>
+
+                <div id="calendar-grid"
+                    style="display: grid; grid-template-columns: repeat(7, 1fr); gap: 10px; min-height: 300px;">
+                    <!-- Rellenado por JS -->
+                </div>
+                <div
+                    style="margin-top:25px; display:flex; gap:20px; font-size:13px; font-weight:600; justify-content:center; flex-wrap:wrap;">
+                    <span style="color:var(--success); text-shadow: 0 0 5px var(--success)">● Operativas</span>
+                    <span style="color:orange; text-shadow: 0 0 5px orange">● Limitadas</span>
+                    <span style="color:#ef4444; text-shadow: 0 0 5px #ef4444">● Caídas</span>
+                    <span style="color:#a855f7; text-shadow: 0 0 5px #a855f7">● Grabando</span>
+                </div>
+            </div>
+        </div>
+
+        <!-- PESTAÑA: ADMINISTRACIÓN DB -->
+        <div id="tab-admin" class="tab-content">
+            <div class="tab-header">
+                <h1>Base de Datos de Estaciones (Excel)</h1>
+                <p>Modifica los datos que alimentan el panel.</p>
+                <div style="margin-top: 15px; display: flex; gap: 10px;">
+                    <button class="action-btn save-btn" id="save-excel-btn" onclick="downloadExcel()"
+                        style="display: none;">
+                        💾 Guardar Excel Actualizado
+                    </button>
+                </div>
+            </div>
+
+            <div
+                style="margin-bottom: 15px; background: var(--panel-bg); padding: 15px; border-radius: 12px; display: flex; gap: 10px; flex-wrap: wrap; border: 1px solid var(--panel-border); backdrop-filter: blur(8px); box-shadow: var(--shadow);">
+                <input type="text" id="table-filter-input" placeholder="🔍 Filtrar por nombre, IP, provincia, ciudad..."
+                    style="flex: 1; min-width: 250px; font-size: 14px;">
+                <button onclick="clearTableFilter()"
+                    style="padding: 8px 16px; background: #9ca3af; color: white; border: none; border-radius: 6px; cursor: pointer;">Limpiar</button>
+                <span id="filter-results" style="padding: 8px 12px; color: #6b7280;"></span>
+            </div>
+
+            <div class="empty-state">
+                Cargando base de datos automática...
+            </div>
+            <div id="excel-table-container"></div>
+        </div>
+
+    </div>
+
+    <!-- MODAL DE LOGIN -->
+    <div class="modal-overlay" id="login-modal">
+        <div class="modal-content" style="max-width: 400px;">
+            <div class="modal-header">
+                <h2>🔐 Acceso Administrativo</h2>
+                <button class="close-btn" onclick="closeLoginModal()">✖</button>
+            </div>
+            <div class="modal-body">
+                <div style="margin-bottom: 15px;">
+                    <label style="display: block; margin-bottom: 5px; font-weight: bold;">Usuario:</label>
+                    <input type="text" id="login-username"
+                        style="width: 100%; padding: 8px; border: 1px solid #e5e7eb; border-radius: 4px;">
+                </div>
+                <div style="margin-bottom: 15px;">
+                    <label style="display: block; margin-bottom: 5px; font-weight: bold;">Contraseña:</label>
+                    <input type="password" id="login-password"
+                        style="width: 100%; padding: 8px; border: 1px solid #e5e7eb; border-radius: 4px;">
+                </div>
+                <div id="login-error" style="color: red; font-size: 14px; display: none;"></div>
+            </div>
+            <div class="modal-footer">
+                <button class="action-btn" onclick="closeLoginModal()" style="background: #9ca3af;">Cancelar</button>
+                <button class="action-btn save-btn" onclick="performLogin()">Iniciar Sesión</button>
+                <button class="action-btn" onclick="performLogout()" style="background: #ef4444; display: none;"
+                    id="logout-btn">Cerrar Sesión</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- MODAL DE EDICIÓN -->
+    <div class="modal-overlay" id="edit-modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2>✏️ Editar Estación</h2>
+                <button class="close-btn" onclick="closeModal()">✖</button>
+            </div>
+            <div class="modal-body" id="modal-form">
+                <!-- Se generan inputs dinámicos aquí -->
+            </div>
+            <div class="modal-footer">
+                <button class="action-btn" onclick="closeModal()" style="background: #9ca3af;">Cancelar</button>
+                <button class="action-btn save-btn" onclick="saveRowChanges()">Guardar Cambios</button>
+            </div>
+        </div>
+    </div>
+
+    <script src="leaflet/leaflet.js"></script>
+    <script src="xlsx.full.min.js"></script>
+    <script src="app.js"></script>
+</body>
+
+</html>

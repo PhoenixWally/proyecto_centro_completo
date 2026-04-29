@@ -1,0 +1,62 @@
+jom: parallel job execution disabled for Makefile
+[  0%] Built target ArgusSentinel_autogen_timestamp_deps
+[ 11%] Automatic MOC and UIC for target ArgusSentinel
+[ 11%] Built target ArgusSentinel_autogen
+[ 22%] Building CXX object CMakeFiles/ArgusSentinel.dir/ArgusSentinel_autogen/mocs_compilation.cpp.obj
+[ 33%] Building CXX object CMakeFiles/ArgusSentinel.dir/main.cpp.obj
+[ 44%] Building CXX object CMakeFiles/ArgusSentinel.dir/ArgusSentinel.cpp.obj
+[ 55%] Building CXX object CMakeFiles/ArgusSentinel.dir/VisorCapturas.cpp.obj
+[ 66%] Building CXX object CMakeFiles/ArgusSentinel.dir/ConfiguradorFuentes.cpp.obj
+[ 77%] Building CXX object CMakeFiles/ArgusSentinel.dir/qcustomplot.cpp.obj
+mocs_compilation.cpp
+Nota: inclusión del archivo: D:\jpit\Remotas\argus\traduccion_c++\Sentinel_Proyecto_Qt\build\Desktop_Qt_6_11_0_MSVC2022_64bit-Debug\ArgusSentinel_autogen\EWIEGA46WW/moc_ArgusSentinel.cpp
+Nota: inclusión del archivo:  D:\jpit\Remotas\argus\traduccion_c++\Sentinel_Proyecto_Qt\build\Desktop_Qt_6_11_0_MSVC2022_64bit-Debug\ArgusSentinel_autogen\EWIEGA46WW\../../../../ArgusSentinel.h
+Nota: inclusión del archivo:   F:\Qt\6.11.0\msvc2022_64\include\QtWidgets\QMainWindow
+Nota: inclusión del archivo:    F:\Qt\6.11.0\msvc2022_64\include\QtWidgets/qmainwindow.h
+Nota: inclusión del archivo:     F:\Qt\6.11.0\msvc2022_64\include\QtWidgets/qtwidgetsglobal.h
+Nota: inclusión del archivo:      F:\Qt\6.11.0\msvc2022_64\include\QtGui/qtguiglobal.h
+Nota: inclusión del archivo:       F:\Qt\6.11.0\msvc2022_64\include\QtCore/qglobal.h
+F:\Qt\6.11.0\msvc2022_64\include\QtCore/qglobal.h(13): fatal error C1083: No se puede abrir el archivo incluir: 'type_traits': No such file or directory
+ArgusSentinel.cpp
+Nota: inclusión del archivo: D:\jpit\Remotas\argus\traduccion_c++\Sentinel_Proyecto_Qt\ArgusSentinel.h
+Nota: inclusión del archivo:  F:\Qt\6.11.0\msvc2022_64\include\QtWidgets\QMainWindow
+Nota: inclusión del archivo:   F:\Qt\6.11.0\msvc2022_64\include\QtWidgets/qmainwindow.h
+Nota: inclusión del archivo:    F:\Qt\6.11.0\msvc2022_64\include\QtWidgets/qtwidgetsglobal.h
+Nota: inclusión del archivo:     F:\Qt\6.11.0\msvc2022_64\include\QtGui/qtguiglobal.h
+Nota: inclusión del archivo:      F:\Qt\6.11.0\msvc2022_64\include\QtCore/qglobal.h
+F:\Qt\6.11.0\msvc2022_64\include\QtCore/qglobal.h(13): fatal error C1083: No se puede abrir el archivo incluir: 'type_traits': No such file or directory
+main.cpp
+Nota: inclusión del archivo: F:\Qt\6.11.0\msvc2022_64\include\QtWidgets\QApplication
+Nota: inclusión del archivo:  F:\Qt\6.11.0\msvc2022_64\include\QtWidgets/qapplication.h
+Nota: inclusión del archivo:   F:\Qt\6.11.0\msvc2022_64\include\QtWidgets/qtwidgetsglobal.h
+Nota: inclusión del archivo:    F:\Qt\6.11.0\msvc2022_64\include\QtGui/qtguiglobal.h
+Nota: inclusión del archivo:     F:\Qt\6.11.0\msvc2022_64\include\QtCore/qglobal.h
+F:\Qt\6.11.0\msvc2022_64\include\QtCore/qglobal.h(13): fatal error C1083: No se puede abrir el archivo incluir: 'type_traits': No such file or directory
+jom: D:\jpit\Remotas\argus\traduccion_c++\Sentinel_Proyecto_Qt\build\Desktop_Qt_6_11_0_MSVC2022_64bit-Debug\CMakeFiles\ArgusSentinel.dir\build.make [CMakeFiles\ArgusSentinel.dir\ArgusSentinel_autogen\mocs_compilation.cpp.obj] Error 2
+VisorCapturas.cpp
+Nota: inclusión del archivo: D:\jpit\Remotas\argus\traduccion_c++\Sentinel_Proyecto_Qt\VisorCapturas.h
+Nota: inclusión del archivo:  F:\Qt\6.11.0\msvc2022_64\include\QtWidgets\QDialog
+Nota: inclusión del archivo:   F:\Qt\6.11.0\msvc2022_64\include\QtWidgets/qdialog.h
+Nota: inclusión del archivo:    F:\Qt\6.11.0\msvc2022_64\include\QtWidgets/qtwidgetsglobal.h
+Nota: inclusión del archivo:     F:\Qt\6.11.0\msvc2022_64\include\QtGui/qtguiglobal.h
+Nota: inclusión del archivo:      F:\Qt\6.11.0\msvc2022_64\include\QtCore/qglobal.h
+F:\Qt\6.11.0\msvc2022_64\include\QtCore/qglobal.h(13): fatal error C1083: No se puede abrir el archivo incluir: 'type_traits': No such file or directory
+ConfiguradorFuentes.cpp
+Nota: inclusión del archivo: D:\jpit\Remotas\argus\traduccion_c++\Sentinel_Proyecto_Qt\ConfiguradorFuentes.h
+Nota: inclusión del archivo:  F:\Qt\6.11.0\msvc2022_64\include\QtWidgets\QDialog
+Nota: inclusión del archivo:   F:\Qt\6.11.0\msvc2022_64\include\QtWidgets/qdialog.h
+Nota: inclusión del archivo:    F:\Qt\6.11.0\msvc2022_64\include\QtWidgets/qtwidgetsglobal.h
+Nota: inclusión del archivo:     F:\Qt\6.11.0\msvc2022_64\include\QtGui/qtguiglobal.h
+Nota: inclusión del archivo:      F:\Qt\6.11.0\msvc2022_64\include\QtCore/qglobal.h
+F:\Qt\6.11.0\msvc2022_64\include\QtCore/qglobal.h(13): fatal error C1083: No se puede abrir el archivo incluir: 'type_traits': No such file or directory
+qcustomplot.cpp
+Nota: inclusión del archivo: D:\jpit\Remotas\argus\traduccion_c++\Sentinel_Proyecto_Qt\qcustomplot.h
+Nota: inclusión del archivo:  F:\Qt\6.11.0\msvc2022_64\include\QtCore/qglobal.h
+F:\Qt\6.11.0\msvc2022_64\include\QtCore/qglobal.h(13): fatal error C1083: No se puede abrir el archivo incluir: 'type_traits': No such file or directory
+jom: D:\jpit\Remotas\argus\traduccion_c++\Sentinel_Proyecto_Qt\build\Desktop_Qt_6_11_0_MSVC2022_64bit-Debug\CMakeFiles\ArgusSentinel.dir\build.make [CMakeFiles\ArgusSentinel.dir\qcustomplot.cpp.obj] Error 2
+jom: D:\jpit\Remotas\argus\traduccion_c++\Sentinel_Proyecto_Qt\build\Desktop_Qt_6_11_0_MSVC2022_64bit-Debug\CMakeFiles\ArgusSentinel.dir\build.make [CMakeFiles\ArgusSentinel.dir\ConfiguradorFuentes.cpp.obj] Error 2
+jom: D:\jpit\Remotas\argus\traduccion_c++\Sentinel_Proyecto_Qt\build\Desktop_Qt_6_11_0_MSVC2022_64bit-Debug\CMakeFiles\ArgusSentinel.dir\build.make [CMakeFiles\ArgusSentinel.dir\VisorCapturas.cpp.obj] Error 2
+jom: D:\jpit\Remotas\argus\traduccion_c++\Sentinel_Proyecto_Qt\build\Desktop_Qt_6_11_0_MSVC2022_64bit-Debug\CMakeFiles\ArgusSentinel.dir\build.make [CMakeFiles\ArgusSentinel.dir\main.cpp.obj] Error 2
+jom: D:\jpit\Remotas\argus\traduccion_c++\Sentinel_Proyecto_Qt\build\Desktop_Qt_6_11_0_MSVC2022_64bit-Debug\CMakeFiles\ArgusSentinel.dir\build.make [CMakeFiles\ArgusSentinel.dir\ArgusSentinel.cpp.obj] Error 2
+jom: D:\jpit\Remotas\argus\traduccion_c++\Sentinel_Proyecto_Qt\build\Desktop_Qt_6_11_0_MSVC2022_64bit-Debug\CMakeFiles\Makefile2 [CMakeFiles\ArgusSentinel.dir\all] Error 2
+jom: D:\jpit\Remotas\argus\traduccion_c++\Sentinel_Proyecto_Qt\build\Desktop_Qt_6_11_0_MSVC2022_64bit-Debug\Makefile [all] Error 2

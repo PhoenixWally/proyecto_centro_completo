@@ -1,0 +1,16 @@
+[
+    {
+        "id": "pc_oficina",
+        "nombre": "PC Oficina Principal",
+        "ciudad": "Málaga",
+        "ip": "192.168.1.15",
+        "puerto": 5900
+    },
+    {
+        "id": "radar_norte",
+        "nombre": "Sistema Radar Norte",
+        "ciudad": "Sevilla",
+        "ip": "192.168.1.20",
+        "puerto": 5900
+    }
+]

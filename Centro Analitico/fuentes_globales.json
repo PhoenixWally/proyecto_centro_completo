@@ -1,0 +1,26 @@
+[
+    {
+        "nombre": "UMA",
+        "pwd_red": "malaga",
+        "ruta_bin": "\\\\192.168.29.12\\jpit_malaga_central\\RESULTADOS_BOT\\UMA\\DATOS",
+        "ruta_json": "\\\\192.168.29.12\\jpit_malaga_central\\RESULTADOS_BOT\\UMA\\config_local.json",
+        "ruta_res": "\\\\192.168.29.12\\jpit_malaga_central\\RESULTADOS_BOT\\UMA\\ANALISIS_UMA",
+        "usr_red": "jpit"
+    },
+    {
+        "nombre": "MA",
+        "ruta_res": "\\\\192.168.29.12\\jpit_malaga_central\\RESULTADOS_BOT\\MA\\ANALISIS_MA",
+        "ruta_bin": "\\\\192.168.29.12\\jpit_malaga_central\\RESULTADOS_BOT\\MA\\DATOS",
+        "ruta_json": "\\\\192.168.29.12\\jpit_malaga_central\\RESULTADOS_BOT\\UMA2\\config_local.json",
+        "usr_red": "jpit",
+        "pwd_red": "malaga"
+    },
+    {
+        "nombre": "UMA2",
+        "ruta_res": "\\\\192.168.29.12\\jpit_malaga_central\\RESULTADOS_BOT\\UMA2\\ANALISIS_UMA2",
+        "ruta_bin": "\\\\192.168.29.12\\jpit_malaga_central\\RESULTADOS_BOT\\UMA2\\DATOS",
+        "ruta_json": "\\\\192.168.29.12\\jpit_malaga_central\\RESULTADOS_BOT\\UMA2\\config_local.json",
+        "usr_red": "jpit",
+        "pwd_red": "malaga"
+    }
+]

@@ -1,0 +1,6 @@
+{
+    "Antena Local Test": "C:/ArgusTest",
+    "MA": "//192.168.29.11/argus_db",
+    "UMA": "//192.168.29.71/argus_db",
+    "UMA2": "//192.168.29.81/argus_db81"
+}

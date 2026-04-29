@@ -1,0 +1,22 @@
+{
+    "gabriel": {
+        "password": "malaga.2026",
+        "role": "admin"
+    },
+    "sergio": {
+        "password": "jpit2026",
+        "role": "admin"
+    },
+    "juancarlos": {
+        "password": "malaga.2026",
+        "role": "admin"
+    },
+    "joseantonio": {
+        "password": "malaga2026",
+        "role": "admin"
+    },
+    "domingo": {
+        "password": "sevilla2026",
+        "role": "admin"
+    }
+}

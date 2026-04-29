@@ -1,0 +1,4 @@
+D:/jpit/Remotas/argus/traduccion_c++/Sentinel_Proyecto_Qt/CMakeFiles/ArgusSentinel.dir
+D:/jpit/Remotas/argus/traduccion_c++/Sentinel_Proyecto_Qt/CMakeFiles/ALL_BUILD.dir
+D:/jpit/Remotas/argus/traduccion_c++/Sentinel_Proyecto_Qt/CMakeFiles/ZERO_CHECK.dir
+D:/jpit/Remotas/argus/traduccion_c++/Sentinel_Proyecto_Qt/_deps/json-build/CMakeFiles/ALL_BUILD.dir
