@@ -101,8 +101,8 @@ async function loadRecordings(filterStationId = null) {
             <td>${r.station_name}</td>
             <td>Ant. ${r.antenna}</td>
             <td>${r.freq_start} – ${r.freq_end} MHz</td>
-            <td>${r.start_time.replace('T',' ')}</td>
-            <td>${r.end_time.replace('T',' ')}</td>
+            <td>${r.date_start} al ${r.date_end}</td>
+            <td>${r.time_start} - ${r.time_end}</td>
             <td><span class="badge ${statusClass}">${r.status}</span></td>
             <td>
                 ${(USER_ROLE !== 'viewer') ? `
@@ -136,8 +136,10 @@ async function editRecording(id) {
     document.getElementById('antennaSelect').value = r.antenna;
     document.getElementById('freqStart').value    = r.freq_start;
     document.getElementById('freqEnd').value      = r.freq_end;
-    document.getElementById('startTime').value    = r.start_time;
-    document.getElementById('endTime').value      = r.end_time;
+    document.getElementById('dateStart').value = r.date_start;
+    document.getElementById('dateEnd').value   = r.date_end;
+    document.getElementById('timeStart').value = r.time_start;
+    document.getElementById('timeEnd').value   = r.time_end;
     document.getElementById('recordOutputDir').value = r.output_dir;
     
     document.getElementById('btnSubmitRecord').textContent = '💾 ACTUALIZAR GRABACIÓN';
@@ -155,15 +157,17 @@ async function deleteRecording(id) {
 
 document.getElementById('recordForm').addEventListener('submit', async e => {
     e.preventDefault();
-    const data = {
-        station_id:  parseInt(document.getElementById('stationSelect').value),
-        antenna:     parseInt(document.getElementById('antennaSelect').value),
-        freq_start:  parseFloat(document.getElementById('freqStart').value),
-        freq_end:    parseFloat(document.getElementById('freqEnd').value),
-        start_time:  document.getElementById('startTime').value,
-        end_time:    document.getElementById('endTime').value,
-        output_dir:  document.getElementById('recordOutputDir').value.trim()
-    };
+        const data = {
+            station_id: document.getElementById('stationSelect').value,
+            antenna: document.getElementById('antennaSelect').value,
+            freq_start: document.getElementById('freqStart').value,
+            freq_end: document.getElementById('freqEnd').value,
+            date_start: document.getElementById('dateStart').value,
+            date_end: document.getElementById('dateEnd').value,
+            time_start: document.getElementById('timeStart').value,
+            time_end: document.getElementById('timeEnd').value,
+            output_dir: document.getElementById('outputDir').value
+        };
 
     if (!data.station_id) { alert('Selecciona una estación.'); return; }
     if (data.freq_start >= data.freq_end) { alert('La frecuencia de fin debe ser mayor que la de inicio.'); return; }

@@ -64,13 +64,19 @@
                         </div>
                         <div class="form-row">
                             <div class="form-group">
-                                <label>Inicio de Grabación</label>
-                                <input type="datetime-local" id="startTime" required>
+                            <label>Rango de Fechas (Desde / Hasta)</label>
+                            <div class="form-row">
+                                <input type="date" id="dateStart" required>
+                                <input type="date" id="dateEnd" required>
                             </div>
-                            <div class="form-group">
-                                <label>Fin de Grabación</label>
-                                <input type="datetime-local" id="endTime" required>
+                        </div>
+                        <div class="form-group">
+                            <label>Horario Diario (Inicio / Fin)</label>
+                            <div class="form-row">
+                                <input type="time" id="timeStart" required>
+                                <input type="time" id="timeEnd" required>
                             </div>
+                        </div>
                         </div>
                         <div class="form-group">
                             <label>Directorio de salida (dejar vacío para usar el de la estación)</label>

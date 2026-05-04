@@ -65,6 +65,7 @@ def get_db():
         db = g._database = sqlite3.connect(DB_PATH)
         db.row_factory = sqlite3.Row
         db.execute("PRAGMA foreign_keys = ON")
+        db.execute("PRAGMA journal_mode = WAL") # Mejora concurrencia
     return db
 
 @app.teardown_appcontext
@@ -98,8 +99,12 @@ def init_db():
                 antenna INTEGER NOT NULL,
                 freq_start REAL NOT NULL,
                 freq_end   REAL NOT NULL,
-                start_time DATETIME NOT NULL,
-                end_time   DATETIME NOT NULL,
+                start_time DATETIME, -- Mantener por compatibilidad
+                end_time   DATETIME,
+                date_start DATE,
+                date_end DATE,
+                time_start TIME,
+                time_end TIME,
                 output_dir TEXT DEFAULT '',
                 status TEXT DEFAULT 'pending',
                 FOREIGN KEY(station_id) REFERENCES stations(id) ON DELETE CASCADE
@@ -469,10 +474,10 @@ def add_recording():
     if overlap:
         return jsonify({"success": False, "error": "Ya existe una grabación programada en ese horario para esta estación."}), 400
 
-    cur = db.execute('''INSERT INTO recordings(station_id,antenna,freq_start,freq_end,start_time,end_time,output_dir)
-                        VALUES(?,?,?,?,?,?,?)''',
+    cur = db.execute('''INSERT INTO recordings(station_id,antenna,freq_start,freq_end,date_start,date_end,time_start,time_end,output_dir)
+                        VALUES(?,?,?,?,?,?,?,?,?)''',
                      (d['station_id'], d['antenna'], d['freq_start'], d['freq_end'],
-                      d['start_time'], d['end_time'], d.get('output_dir','')))
+                      d['date_start'], d['date_end'], d['time_start'], d['time_end'], d.get('output_dir','')))
     db.commit()
     audit_log(session['username'], f"Grabación programada estación {d['station_id']}")
     return jsonify({"success": True, "id": cur.lastrowid})
@@ -491,9 +496,9 @@ def update_recording(rid):
     d = request.json
     db = get_db()
     db.execute('''UPDATE recordings SET station_id=?, antenna=?, freq_start=?, freq_end=?, 
-                  start_time=?, end_time=?, output_dir=? WHERE id=?''',
+                  date_start=?, date_end=?, time_start=?, time_end=?, output_dir=? WHERE id=?''',
                (d['station_id'], d['antenna'], d['freq_start'], d['freq_end'],
-                d['start_time'], d['end_time'], d.get('output_dir',''), rid))
+                d['date_start'], d['date_end'], d['time_start'], d['time_end'], d.get('output_dir',''), rid))
     db.commit()
     audit_log(session['username'], f"Grabación editada ID:{rid}")
     return jsonify({"success": True})
@@ -600,9 +605,19 @@ def esmb_data():
         })
 
 if __name__ == '__main__':
+    # ─── Lanzador Integrado ───
+    try:
+        import recorder
+        print("[*] Iniciando servicio de Grabación en segundo plano...")
+        recorder_thread = threading.Thread(target=recorder.main, daemon=True)
+        recorder_thread.start()
+    except Exception as e:
+        print(f"[!] Error iniciando grabador: {e}")
+
     try:
         from waitress import serve
-        print("[+] ESMB-Control iniciado en http://0.0.0.0:8000")
+        print("[+] ESMB-Control (Web) iniciado en http://0.0.0.0:8000")
         serve(app, host='0.0.0.0', port=8000)
     except ImportError:
+        print("[!] Waitress no detectado, usando modo debug...")
         app.run(host='0.0.0.0', port=8000, debug=False)

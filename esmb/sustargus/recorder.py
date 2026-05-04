@@ -30,7 +30,7 @@ def parse_db_date(date_str):
     return None
 
 class RecordingWorker(threading.Thread):
-    def __init__(self, rid, ip, antenna, f_start, f_end, output_dir, station_name, end_time_str):
+    def __init__(self, rid, ip, antenna, f_start, f_end, output_dir, station_name, time_end_str):
         super().__init__()
         self.rid = rid
         self.ip = ip
@@ -39,7 +39,7 @@ class RecordingWorker(threading.Thread):
         self.f_end = f_end
         self.output_dir = output_dir if output_dir else "C:/Grabaciones"
         self.station_name = station_name
-        self.end_time = parse_db_date(end_time_str)
+        self.time_end_str = time_end_str # Formato HH:MM
         self.running = True
 
     def select_antenna(self):
@@ -102,11 +102,10 @@ class RecordingWorker(threading.Thread):
             trace_count = 0
 
             while self.running:
-                now_dt = datetime.datetime.now()
-                
-                # Comprobar si debemos parar (por tiempo o por DB)
-                if now_dt >= self.end_time:
-                    print(f"[*] ID {self.rid}: Tiempo finalizado ({now_dt} >= {self.end_time})")
+                # Comprobar si debemos parar (por horario diario o por DB)
+                now_time_str = now_dt.strftime('%H:%M')
+                if now_time_str >= self.time_end_str:
+                    print(f"[*] ID {self.rid}: Fin de turno diario ({now_time_str} >= {self.time_end_str})")
                     break
                 
                 # Cada 10 segundos verificamos si el usuario la ha parado en la web
@@ -149,12 +148,7 @@ class RecordingWorker(threading.Thread):
                 time.sleep(0.1)
 
             if csv_file: csv_file.close()
-            
-            db = get_db()
-            db.execute("UPDATE recordings SET status='done' WHERE id=?", (self.rid,))
-            db.commit()
-            db.close()
-            print(f"[✓] Grabación {self.rid} COMPLETADA.")
+            print(f"[✓] Sesión diaria de Grabación {self.rid} finalizada.")
 
         except Exception as e:
             print(f"[!] Error crítico ID {self.rid}: {str(e)}")
@@ -184,23 +178,28 @@ def main():
             rows = db.execute(query).fetchall()
             
             for r in rows:
-                start = parse_db_date(r['start_time'])
-                end   = parse_db_date(r['end_time'])
+                now_date = now_dt.strftime('%Y-%m-%d')
+                now_time = now_dt.strftime('%H:%M')
                 
-                # Caso A: Ya toca empezar
-                if r['id'] not in active_threads and start <= now_dt < end:
-                    print(f"[!] Detectada tarea ID {r['id']} ({r['s_name']}) -> LANZANDO")
+                # Verificamos si estamos dentro del rango de fechas y horas
+                in_date_range = (r['date_start'] <= now_date <= r['date_end'])
+                in_time_slot  = (r['time_start'] <= now_time < r['time_end'])
+                
+                # Caso A: Toca empezar (en rango y no está corriendo)
+                if r['id'] not in active_threads and in_date_range and in_time_slot:
+                    print(f"[!] Lanzando sesión diaria para ID {r['id']} ({r['s_name']})")
                     
                     if r['status'] == 'pending':
                         db.execute("UPDATE recordings SET status='running' WHERE id=?", (r['id'],))
                         db.commit()
                     
-                    t = RecordingWorker(r['id'], r['s_ip'], r['antenna'], r['freq_start'], r['freq_end'], r['output_dir'], r['s_name'], r['end_time'])
+                    t = RecordingWorker(r['id'], r['s_ip'], r['antenna'], r['freq_start'], r['freq_end'], r['output_dir'], r['s_name'], r['time_end'])
                     active_threads[r['id']] = t
                     t.start()
                 
-                # Caso B: Ya pasó su hora y sigue en DB (y no está en hilos activos)
-                elif r['id'] not in active_threads and now_dt >= end:
+                # Caso B: Si ya pasó la fecha fin definitiva, marcar como 'done'
+                elif r['id'] not in active_threads and now_date > r['date_end']:
+                    print(f"[*] ID {r['id']}: Rango de fechas finalizado. Marcando como completado.")
                     db.execute("UPDATE recordings SET status='done' WHERE id=?", (r['id'],))
                     db.commit()
             
@@ -209,9 +208,6 @@ def main():
             print(f"[!!!] Error loop: {e}")
             
         time.sleep(5)
-
-if __name__ == "__main__":
-    main()
 
 if __name__ == "__main__":
     main()
