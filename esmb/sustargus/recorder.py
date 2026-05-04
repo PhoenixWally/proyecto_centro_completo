@@ -42,7 +42,7 @@ class RecordingWorker(threading.Thread):
         self.antenna = antenna
         self.f_start = f_start
         self.f_end = f_end
-        self.output_dir = output_dir if output_dir else "C:/Grabaciones"
+        self.output_dir = output_dir # Si es vacío, usará la ruta jerárquica
         self.station_name = station_name
         self.time_end_str = time_end_str # Formato HH:MM
         self.shared_state = shared_state # Diccionario de app.py
@@ -66,8 +66,10 @@ class RecordingWorker(threading.Thread):
         print(f"[+] INICIANDO GRABACIÓN ID {self.rid} | {self.station_name}")
         
         # Sincronizar estado con la WEB si existe el puente
+        self.was_running_before = False
         if self.shared_state:
             with self.shared_state['lock']:
+                self.was_running_before = self.shared_state['running']
                 self.shared_state['running'] = True
                 self.shared_state['owner']   = f"GRABADOR (ID:{self.rid})"
                 self.shared_state['freq_start'] = self.f_start
@@ -101,30 +103,54 @@ class RecordingWorker(threading.Thread):
                 nonlocal current_file, writer, csv_file, file_start_time
                 if csv_file: csv_file.close()
                 
-                os.makedirs(self.output_dir, exist_ok=True)
                 now_dt = datetime.datetime.now()
-                now_str = now_dt.strftime('%Y%m%d_%H%M%S')
+                
+                # 1. Calcular carpeta de Semana: XXsemana_DDMMYY_DDMMYY
+                isocal = now_dt.isocalendar() # (year, week, weekday)
+                week_num = isocal[1]
+                # Lunes de esta semana
+                monday = now_dt - datetime.timedelta(days=now_dt.weekday())
+                sunday = monday + datetime.timedelta(days=6)
+                week_folder = f"{week_num}semana_{monday.strftime('%d%m%y')}_{sunday.strftime('%d%m%y')}"
+                
+                # 2. Carpeta de Día: DDMMYY
+                day_folder = now_dt.strftime('%d%m%y')
+                
+                # 3. Construir ruta final
+                # Usar el directorio de la estación dentro de 'data/grabaciones'
+                base_rec_dir = os.path.join(BASE_DIR, 'data', 'grabaciones', self.station_name, week_folder, day_folder)
+                
+                # Si el usuario especificó una ruta manual absoluta, respetarla, si no, usar la jerárquica
+                if self.output_dir and (self.output_dir.startswith('/') or ':' in self.output_dir):
+                    final_dir = self.output_dir
+                else:
+                    final_dir = base_rec_dir
+
+                os.makedirs(final_dir, exist_ok=True)
+                
+                now_str = now_dt.strftime('%H%M%S')
                 filename = f"{self.station_name}_{now_str}.csv"
-                current_file = os.path.join(self.output_dir, filename)
+                current_file = os.path.join(final_dir, filename)
                 
                 csv_file = open(current_file, 'w', newline='')
                 writer = csv.writer(csv_file)
                 writer.writerow(['Fecha', 'Hora', 'Frecuencia (MHz)', 'Nivel (dBuV)'])
                 file_start_time = time.time()
-                print(f"    [File] ID {self.rid}: Nuevo archivo -> {filename}")
+                print(f"    [File] ID {self.rid}: Nuevo archivo -> {current_file}")
 
             open_new_file()
             trace_count = 0
 
             while self.running:
+                now_dt = datetime.datetime.now()
                 # Comprobar si debemos parar (por horario diario o por DB)
                 now_time_str = now_dt.strftime('%H:%M')
                 if now_time_str >= self.time_end_str:
                     print(f"[*] ID {self.rid}: Fin de turno diario ({now_time_str} >= {self.time_end_str})")
                     break
                 
-                # Cada 10 segundos verificamos si el usuario la ha parado en la web
-                if trace_count % 10 == 0:
+                # Cada 50 trazas (aprox 25-50 seg) verificamos si el usuario la ha parado en la web
+                if trace_count % 50 == 0:
                     db = get_db()
                     row = db.execute("SELECT status FROM recordings WHERE id=?", (self.rid,)).fetchone()
                     db.close()
@@ -138,6 +164,8 @@ class RecordingWorker(threading.Thread):
                     
                     raw_data = instr.query(":TRAC? MTRACE")
                     levels = [float(x) for x in raw_data.split(',') if x.strip()]
+                    f_list = []
+                    v_list = []
                     
                     if len(levels) > 1:
                         fecha_str = now_dt.strftime("%Y-%m-%d")
@@ -156,7 +184,8 @@ class RecordingWorker(threading.Thread):
                             with self.shared_state['lock']:
                                 self.shared_state['latest_trace'] = {"frequencies": f_list, "levels": v_list}
 
-                        csv_file.flush()
+                        if trace_count % 20 == 0:
+                            csv_file.flush()
                         trace_count += 1
                         if trace_count % 20 == 0:
                             print(f"    [Rec] ID {self.rid}: {trace_count} trazas...")
@@ -182,8 +211,12 @@ class RecordingWorker(threading.Thread):
             if instr: instr.close()
             if self.shared_state:
                 with self.shared_state['lock']:
-                    self.shared_state['running'] = False
-                    self.shared_state['owner']   = None
+                    if self.shared_state['owner'] == f"GRABADOR (ID:{self.rid})":
+                        self.shared_state['owner'] = None
+                        # Si nosotros arrancamos el 'running', nosotros lo apagamos.
+                        # Si ya estaba 'running' (un usuario manual), lo dejamos para que él retome.
+                        if not self.was_running_before:
+                            self.shared_state['running'] = False
             if self.rid in active_threads: del active_threads[self.rid]
 
 def main(shared_scanners=None):

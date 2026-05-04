@@ -186,6 +186,12 @@ function processNewData(xRow, yRow) {
 
     if (!freqAxis.length) freqAxis = xRow;
 
+    // Control de precisión (aviso si hay pocos puntos)
+    const warnEl = document.getElementById('lowPrecisionWarn');
+    if (warnEl) {
+        warnEl.style.display = (yRow.length < 20) ? 'inline-block' : 'none';
+    }
+
     const now = new Date().toISOString().replace(/[:.]/g, '-').slice(0, 19);
     const stationName = document.getElementById('viewerStationSelect').selectedOptions[0]?.text || 'Scan';
     const filename = `${stationName}_${now}`;
@@ -210,7 +216,8 @@ function processNewData(xRow, yRow) {
         margin: { l: 60, r: 20, b: 80, t: 35 },
         xaxis: { title: 'Frecuencia (MHz)', color: '#94a3b8', gridcolor: 'rgba(255,255,255,0.05)' },
         yaxis: { title: 'dBm', color: '#94a3b8', gridcolor: 'rgba(255,255,255,0.05)' },
-        legend: { font: { color: '#e2e8f0' } }
+        legend: { font: { color: '#e2e8f0' } },
+        uirevision: 'true'
     }, { 
         responsive: true, 
         displayModeBar: true,
@@ -222,16 +229,9 @@ function processNewData(xRow, yRow) {
     zHistory.push(yRow);
     if (zHistory.length > MAX_Z_ROWS) zHistory.shift();
 
-    // Actualizar 3D siempre (ya no hay pestañas)
-    // Recuperar la posición actual de la cámara para que no salte
-    const plot3DDiv = document.getElementById("chart3D");
-    let currentCamera = { eye: { x: 1.2, y: -1.2, z: 0.4 }, projection: { type: 'orthographic' } };
-    if (plot3DDiv && plot3DDiv.layout && plot3DDiv.layout.scene && plot3DDiv.layout.scene.camera) {
-        currentCamera = plot3DDiv.layout.scene.camera;
-    }
-
+    // Actualizar 3D siempre
     const trace3D = {
-        z: renderZ_3d = (zHistory.length === 1 ? [zHistory[0], zHistory[0]] : zHistory),
+        z: (zHistory.length === 1 ? [zHistory[0], zHistory[0]] : zHistory),
         x: xRow,
         type: 'surface',
         colorscale: 'Jet',
@@ -247,10 +247,10 @@ function processNewData(xRow, yRow) {
         paper_bgcolor: 'rgba(0,0,0,0)',
         plot_bgcolor: 'rgba(0,0,0,0)',
         font: { color: '#94a3b8', family: 'Inter' },
+        uirevision: 'true',
         scene: {
-            camera: currentCamera,
             xaxis: { title: 'MHz', backgroundcolor: "rgba(0,0,0,0.5)", showbackground: true, color: "#94a3b8", gridcolor: '#334155' },
-            yaxis: { title: 'Historia', backgroundcolor: "rgba(0,0,0,0.5)", showbackground: true, color: "#94a3b8", gridcolor: '#334155', showticklabels: false },
+            yaxis: { title: 'Barridos/Tiempo', backgroundcolor: "rgba(0,0,0,0.5)", showbackground: true, color: "#94a3b8", gridcolor: '#334155', showticklabels: true },
             zaxis: { title: 'dBm', backgroundcolor: "rgba(0,0,0,0.5)", showbackground: true, range: [-30, 80], color: "#94a3b8", gridcolor: '#334155' },
             aspectratio: { x: 1.5, y: 1.5, z: 0.6 }
         }

@@ -67,6 +67,8 @@ input:focus, select:focus, textarea:focus {
 option { background: #0f172a; }
 textarea { resize: vertical; min-height: 60px; }
 input[type="range"] { padding: 0; border: none; background: transparent; cursor: pointer; }
+.form-actions { display: flex; gap: 1rem; margin-top: 1.2rem; }
+.flatpickr-input[readonly] { cursor: pointer; }
 
 /* ── Buttons ── */
 .btn {
@@ -213,3 +215,11 @@ input[type="range"] { padding: 0; border: none; background: transparent; cursor:
 ::-webkit-scrollbar { width: 6px; }
 ::-webkit-scrollbar-track { background: transparent; }
 ::-webkit-scrollbar-thumb { background: var(--border-glass); border-radius: 3px; }
+
+.blink-red {
+    color: #ef4444;
+    animation: blinker-slow 2.5s linear infinite;
+}
+@keyframes blinker-slow {
+    50% { opacity: 0.2; }
+}

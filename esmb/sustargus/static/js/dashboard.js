@@ -166,7 +166,7 @@ document.getElementById('recordForm').addEventListener('submit', async e => {
             date_end: document.getElementById('dateEnd').value,
             time_start: document.getElementById('timeStart').value,
             time_end: document.getElementById('timeEnd').value,
-            output_dir: document.getElementById('outputDir').value
+            output_dir: document.getElementById('recordOutputDir').value
         };
 
     if (!data.station_id) { alert('Selecciona una estación.'); return; }
@@ -293,3 +293,31 @@ async function deleteUser(id) {
 
 // Inicializar tabla al cargar
 loadRecordings();
+// ─── Inicialización de Flatpickr (Fechas y Horas modernas) ──
+document.addEventListener('DOMContentLoaded', () => {
+    // Configuración común para fechas
+    const dateConfig = {
+        locale: "es",
+        dateFormat: "Y-m-d",
+        altInput: true,
+        altFormat: "d/m/Y",
+        allowInput: true,
+        theme: "dark"
+    };
+
+    flatpickr("#dateStart", dateConfig);
+    flatpickr("#dateEnd", dateConfig);
+
+    // Configuración común para horas
+    const timeConfig = {
+        locale: "es",
+        enableTime: true,
+        noCalendar: true,
+        dateFormat: "H:i",
+        time_24hr: true,
+        theme: "dark"
+    };
+
+    flatpickr("#timeStart", timeConfig);
+    flatpickr("#timeEnd", timeConfig);
+});

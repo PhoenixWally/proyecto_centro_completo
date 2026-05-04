@@ -14,6 +14,7 @@
     <nav class="navbar glass-panel">
         <div class="nav-brand">ESMB-<span class="accent">Control</span> <span class="badge guest">VISOR</span>
             <span class="text-muted" style="font-size:0.75rem;font-weight:400;margin-left:0.5rem">{{ username }}</span>
+            <span id="lowPrecisionWarn" class="blink-red" style="display:none; margin-left:2rem; font-size:0.9rem; font-weight:800;">[!] PRECISIÓN BAJA, POCOS PUNTOS</span>
         </div>
         <div class="nav-links">
             {% if role != 'guest' %}

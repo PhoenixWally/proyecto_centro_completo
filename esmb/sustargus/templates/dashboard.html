@@ -6,6 +6,11 @@
     <title>ESMB-Control | Grabaciones</title>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;800&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+    <!-- Flatpickr (Modern Date/Time Picker) -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flatpickr/dist/flatpickr.min.css">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flatpickr/dist/themes/dark.css">
+    <script src="https://cdn.jsdelivr.net/npm/flatpickr"></script>
+    <script src="https://npmcdn.com/flatpickr/dist/l10n/es.js"></script>
 </head>
 <body class="app-body">
     <nav class="navbar glass-panel">
@@ -65,24 +70,27 @@
                         <div class="form-row">
                             <div class="form-group">
                             <label>Rango de Fechas (Desde / Hasta)</label>
-                            <div class="form-row">
-                                <input type="date" id="dateStart" required>
-                                <input type="date" id="dateEnd" required>
-                            </div>
+                             <div class="form-row">
+                                 <input type="text" id="dateStart" required placeholder="📅 Fecha inicio">
+                                 <input type="text" id="dateEnd" required placeholder="📅 Fecha fin">
+                             </div>
                         </div>
                         <div class="form-group">
                             <label>Horario Diario (Inicio / Fin)</label>
-                            <div class="form-row">
-                                <input type="time" id="timeStart" required>
-                                <input type="time" id="timeEnd" required>
-                            </div>
+                             <div class="form-row">
+                                 <input type="text" id="timeStart" required placeholder="🕒 Hora inicio">
+                                 <input type="text" id="timeEnd" required placeholder="🕒 Hora fin">
+                             </div>
                         </div>
                         </div>
                         <div class="form-group">
                             <label>Directorio de salida (dejar vacío para usar el de la estación)</label>
                             <input type="text" id="recordOutputDir" placeholder="Ej: D:/Grabaciones">
                         </div>
-                        <button type="submit" id="btnSubmitRecord" class="btn btn-primary">📅 PROGRAMAR GRABACIÓN</button>
+                        <div class="form-actions">
+                            <button type="submit" id="btnSubmitRecord" class="btn btn-primary">📅 PROGRAMAR GRABACIÓN</button>
+                            <button type="reset" class="btn btn-outline">Limpiar</button>
+                        </div>
                     </form>
                 </div>
                 {% endif %}

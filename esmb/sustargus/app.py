@@ -81,7 +81,43 @@ def init_db():
         cursor = db.execute("PRAGMA table_info(users)")
         cols = cursor.fetchall()
         
-        # Si la tabla existe, intentamos recrearla para actualizar el CHECK constraint si es necesario
+        # Migración para RECORDINGS (nuevos campos diarios y quitar NOT NULL antiguo)
+        cursor = db.execute("PRAGMA table_info(recordings)")
+        r_info = cursor.fetchall()
+        r_cols = [c['name'] for c in r_info]
+        start_time_info = next((c for c in r_info if c['name'] == 'start_time'), None)
+        
+        # Si faltan columnas o si start_time sigue siendo NOT NULL (pk=0, notnull=1)
+        needs_migration = ("date_start" not in r_cols) or (start_time_info and start_time_info['notnull'] == 1)
+        
+        if needs_migration:
+            print("[!] Migrando tabla recordings para soporte diario y flexibilización de fechas...")
+            db.executescript('''
+                CREATE TABLE recordings_new (
+                    id INTEGER PRIMARY KEY AUTOINCREMENT,
+                    station_id INTEGER NOT NULL,
+                    antenna INTEGER NOT NULL,
+                    freq_start REAL NOT NULL,
+                    freq_end   REAL NOT NULL,
+                    start_time DATETIME,
+                    end_time   DATETIME,
+                    date_start DATE,
+                    date_end DATE,
+                    time_start TIME,
+                    time_end TIME,
+                    output_dir TEXT DEFAULT '',
+                    status TEXT DEFAULT 'pending',
+                    FOREIGN KEY(station_id) REFERENCES stations(id) ON DELETE CASCADE
+                );
+                -- Intentar copiar datos si existen
+                INSERT INTO recordings_new (id, station_id, antenna, freq_start, freq_end, start_time, end_time, output_dir, status)
+                SELECT id, station_id, antenna, freq_start, freq_end, start_time, end_time, output_dir, status FROM recordings;
+                
+                DROP TABLE recordings;
+                ALTER TABLE recordings_new RENAME TO recordings;
+            ''')
+            db.commit()
+
         db.executescript('''
             CREATE TABLE IF NOT EXISTS stations (
                 id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -237,7 +273,30 @@ def esmb_scan_thread(ip, freq_start, freq_end, step_khz=100.0, owner=None):
     
     last_valid_n = -10.0
     while state['running']:
+        # SI EL GRABADOR TOMA EL CONTROL, CEDEMOS EL HARDWARE PERO MANTENEMOS EL HILO
+        with state['lock']:
+            current_owner = state['owner']
+        
+        if current_owner and current_owner.startswith('GRABADOR') and current_owner != owner:
+            if instr:
+                try: instr.close()
+                except: pass
+                instr = None
+            time.sleep(1)
+            continue
+        
+        # SI EL GRABADOR YA TERMINÓ (owner es None), RECLAMAMOS EL DUEÑO
+        if current_owner is None:
+            with state['lock']:
+                state['owner'] = owner
+
         try:
+            if not instr:
+                instr = RsInstrument(f'TCPIP::{ip}::5555::SOCKET', True, False)
+                instr.visa_timeout = 3000
+                instr.write("*CLS; ABORT; :FREQ:MODE SWE; :TRAC:FEED:CONT MTRACE, ALW; :STAT:TRAC:ENAB #B10010")
+                instr.write(f":FREQ:STAR {freq_start} MHz;STOP {freq_end} MHz; :SWE:STEP {step_khz/1000.0} MHz; :FORM ASC")
+
             instr.write(":INIT;*WAI")
             time.sleep(0.2)
             raw_data = instr.query(":TRAC? MTRACE")
@@ -265,18 +324,33 @@ def esmb_scan_thread(ip, freq_start, freq_end, step_khz=100.0, owner=None):
             time.sleep(0.05)
             
         except Exception as e:
+            if instr:
+                try: instr.close()
+                except: pass
+                instr = None
+            
+            # Verificar si el error es porque el grabador tomó el mando
             with state['lock']:
-                state['error'] = f"Error en traza: {str(e)}"
-            time.sleep(1)
+                curr_owner = state['owner']
+                
+            if curr_owner and curr_owner.startswith('GRABADOR'):
+                # Esperar a que el grabador termine
+                time.sleep(1)
+            else:
+                with state['lock']:
+                    state['error'] = f"Reconectando... {str(e)}"
+                time.sleep(2)
 
     if instr:
         try: instr.close()
         except: pass
     
     with state['lock']:
-        state['running'] = False
-        state['owner'] = None
-    print(f"[*] Escáner detenido en IP {ip}")
+        # Solo limpiar si nosotros somos el dueño actual
+        if state['owner'] == owner:
+            state['running'] = False
+            state['owner'] = None
+    print(f"[*] Hilo de escaneo en {ip} finalizado.")
 
 # ─── Rutas principales ───────────────────────────────────────
 @app.route('/login', methods=['GET', 'POST'])
@@ -330,7 +404,7 @@ def dashboard():
     recordings  = db.execute('''
         SELECT r.*, s.name as station_name
         FROM recordings r JOIN stations s ON r.station_id = s.id
-        ORDER BY r.start_time DESC
+        ORDER BY r.date_start DESC, r.time_start DESC
     ''').fetchall()
     return render_template('dashboard.html', 
                            stations=stations, 
@@ -450,7 +524,7 @@ def delete_station(sid):
 def list_recordings():
     db = get_db()
     rows = db.execute('''SELECT r.*, s.name as station_name FROM recordings r
-                         JOIN stations s ON r.station_id=s.id ORDER BY r.start_time DESC''').fetchall()
+                         JOIN stations s ON r.station_id=s.id ORDER BY r.date_start DESC, r.time_start DESC''').fetchall()
     return jsonify([dict(r) for r in rows])
 
 @app.route('/api/recordings', methods=['POST'])
@@ -459,17 +533,23 @@ def add_recording():
     d = request.json
     db = get_db()
     
-    # 1. Validar solapamientos (Misma estación, mismo rango de tiempo)
+    # 1. Validar solapamientos (Misma estación, mismo rango de fechas Y mismo horario diario)
     overlap = db.execute('''
         SELECT id FROM recordings 
         WHERE station_id = ? 
         AND status != 'done'
         AND (
-            (start_time <= ? AND end_time >= ?) OR 
-            (start_time <= ? AND end_time >= ?) OR
-            (? <= start_time AND ? >= end_time)
+            -- Solapamiento de fechas
+            (date_start <= ? AND date_end >= ?)
         )
-    ''', (d['station_id'], d['start_time'], d['start_time'], d['end_time'], d['end_time'], d['start_time'], d['end_time'])).fetchone()
+        AND (
+            -- Solapamiento de horario diario
+            (time_start <= ? AND time_end >= ?) OR 
+            (time_start <= ? AND time_end >= ?) OR
+            (? <= time_start AND ? >= time_end)
+        )
+    ''', (d['station_id'], d['date_end'], d['date_start'], 
+          d['time_start'], d['time_start'], d['time_end'], d['time_end'], d['time_start'], d['time_end'])).fetchone()
     
     if overlap:
         return jsonify({"success": False, "error": "Ya existe una grabación programada en ese horario para esta estación."}), 400
@@ -556,11 +636,11 @@ def scan_stop():
     username = session.get('username')
     
     with state['lock']:
-        # Permitir detener si es el dueño O si es admin
+        # Permitir detener si es el dueño O si es admin O si no hay dueño actual (limbo)
         if not state['running']:
             return jsonify({"success": True})
             
-        if state['owner'] != username and session.get('role') != 'admin':
+        if state['owner'] is not None and state['owner'] != username and session.get('role') != 'admin':
             return jsonify({"success": False, "error": f"No puedes detener este escáner, pertenece a {state['owner']}"}), 403
             
         state['running'] = False
