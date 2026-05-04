@@ -3,13 +3,13 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>SustArgus | Dashboard Administrador</title>
+    <title>ESMB-Control | Grabaciones</title>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;800&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
 </head>
 <body class="app-body">
     <nav class="navbar glass-panel">
-        <div class="nav-brand">Sust<span class="accent">Argus</span> 
+        <div class="nav-brand">ESMB-<span class="accent">Control</span> 
             {% if role == 'admin' %}<span class="badge">ADMIN</span>
             {% elif role == 'manager' %}<span class="badge">GESTOR</span>
             {% else %}<span class="badge guest">VISOR</span>{% endif %}

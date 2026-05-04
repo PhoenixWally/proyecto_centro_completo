@@ -4,7 +4,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>SustArgus | Sentinel Viewer</title>
+    <title>ESMB-Control | Sentinel Viewer</title>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;800&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
     <script src="{{ url_for('static', filename='js/plotly-2.27.0.min.js') }}"></script>
@@ -12,12 +12,12 @@
 
 <body class="app-body sentinel-mode">
     <nav class="navbar glass-panel">
-        <div class="nav-brand">Sust<span class="accent">Argus</span> <span class="badge guest">VISOR</span>
+        <div class="nav-brand">ESMB-<span class="accent">Control</span> <span class="badge guest">VISOR</span>
             <span class="text-muted" style="font-size:0.75rem;font-weight:400;margin-left:0.5rem">{{ username }}</span>
         </div>
         <div class="nav-links">
             {% if role != 'guest' %}
-            <a href="{{ url_for('dashboard') }}" class="btn btn-outline">Dashboard</a>
+            <a href="{{ url_for('dashboard') }}" class="btn btn-outline">Grabaciones</a>
             {% endif %}
             {% if role != 'guest' %}
             <a href="{{ url_for('logout') }}" class="btn btn-danger">Cerrar Sesión</a>
@@ -63,10 +63,14 @@
                 <input type="number" id="peakThreshold" value="0" step="0.1">
             </div>
 
-            <button class="btn btn-primary btn-block pulse" id="btnStart" onclick="startScan()">▶ INICIAR
-                ESCÁNER</button>
-            <button class="btn btn-danger btn-block mt-1" id="btnStop" onclick="stopScan()" style="display:none">⏹
-                DETENER ESCÁNER</button>
+            {% if role != 'guest' and role != 'viewer' %}
+            <button class="btn btn-primary btn-block pulse" id="btnStart" onclick="startScan()">▶ INICIAR ESCÁNER</button>
+            <button class="btn btn-danger btn-block mt-1" id="btnStop" onclick="stopScan()" style="display:none">⏹ DETENER ESCÁNER</button>
+            {% else %}
+            <div class="alert alert-danger mt-2" style="text-align:center; font-size: 0.8rem;">
+                ⚠️ Modo Solo Lectura<br>No tienes permisos para controlar el hardware.
+            </div>
+            {% endif %}
 
             <div class="status-indicator mt-2" id="scanStatus">
                 <div class="led led-off" id="statusLed"></div>

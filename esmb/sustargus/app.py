@@ -509,7 +509,7 @@ def delete_recording(rid):
 
 # ─── API Scanner ESMB (real) ─────────────────────────────────
 @app.route('/api/esmb/scan/start', methods=['POST'])
-@login_required
+@manager_required
 def scan_start():
     d = request.json
     ip         = d.get('ip_esmb')
@@ -540,10 +540,9 @@ def scan_start():
 
     audit_log(username, f"Escáner iniciado en {ip} ({freq_start}-{freq_end} MHz)")
     return jsonify({"success": True})
-    return jsonify({"success": True})
 
 @app.route('/api/esmb/scan/stop', methods=['POST'])
-@login_required
+@manager_required
 def scan_stop():
     ip = request.json.get('ip_esmb')
     if not ip: return jsonify({"success": False, "error": "IP requerida"}), 400
@@ -587,7 +586,7 @@ def esmb_data():
 if __name__ == '__main__':
     try:
         from waitress import serve
-        print("[+] SustArgus iniciado en http://0.0.0.0:8000")
+        print("[+] ESMB-Control iniciado en http://0.0.0.0:8000")
         serve(app, host='0.0.0.0', port=8000)
     except ImportError:
         app.run(host='0.0.0.0', port=8000, debug=False)

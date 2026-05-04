@@ -201,7 +201,7 @@ function processNewData(xRow, yRow) {
         paper_bgcolor: 'rgba(0,0,0,0)',
         plot_bgcolor:  'rgba(0,0,0,0)',
         font: { color: '#e2e8f0', family: 'Inter' },
-        margin: { l: 50, r: 20, b: 50, t: 35 },
+        margin: { l: 60, r: 20, b: 80, t: 35 },
         xaxis: { title: 'Frecuencia (MHz)', color: '#94a3b8', gridcolor: 'rgba(255,255,255,0.05)' },
         yaxis: { title: 'dBm', color: '#94a3b8', gridcolor: 'rgba(255,255,255,0.05)' },
         legend: { font: { color: '#e2e8f0' } }
