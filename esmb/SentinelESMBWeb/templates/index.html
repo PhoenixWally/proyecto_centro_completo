@@ -1,0 +1,70 @@
+<!DOCTYPE html>
+<html lang="es">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Sentinel ESMB - Real Time Spectrum</title>
+    <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;700&display=swap" rel="stylesheet">
+    <script src="{{ url_for('static', filename='js/plotly-2.27.0.min.js') }}"></script>
+
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+</head>
+
+<body>
+    <div class="app-container">
+        <!-- Sidebar Controls -->
+        <aside class="glass-sidebar">
+            <div class="logo">
+                <div class="glow-dot" id="status-dot"></div>
+                <h2>Sentinel ESMB</h2>
+            </div>
+
+            <form id="control-form">
+                <div class="form-group">
+                    <label>IP ESMB (Fuente)</label>
+                    <input type="text" id="ip_esmb" value="192.168.29.22" required>
+                </div>
+                <div class="form-group">
+                    <label>Freq Inicio (MHz)</label>
+                    <input type="number" id="freq_inicio" step="0.001" value="101.0" required>
+                </div>
+                <div class="form-group">
+                    <label>Freq Fin (MHz)</label>
+                    <input type="number" id="freq_fin" step="0.001" value="103.0" required>
+                </div>
+
+                <button type="submit" class="btn btn-glow" id="btn-start">▶ INICIAR MONITOR</button>
+                <button type="button" class="btn btn-danger hidden" id="btn-stop">⏹ DETENER</button>
+            </form>
+
+            <div id="error-box" class="error-box hidden"></div>
+
+            <div class="log-container">
+                <div class="log-header">
+                    <span>SISTEMA / MEDIDAS</span>
+                    <button type="button" onclick="document.getElementById('log-box').innerHTML=''" class="btn-clear-log">🗑</button>
+                </div>
+                <div id="log-box" class="log-box">
+                    <div class="log-entry system">Esperando inicio...</div>
+                </div>
+            </div>
+        </aside>
+
+        <!-- Main Chart Area -->
+        <main class="chart-container">
+            <div class="chart-header">
+                <h3>Monitor Espectral Avanzado</h3>
+                <span class="fps-counter" id="fps-counter">FPS: 0</span>
+            </div>
+            <div class="plots-wrapper">
+                <div id="plot3D" class="plot-box plot-3d"></div>
+                <div id="plot2D" class="plot-box plot-2d"></div>
+            </div>
+        </main>
+    </div>
+
+    <script src="{{ url_for('static', filename='js/app.js') }}"></script>
+</body>
+
+</html>

@@ -1,0 +1,292 @@
+:root {
+    --bg-color: #0f172a;
+    --panel-bg: rgba(30, 41, 59, 0.7);
+    --primary: #3b82f6;
+    --primary-hover: #2563eb;
+    --danger: #ef4444;
+    --danger-hover: #dc2626;
+    --text-main: #f8fafc;
+    --text-muted: #94a3b8;
+    --input-bg: rgba(15, 23, 42, 0.6);
+    --border-color: rgba(148, 163, 184, 0.1);
+    --glass-border: rgba(255, 255, 255, 0.05);
+    --accent: #10b981;
+}
+
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+body {
+    font-family: 'Inter', sans-serif;
+    background-color: var(--bg-color);
+    color: var(--text-main);
+    min-height: 100vh;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    position: relative;
+    overflow: hidden;
+}
+
+/* Dynamic animated background */
+.background-animation {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100vw;
+    height: 100vh;
+    background: radial-gradient(circle at 15% 50%, rgba(59, 130, 246, 0.15), transparent 25%),
+                radial-gradient(circle at 85% 30%, rgba(16, 185, 129, 0.15), transparent 25%);
+    z-index: -1;
+    animation: pulse-bg 15s infinite alternate;
+}
+
+@keyframes pulse-bg {
+    0% { transform: scale(1); }
+    100% { transform: scale(1.1); }
+}
+
+.container {
+    width: 100%;
+    max-width: 600px;
+    padding: 2.5rem;
+    z-index: 1;
+}
+
+.glass-panel {
+    background: var(--panel-bg);
+    backdrop-filter: blur(16px);
+    -webkit-backdrop-filter: blur(16px);
+    border: 1px solid var(--glass-border);
+    border-radius: 24px;
+    box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5);
+}
+
+header {
+    text-align: center;
+    margin-bottom: 2.5rem;
+}
+
+.logo-container {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 12px;
+    margin-bottom: 8px;
+}
+
+h1 {
+    font-size: 1.75rem;
+    font-weight: 600;
+    letter-spacing: -0.025em;
+}
+
+.subtitle {
+    color: var(--text-muted);
+    font-size: 0.95rem;
+}
+
+.pulse-indicator {
+    width: 12px;
+    height: 12px;
+    background-color: var(--text-muted);
+    border-radius: 50%;
+    box-shadow: 0 0 0 0 rgba(148, 163, 184, 0.7);
+    transition: all 0.3s ease;
+}
+
+.pulse-indicator.active {
+    background-color: var(--accent);
+    box-shadow: 0 0 0 0 rgba(16, 185, 129, 0.7);
+    animation: pulse-dot 2s infinite;
+}
+
+@keyframes pulse-dot {
+    0% { transform: scale(0.95); box-shadow: 0 0 0 0 rgba(16, 185, 129, 0.7); }
+    70% { transform: scale(1); box-shadow: 0 0 0 10px rgba(16, 185, 129, 0); }
+    100% { transform: scale(0.95); box-shadow: 0 0 0 0 rgba(16, 185, 129, 0); }
+}
+
+.input-grid, .input-grid-2 {
+    display: grid;
+    gap: 1.25rem;
+    margin-bottom: 1.5rem;
+}
+
+.input-grid {
+    grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+}
+
+.input-grid-2 {
+    grid-template-columns: 1fr 1fr;
+}
+
+.input-group {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+}
+
+label {
+    font-size: 0.85rem;
+    color: var(--text-muted);
+    font-weight: 500;
+}
+
+input {
+    background: var(--input-bg);
+    border: 1px solid var(--border-color);
+    color: var(--text-main);
+    padding: 0.75rem 1rem;
+    border-radius: 12px;
+    font-size: 1rem;
+    font-family: inherit;
+    transition: all 0.2s ease;
+    outline: none;
+}
+
+input:focus {
+    border-color: var(--primary);
+    box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.2);
+}
+
+.duration-section {
+    background: rgba(15, 23, 42, 0.3);
+    padding: 1.5rem;
+    border-radius: 16px;
+    border: 1px solid var(--border-color);
+    margin-bottom: 2rem;
+}
+
+.duration-section h3 {
+    font-size: 1rem;
+    margin-bottom: 1rem;
+    font-weight: 500;
+    color: #e2e8f0;
+}
+
+.actions {
+    display: flex;
+    gap: 1rem;
+}
+
+.btn {
+    flex: 1;
+    padding: 0.875rem 1.5rem;
+    border: none;
+    border-radius: 12px;
+    font-weight: 600;
+    font-size: 1rem;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    font-family: inherit;
+}
+
+.btn:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+}
+
+.btn-primary {
+    background-color: var(--primary);
+    color: white;
+}
+
+.btn-primary:not(:disabled):hover {
+    background-color: var(--primary-hover);
+    transform: translateY(-2px);
+    box-shadow: 0 10px 15px -3px rgba(59, 130, 246, 0.4);
+}
+
+.btn-danger {
+    background-color: transparent;
+    color: var(--danger);
+    border: 1px solid var(--danger);
+}
+
+.btn-danger:not(:disabled):hover {
+    background-color: var(--danger);
+    color: white;
+    transform: translateY(-2px);
+    box-shadow: 0 10px 15px -3px rgba(239, 68, 68, 0.4);
+}
+
+.hidden {
+    display: none !important;
+}
+
+.status-panel {
+    margin-top: 2rem;
+    padding-top: 2rem;
+    border-top: 1px solid var(--border-color);
+    animation: fade-in 0.4s ease;
+}
+
+@keyframes fade-in {
+    from { opacity: 0; transform: translateY(10px); }
+    to { opacity: 1; transform: translateY(0); }
+}
+
+.status-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 1.5rem;
+}
+
+.status-header h3 {
+    font-size: 1.1rem;
+    font-weight: 500;
+}
+
+.badge {
+    background: rgba(16, 185, 129, 0.2);
+    color: var(--accent);
+    padding: 0.25rem 0.75rem;
+    border-radius: 999px;
+    font-size: 0.8rem;
+    font-weight: 600;
+    border: 1px solid rgba(16, 185, 129, 0.3);
+}
+
+.status-details {
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+}
+
+.detail-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.detail-item .label {
+    color: var(--text-muted);
+}
+
+.detail-item .value {
+    font-family: monospace;
+    font-size: 1.05rem;
+    color: #e2e8f0;
+}
+
+.progress-bar {
+    width: 100%;
+    height: 8px;
+    background: var(--input-bg);
+    border-radius: 4px;
+    overflow: hidden;
+    margin-top: 0.5rem;
+}
+
+.progress-fill {
+    height: 100%;
+    width: 0%;
+    background: linear-gradient(90deg, var(--primary), var(--accent));
+    border-radius: 4px;
+    transition: width 1s linear;
+}

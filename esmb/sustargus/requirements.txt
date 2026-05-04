@@ -1,0 +1,7 @@
+Flask==3.1.2
+Werkzeug==3.1.4
+APScheduler==3.10.4
+RsInstrument==1.124.0
+pyserial==3.5
+waitress==3.0.2
+pandas==2.2.2

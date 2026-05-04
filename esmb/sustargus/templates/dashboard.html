@@ -1,0 +1,186 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SustArgus | Dashboard Administrador</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+</head>
+<body class="app-body">
+    <nav class="navbar glass-panel">
+        <div class="nav-brand">Sust<span class="accent">Argus</span> <span class="badge">ADMIN</span></div>
+        <div class="nav-links">
+            {% if role == 'admin' %}
+            <button class="btn btn-outline" onclick="openUserModal()">👥 Gestionar Usuarios</button>
+            {% endif %}
+            <a href="{{ url_for('sentinel') }}" class="btn btn-outline">Visor Sentinel</a>
+            <a href="{{ url_for('logout') }}" class="btn btn-danger">Cerrar Sesión</a>
+        </div>
+    </nav>
+
+    <div class="container">
+        <div class="grid-layout">
+            <!-- Columna izquierda: Formulario + Grabaciones programadas -->
+            <div class="flex-col gap-lg">
+                <!-- Formulario Programar -->
+                {% if role != 'viewer' %}
+                <div class="glass-panel main-panel">
+                    <h2>Programar Grabación</h2>
+                    <form id="recordForm" class="record-form">
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label>Estación</label>
+                                <select id="stationSelect" required>
+                                    <option value="">-- Seleccionar --</option>
+                                    {% for st in stations %}
+                                    <option value="{{ st.id }}">{{ st.name }} ({{ st.ip_esmb }})</option>
+                                    {% endfor %}
+                                </select>
+                            </div>
+                            <div class="form-group">
+                                <label>Antena</label>
+                                <select id="antennaSelect" required>
+                                    <option value="1">Antena 1</option>
+                                    <option value="2">Antena 2</option>
+                                    <option value="3">Antena 3</option>
+                                    <option value="4">Antena 4</option>
+                                </select>
+                            </div>
+                        </div>
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label>Frec. Inicio (MHz)</label>
+                                <input type="number" step="0.001" id="freqStart" required placeholder="Ej: 100.000">
+                            </div>
+                            <div class="form-group">
+                                <label>Frec. Fin (MHz)</label>
+                                <input type="number" step="0.001" id="freqEnd" required placeholder="Ej: 108.000">
+                            </div>
+                        </div>
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label>Inicio de Grabación</label>
+                                <input type="datetime-local" id="startTime" required>
+                            </div>
+                            <div class="form-group">
+                                <label>Fin de Grabación</label>
+                                <input type="datetime-local" id="endTime" required>
+                            </div>
+                        </div>
+                        <div class="form-group">
+                            <label>Directorio de salida (dejar vacío para usar el de la estación)</label>
+                            <input type="text" id="recordOutputDir" placeholder="Ej: D:/Grabaciones">
+                        </div>
+                        <button type="submit" id="btnSubmitRecord" class="btn btn-primary">📅 PROGRAMAR GRABACIÓN</button>
+                    </form>
+                </div>
+                {% endif %}
+
+                <!-- Tabla de grabaciones programadas -->
+                <div class="glass-panel main-panel">
+                    <div class="panel-header">
+                        <h2>Grabaciones Programadas</h2>
+                        <button class="btn btn-small btn-outline" onclick="loadRecordings()">↻ Actualizar</button>
+                    </div>
+                    <div id="recordingsTable">
+                        <p class="text-muted">Cargando...</p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Columna derecha: Estaciones -->
+            <div class="glass-panel side-panel">
+                <div class="panel-header">
+                    <h2>Fuentes (Estaciones)</h2>
+                    {% if role == 'admin' %}
+                    <button class="btn btn-small btn-success" onclick="openStationModal()">+ Añadir</button>
+                    {% endif %}
+                </div>
+                <ul class="station-list" id="stationList">
+                    {% for st in stations %}
+                    <li class="station-item" id="st-{{ st.id }}">
+                        <div class="station-info">
+                            <strong>{{ st.name }}</strong>
+                            <span>ESMB: {{ st.ip_esmb }}</span>
+                            <span>ZA: {{ st.ip_station }}</span>
+                        </div>
+                        <div class="station-actions">
+                            {% if role == 'admin' %}
+                            <button class="btn btn-small btn-outline" onclick="openEditStationModal({{ st.id }})">✏️</button>
+                            <button class="btn btn-small btn-danger" onclick="deleteStation({{ st.id }})">🗑</button>
+                            {% else %}
+                            <span class="badge guest">Solo lectura</span>
+                            {% endif %}
+                        </div>
+                    </li>
+                    {% else %}
+                    <p class="text-muted" id="noStations">No hay estaciones configuradas.</p>
+                    {% endfor %}
+                </ul>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal Estación (Añadir / Editar) -->
+    <div id="stationModal" class="modal">
+        <div class="modal-content glass-panel">
+            <h2 id="modalTitle">Nueva Estación</h2>
+            <input type="hidden" id="editStationId">
+            <form id="stationForm">
+                <div class="form-group"><label>Nombre</label><input type="text" id="stName" required></div>
+                <div class="form-row">
+                    <div class="form-group"><label>IP ESMB</label><input type="text" id="stIpEsmb" required placeholder="192.168.x.x"></div>
+                    <div class="form-group"><label>IP Estación (ZA129)</label><input type="text" id="stIpStation" required placeholder="192.168.x.x"></div>
+                </div>
+                <div class="form-group"><label>Directorio Salida CSV</label><input type="text" id="stOutputDir" value="C:/Argus/Data" required></div>
+                <div class="form-row">
+                    <div class="form-group"><label>Usuario</label><input type="text" id="stUser" autocomplete="off"></div>
+                    <div class="form-group"><label>Contraseña</label><input type="password" id="stPass" autocomplete="off"></div>
+                </div>
+                <div class="form-group"><label>Observaciones</label><textarea id="stObs" rows="2"></textarea></div>
+                <div class="modal-actions">
+                    <button type="button" class="btn btn-outline" onclick="closeStationModal()">Cancelar</button>
+                    <button type="submit" class="btn btn-primary">Guardar</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Modal Usuarios (Admin Only) -->
+    <div id="userModal" class="modal">
+        <div class="modal-content glass-panel" style="max-width: 600px;">
+            <div class="panel-header">
+                <h2>Gestión de Usuarios</h2>
+                <button class="btn btn-small btn-outline" onclick="closeUserModal()">Cerrar</button>
+            </div>
+            
+            <form id="userForm" class="record-form" style="margin-bottom: 1.5rem; padding-bottom: 1rem; border-bottom: 1px solid var(--border-glass);">
+                <input type="hidden" id="editUserId">
+                <div class="form-row">
+                    <div class="form-group"><label>Usuario</label><input type="text" id="usrName" required></div>
+                    <div class="form-group"><label>Contraseña</label><input type="password" id="usrPass" placeholder="Dejar vacío para no cambiar"></div>
+                    <div class="form-group">
+                        <label>Rol</label>
+                        <select id="usrRole" required>
+                            <option value="viewer">Visor (Lectura)</option>
+                            <option value="manager">Gestor (Grabaciones)</option>
+                            <option value="admin">Administrador (Todo)</option>
+                        </select>
+                    </div>
+                </div>
+                <button type="submit" id="btnSubmitUser" class="btn btn-primary btn-block" style="display: block; width: 100%;">➕ CREAR USUARIO</button>
+            </form>
+
+            <div id="usersListTable">
+                <!-- Se llena vía JS -->
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const USER_ROLE = "{{ role }}";
+    </script>
+    <script src="{{ url_for('static', filename='js/dashboard.js') }}"></script>
+</body>
+</html>

@@ -1,0 +1,277 @@
+2026-04-30 18:11:02,837 - IP: 127.0.0.1 - USER: admin - Login exitoso.
+2026-04-30 18:11:09,925 - IP: 127.0.0.1 - USER: admin - Logout de usuario.
+2026-04-30 18:11:17,824 - IP: 127.0.0.1 - USER: admin - Login exitoso.
+2026-04-30 18:12:36,767 - IP: 127.0.0.1 - USER: admin - Estaci�n a�adida: UMA
+2026-04-30 18:13:24,247 - IP: 127.0.0.1 - USER: admin - Cambio de estado del esc�ner en ESMB IP: 192.168.29.72 a start
+2026-04-30 18:16:52,791 - IP: 127.0.0.1 - USER: admin - Cambio de estado del esc�ner en ESMB IP: 192.168.29.72 a stop
+2026-04-30 18:16:54,571 - IP: 127.0.0.1 - USER: admin - Cambio de estado del esc�ner en ESMB IP: 192.168.29.72 a start
+2026-04-30 18:18:04,724 - IP: 127.0.0.1 - USER: admin - Cambio de estado del esc�ner en ESMB IP: 192.168.29.72 a stop
+2026-04-30 18:18:35,035 - IP: 127.0.0.1 - USER: admin - Estaci�n a�adida: MA-ASISTIDA
+2026-04-30 18:18:55,911 - IP: 127.0.0.1 - USER: admin - Cambio de estado del esc�ner en ESMB IP: 192.168.29.17 a start
+2026-04-30 18:20:17,634 - IP: 127.0.0.1 - USER: admin - Grabaci�n programada en estaci�n 2
+2026-04-30 18:22:42,850 - IP: 127.0.0.1 - USER: admin - Cambio de estado del esc�ner en ESMB IP: 192.168.29.72 a start
+2026-04-30 18:23:00,849 - IP: 127.0.0.1 - USER: admin - Cambio de estado del esc�ner en ESMB IP: 192.168.29.72 a stop
+2026-04-30 18:23:04,549 - IP: 127.0.0.1 - USER: admin - Cambio de estado del esc�ner en ESMB IP: 192.168.29.17 a start
+2026-04-30 18:23:13,331 - IP: 127.0.0.1 - USER: admin - Cambio de estado del esc�ner en ESMB IP: 192.168.29.17 a stop
+2026-04-30 18:23:40,301 - IP: 127.0.0.1 - USER: admin - Estaci�n a�adida: mijas
+2026-04-30 18:23:47,301 - IP: 127.0.0.1 - USER: admin - Cambio de estado del esc�ner en ESMB IP: 192.168.29.22 a start
+2026-04-30 18:24:07,607 - IP: 127.0.0.1 - USER: admin - Cambio de estado del esc�ner en ESMB IP: 192.168.29.72 a stop
+2026-04-30 18:24:10,301 - IP: 127.0.0.1 - USER: admin - Cambio de estado del esc�ner en ESMB IP: 192.168.29.72 a start
+2026-04-30 18:24:14,405 - IP: 127.0.0.1 - USER: admin - Cambio de estado del esc�ner en ESMB IP: 192.168.29.72 a stop
+2026-04-30 18:24:17,694 - IP: 127.0.0.1 - USER: admin - Cambio de estado del esc�ner en ESMB IP: 192.168.29.17 a start
+2026-04-30 18:24:20,482 - IP: 127.0.0.1 - USER: admin - Cambio de estado del esc�ner en ESMB IP: 192.168.29.17 a stop
+2026-04-30 18:32:03,069 | IP: 127.0.0.1 | USER: visitante | Acceso al visor público.
+2026-04-30 18:33:09,406 | IP: 127.0.0.1 | USER: admin | Login exitoso.
+2026-04-30 18:33:21,099 | IP: 127.0.0.1 | USER: admin | Grabación borrada ID:1
+2026-04-30 18:33:28,611 | IP: 127.0.0.1 | USER: admin | Acceso al visor Sentinel.
+2026-04-30 18:33:31,441 | IP: 127.0.0.1 | USER: admin | Acceso al visor Sentinel.
+2026-04-30 18:33:38,448 | IP: 127.0.0.1 | USER: admin | Escáner iniciado ESMB:192.168.29.72 100.0-108.0 MHz
+2026-04-30 18:34:33,906 | IP: 127.0.0.1 | USER: admin | Escáner detenido.
+2026-04-30 18:34:46,759 | IP: 127.0.0.1 | USER: admin | Escáner iniciado ESMB:192.168.29.72 1564.0-1579.0 MHz
+2026-04-30 18:35:51,052 | IP: 127.0.0.1 | USER: admin | Escáner detenido.
+2026-04-30 18:35:54,137 | IP: 127.0.0.1 | USER: admin | Escáner iniciado ESMB:192.168.29.17 1564.0-1579.0 MHz
+2026-04-30 18:36:05,676 | IP: 127.0.0.1 | USER: admin | Escáner detenido.
+2026-04-30 18:50:10,193 | IP: 127.0.0.1 | USER: admin | Acceso al visor Sentinel.
+2026-04-30 18:50:18,939 | IP: 127.0.0.1 | USER: admin | Logout.
+2026-04-30 18:50:20,395 | IP: 127.0.0.1 | USER: visitante | Acceso al visor público.
+2026-04-30 18:50:49,914 | IP: 127.0.0.1 | USER: visitante | Acceso al visor público.
+2026-04-30 18:50:51,393 | IP: 127.0.0.1 | USER: visitante | Acceso al visor público.
+2026-04-30 18:50:52,372 | IP: 127.0.0.1 | USER: visitante | Acceso al visor público.
+2026-04-30 18:51:50,471 | IP: 127.0.0.1 | USER: visitante | Acceso al visor público.
+2026-04-30 18:51:57,229 | IP: 127.0.0.1 | USER: visitante | Acceso al visor público.
+2026-04-30 18:51:59,577 | IP: 127.0.0.1 | USER: visitante | Acceso al visor público.
+2026-04-30 18:52:06,991 | IP: 127.0.0.1 | USER: Visitante | Escáner iniciado ESMB:192.168.29.72 100.0-108.0 MHz
+2026-04-30 18:52:28,303 | IP: 127.0.0.1 | USER: Visitante | Escáner detenido.
+2026-04-30 18:52:36,843 | IP: 127.0.0.1 | USER: Visitante | Escáner iniciado ESMB:192.168.29.72 1564.0-1579.0 MHz
+2026-04-30 18:53:27,690 | IP: 127.0.0.1 | USER: Visitante | Escáner detenido.
+2026-04-30 18:53:28,776 | IP: 127.0.0.1 | USER: Visitante | Escáner iniciado ESMB:192.168.29.17 1564.0-1579.0 MHz
+2026-04-30 18:53:40,204 | IP: 127.0.0.1 | USER: Visitante | Escáner detenido.
+2026-04-30 18:53:41,188 | IP: 127.0.0.1 | USER: Visitante | Escáner iniciado ESMB:192.168.29.22 1564.0-1579.0 MHz
+2026-04-30 18:54:13,771 | IP: 127.0.0.1 | USER: Visitante | Escáner detenido.
+2026-04-30 18:54:18,446 | IP: 127.0.0.1 | USER: Visitante | Escáner iniciado ESMB:192.168.29.72 1564.0-1579.0 MHz
+2026-04-30 18:55:00,869 | IP: 127.0.0.1 | USER: visitante | Acceso al visor público.
+2026-04-30 18:55:18,704 | IP: 127.0.0.1 | USER: visitante | Acceso al visor público.
+2026-04-30 18:55:35,964 | IP: 127.0.0.1 | USER: Visitante | Escáner detenido.
+2026-04-30 18:55:52,432 | IP: 127.0.0.1 | USER: Visitante | Escáner iniciado ESMB:192.168.29.72 100.0-108.0 MHz
+2026-04-30 18:55:59,380 | IP: 127.0.0.1 | USER: Visitante | Escáner detenido.
+2026-04-30 18:57:57,859 | IP: 127.0.0.1 | USER: visitante | Acceso al visor público.
+2026-04-30 18:58:18,742 | IP: 127.0.0.1 | USER: Visitante | Escáner iniciado ESMB:192.168.29.72 100.0-108.0 MHz
+2026-04-30 18:58:41,362 | IP: 127.0.0.1 | USER: Visitante | Escáner detenido.
+2026-04-30 18:58:51,820 | IP: 127.0.0.1 | USER: Visitante | Escáner iniciado ESMB:192.168.29.72 1564.0-1579.0 MHz
+2026-04-30 19:00:25,106 | IP: 127.0.0.1 | USER: Visitante | Escáner detenido.
+2026-04-30 19:01:46,978 | IP: 127.0.0.1 | USER: visitante | Acceso al visor público.
+2026-04-30 19:01:58,366 | IP: 127.0.0.1 | USER: Visitante | Escáner iniciado ESMB:192.168.29.72 1565.0-1579.0 MHz
+2026-04-30 19:03:48,057 | IP: 127.0.0.1 | USER: Visitante | Escáner detenido.
+2026-04-30 19:03:51,738 | IP: 127.0.0.1 | USER: Visitante | Escáner iniciado ESMB:192.168.29.22 1565.0-1579.0 MHz
+2026-04-30 19:05:06,539 | IP: 127.0.0.1 | USER: Visitante | Escáner detenido.
+2026-04-30 19:05:07,893 | IP: 127.0.0.1 | USER: Visitante | Escáner iniciado ESMB:192.168.29.22 1565.0-1579.0 MHz
+2026-04-30 19:05:26,987 | IP: 127.0.0.1 | USER: Visitante | Escáner detenido.
+2026-04-30 19:05:27,625 | IP: 127.0.0.1 | USER: Visitante | Escáner iniciado ESMB:192.168.29.22 1565.0-1579.0 MHz
+2026-04-30 19:06:18,641 | IP: 127.0.0.1 | USER: Visitante | Escáner detenido.
+2026-04-30 19:14:36,595 | IP: 127.0.0.1 | USER: visitante | Acceso al visor público.
+2026-04-30 19:14:42,695 | IP: 127.0.0.1 | USER: Visitante | Escáner iniciado ESMB:192.168.29.72 100.0-108.0 MHz
+2026-04-30 19:14:44,911 | IP: 127.0.0.1 | USER: Visitante | Escáner detenido.
+2026-04-30 19:14:46,260 | IP: 127.0.0.1 | USER: Visitante | Escáner iniciado ESMB:192.168.29.72 100.0-108.0 MHz
+2026-04-30 19:14:48,358 | IP: 127.0.0.1 | USER: Visitante | Escáner detenido.
+2026-04-30 19:14:56,888 | IP: 127.0.0.1 | USER: Visitante | Escáner iniciado ESMB:192.168.29.72 1565.0-1579.0 MHz
+2026-04-30 19:14:58,945 | IP: 127.0.0.1 | USER: Visitante | Escáner detenido.
+2026-04-30 19:15:19,680 | IP: 127.0.0.1 | USER: Visitante | Escáner iniciado ESMB:192.168.29.72 1565.0-1579.0 MHz
+2026-04-30 19:15:21,802 | IP: 127.0.0.1 | USER: Visitante | Escáner detenido.
+2026-04-30 19:15:21,803 | IP: 127.0.0.1 | USER: Visitante | Escáner detenido.
+2026-04-30 19:15:21,803 | IP: 127.0.0.1 | USER: Visitante | Escáner detenido.
+2026-04-30 19:15:21,804 | IP: 127.0.0.1 | USER: Visitante | Escáner detenido.
+2026-04-30 19:15:21,805 | IP: 127.0.0.1 | USER: Visitante | Escáner detenido.
+2026-04-30 19:15:21,805 | IP: 127.0.0.1 | USER: Visitante | Escáner detenido.
+2026-04-30 19:15:21,806 | IP: 127.0.0.1 | USER: Visitante | Escáner detenido.
+2026-04-30 19:15:21,807 | IP: 127.0.0.1 | USER: Visitante | Escáner detenido.
+2026-04-30 19:15:21,807 | IP: 127.0.0.1 | USER: Visitante | Escáner detenido.
+2026-04-30 19:15:21,808 | IP: 127.0.0.1 | USER: Visitante | Escáner detenido.
+2026-04-30 19:15:21,810 | IP: 127.0.0.1 | USER: Visitante | Escáner detenido.
+2026-04-30 19:15:21,811 | IP: 127.0.0.1 | USER: Visitante | Escáner detenido.
+2026-04-30 19:15:21,811 | IP: 127.0.0.1 | USER: Visitante | Escáner detenido.
+2026-04-30 19:15:21,812 | IP: 127.0.0.1 | USER: Visitante | Escáner detenido.
+2026-04-30 19:15:21,812 | IP: 127.0.0.1 | USER: Visitante | Escáner detenido.
+2026-04-30 19:15:21,813 | IP: 127.0.0.1 | USER: Visitante | Escáner detenido.
+2026-04-30 19:15:21,814 | IP: 127.0.0.1 | USER: Visitante | Escáner detenido.
+2026-04-30 19:15:21,815 | IP: 127.0.0.1 | USER: Visitante | Escáner detenido.
+2026-04-30 19:15:25,426 | IP: 127.0.0.1 | USER: Visitante | Escáner iniciado ESMB:192.168.29.72 1565.0-1579.0 MHz
+2026-04-30 19:15:26,325 | IP: 127.0.0.1 | USER: Visitante | Escáner detenido.
+2026-04-30 19:15:32,158 | IP: 127.0.0.1 | USER: Visitante | Escáner iniciado ESMB:192.168.29.17 1565.0-1579.0 MHz
+2026-04-30 19:15:32,858 | IP: 127.0.0.1 | USER: Visitante | Escáner detenido.
+2026-04-30 19:15:38,156 | IP: 127.0.0.1 | USER: Visitante | Escáner iniciado ESMB:192.168.29.22 1565.0-1579.0 MHz
+2026-04-30 19:16:17,992 | IP: 127.0.0.1 | USER: Visitante | Escáner detenido.
+2026-04-30 19:16:21,570 | IP: 127.0.0.1 | USER: Visitante | Escáner iniciado ESMB:192.168.29.72 1565.0-1579.0 MHz
+2026-04-30 19:16:22,459 | IP: 127.0.0.1 | USER: Visitante | Escáner detenido.
+2026-04-30 19:16:39,646 | IP: 127.0.0.1 | USER: Visitante | Escáner iniciado ESMB:192.168.29.72 1565.0-1579.0 MHz
+2026-04-30 19:18:02,792 | IP: 127.0.0.1 | USER: Visitante | Escáner detenido.
+2026-04-30 19:18:07,965 | IP: 127.0.0.1 | USER: Visitante | Escáner iniciado ESMB:192.168.29.17 1565.0-1579.0 MHz
+2026-04-30 19:18:36,273 | IP: 127.0.0.1 | USER: Visitante | Escáner detenido.
+2026-04-30 19:18:43,218 | IP: 127.0.0.1 | USER: admin | Login exitoso.
+2026-04-30 19:19:41,311 | IP: 127.0.0.1 | USER: admin | Estación añadida: MARBELLA
+2026-04-30 19:22:51,233 | IP: 127.0.0.1 | USER: admin | Estación añadida: MARBELLA
+2026-04-30 19:23:13,999 | IP: 127.0.0.1 | USER: admin | Grabación programada estación 1
+2026-04-30 19:23:42,416 | IP: 127.0.0.1 | USER: admin | Grabación programada estación 1
+2026-04-30 19:23:50,974 | IP: 127.0.0.1 | USER: admin | Grabación borrada ID:1
+2026-04-30 19:31:39,626 | IP: 127.0.0.1 | USER: admin | Grabación editada ID:2
+2026-04-30 19:35:47,865 | IP: 127.0.0.1 | USER: admin | Grabación editada ID:2
+2026-04-30 19:38:28,341 | IP: 127.0.0.1 | USER: admin | Grabación editada ID:2
+2026-04-30 19:40:03,747 | IP: 127.0.0.1 | USER: admin | Acceso al visor Sentinel.
+2026-04-30 19:40:52,512 | IP: 127.0.0.1 | USER: admin | Grabación editada ID:2
+2026-04-30 19:42:55,297 | IP: 127.0.0.1 | USER: admin | Grabación editada ID:2
+2026-04-30 19:45:34,444 | IP: 127.0.0.1 | USER: admin | Grabación borrada ID:2
+2026-04-30 19:45:48,144 | IP: 127.0.0.1 | USER: admin | Grabación editada ID:2
+2026-04-30 19:46:13,469 | IP: 127.0.0.1 | USER: admin | Grabación programada estación 1
+2026-04-30 19:48:51,108 | IP: 127.0.0.1 | USER: admin | Grabación editada ID:3
+2026-04-30 19:49:35,485 | IP: 127.0.0.1 | USER: admin | Grabación borrada ID:3
+2026-04-30 19:49:36,868 | IP: 127.0.0.1 | USER: admin | Grabación programada estación 1
+2026-04-30 19:57:05,573 | IP: 127.0.0.1 | USER: admin | Acceso al visor Sentinel.
+2026-04-30 19:57:15,157 | IP: 127.0.0.1 | USER: admin | Escáner iniciado ESMB:192.168.29.102 1565.0-1585.0 MHz
+2026-04-30 20:08:18,304 | IP: 127.0.0.1 | USER: admin | Grabación borrada ID:4
+2026-04-30 20:08:39,876 | IP: 127.0.0.1 | USER: admin | Grabación programada estación 1
+2026-04-30 20:09:28,826 | IP: 127.0.0.1 | USER: admin | Acceso al visor Sentinel.
+2026-05-01 00:01:26,577 | IP: 127.0.0.1 | USER: admin | Grabación programada estación 1
+2026-05-04 00:51:39,014 | IP: 192.168.1.110 | USER: admin | Login exitoso.
+2026-05-04 00:51:42,032 | IP: 192.168.1.110 | USER: admin | Acceso al visor Sentinel.
+2026-05-04 00:52:23,110 | IP: 192.168.1.110 | USER: admin | Estación añadida: UMA
+2026-05-04 00:52:25,501 | IP: 192.168.1.110 | USER: admin | Acceso al visor Sentinel.
+2026-05-04 00:52:35,347 | IP: 192.168.1.110 | USER: admin | Escáner iniciado ESMB:192.168.29.72 1570.0-1580.0 MHz
+2026-05-04 00:53:08,387 | IP: 192.168.1.110 | USER: admin | Escáner detenido.
+2026-05-04 00:53:11,424 | IP: 192.168.1.110 | USER: admin | Escáner iniciado ESMB:192.168.29.72 1564.0-1580.0 MHz
+2026-05-04 00:53:14,172 | IP: 192.168.1.110 | USER: admin | Escáner detenido.
+2026-05-04 00:53:17,800 | IP: 192.168.1.110 | USER: admin | Escáner iniciado ESMB:192.168.29.72 1564.0-1578.0 MHz
+2026-05-04 00:53:35,027 | IP: 192.168.1.110 | USER: admin | Escáner detenido.
+2026-05-04 00:53:39,416 | IP: 192.168.1.110 | USER: admin | Escáner iniciado ESMB:192.168.29.102 1564.0-1578.0 MHz
+2026-05-04 00:53:50,845 | IP: 192.168.1.110 | USER: admin | Escáner detenido.
+2026-05-04 00:53:51,343 | IP: 192.168.1.110 | USER: admin | Escáner iniciado ESMB:192.168.29.102 100.0-108.0 MHz
+2026-05-04 00:53:55,213 | IP: 192.168.1.110 | USER: admin | Escáner detenido.
+2026-05-04 00:53:57,887 | IP: 192.168.1.110 | USER: admin | Escáner iniciado ESMB:192.168.29.72 100.0-108.0 MHz
+2026-05-04 00:56:00,583 | IP: 127.0.0.1 | USER: admin | Login exitoso.
+2026-05-04 00:56:05,226 | IP: 127.0.0.1 | USER: admin | Acceso al visor Sentinel.
+2026-05-04 00:56:12,506 | IP: 127.0.0.1 | USER: admin | Escáner iniciado ESMB:192.168.29.72 100.0-108.0 MHz
+2026-05-04 00:57:45,869 | IP: 127.0.0.1 | USER: admin | Escáner detenido.
+2026-05-04 00:57:48,236 | IP: 127.0.0.1 | USER: admin | Escáner iniciado ESMB:192.168.29.102 100.0-108.0 MHz
+2026-05-04 00:58:07,957 | IP: 127.0.0.1 | USER: admin | Logout.
+2026-05-04 00:58:09,379 | IP: 127.0.0.1 | USER: visitante | Acceso al visor público.
+2026-05-04 00:58:18,518 | IP: 127.0.0.1 | USER: visitante | Acceso al visor público.
+2026-05-04 00:58:19,097 | IP: 127.0.0.1 | USER: visitante | Acceso al visor público.
+2026-05-04 00:58:19,675 | IP: 127.0.0.1 | USER: visitante | Acceso al visor público.
+2026-05-04 00:58:21,023 | IP: 127.0.0.1 | USER: visitante | Acceso al visor público.
+2026-05-04 00:58:36,225 | IP: 127.0.0.1 | USER: visitante | Acceso al visor público.
+2026-05-04 00:58:42,480 | IP: 127.0.0.1 | USER: Visitante | Escáner iniciado ESMB:192.168.29.72 100.0-108.0 MHz
+2026-05-04 00:58:51,476 | IP: 127.0.0.1 | USER: Visitante | Escáner detenido.
+2026-05-04 00:59:18,748 | IP: 127.0.0.1 | USER: Visitante | Escáner iniciado ESMB:192.168.29.72 1570.0-1580.0 MHz
+2026-05-04 01:00:16,268 | IP: 127.0.0.1 | USER: Visitante | Escáner detenido.
+2026-05-04 01:00:34,176 | IP: 127.0.0.1 | USER: Visitante | Escáner iniciado ESMB:192.168.29.72 1570.0-1580.0 MHz
+2026-05-04 01:00:43,859 | IP: 127.0.0.1 | USER: Visitante | Escáner detenido.
+2026-05-04 01:01:23,491 | IP: 127.0.0.1 | USER: Visitante | Escáner iniciado ESMB:192.168.29.72 1570.0-1580.0 MHz
+2026-05-04 01:01:55,638 | IP: 127.0.0.1 | USER: Visitante | Escáner detenido.
+2026-05-04 01:01:55,639 | IP: 127.0.0.1 | USER: Visitante | Escáner detenido.
+2026-05-04 01:01:55,640 | IP: 127.0.0.1 | USER: Visitante | Escáner detenido.
+2026-05-04 01:01:55,643 | IP: 127.0.0.1 | USER: Visitante | Escáner detenido.
+2026-05-04 01:01:55,651 | IP: 127.0.0.1 | USER: Visitante | Escáner detenido.
+2026-05-04 01:01:55,652 | IP: 127.0.0.1 | USER: Visitante | Escáner detenido.
+2026-05-04 01:01:55,653 | IP: 127.0.0.1 | USER: Visitante | Escáner detenido.
+2026-05-04 01:01:55,654 | IP: 127.0.0.1 | USER: Visitante | Escáner detenido.
+2026-05-04 01:01:55,656 | IP: 127.0.0.1 | USER: Visitante | Escáner detenido.
+2026-05-04 01:01:55,663 | IP: 127.0.0.1 | USER: Visitante | Escáner detenido.
+2026-05-04 01:01:55,666 | IP: 127.0.0.1 | USER: Visitante | Escáner detenido.
+2026-05-04 01:01:55,667 | IP: 127.0.0.1 | USER: Visitante | Escáner detenido.
+2026-05-04 01:01:55,669 | IP: 127.0.0.1 | USER: Visitante | Escáner detenido.
+2026-05-04 01:01:55,670 | IP: 127.0.0.1 | USER: Visitante | Escáner detenido.
+2026-05-04 01:01:55,674 | IP: 127.0.0.1 | USER: Visitante | Escáner detenido.
+2026-05-04 01:01:55,675 | IP: 127.0.0.1 | USER: Visitante | Escáner detenido.
+2026-05-04 01:01:55,677 | IP: 127.0.0.1 | USER: Visitante | Escáner detenido.
+2026-05-04 01:01:55,678 | IP: 127.0.0.1 | USER: Visitante | Escáner detenido.
+2026-05-04 01:01:55,680 | IP: 127.0.0.1 | USER: Visitante | Escáner detenido.
+2026-05-04 01:01:55,682 | IP: 127.0.0.1 | USER: Visitante | Escáner detenido.
+2026-05-04 01:01:55,685 | IP: 127.0.0.1 | USER: Visitante | Escáner detenido.
+2026-05-04 01:01:55,686 | IP: 127.0.0.1 | USER: Visitante | Escáner detenido.
+2026-05-04 01:01:55,688 | IP: 127.0.0.1 | USER: Visitante | Escáner detenido.
+2026-05-04 01:01:55,689 | IP: 127.0.0.1 | USER: Visitante | Escáner detenido.
+2026-05-04 01:01:55,690 | IP: 127.0.0.1 | USER: Visitante | Escáner detenido.
+2026-05-04 01:01:55,691 | IP: 127.0.0.1 | USER: Visitante | Escáner detenido.
+2026-05-04 01:01:55,696 | IP: 127.0.0.1 | USER: Visitante | Escáner detenido.
+2026-05-04 01:01:55,697 | IP: 127.0.0.1 | USER: Visitante | Escáner detenido.
+2026-05-04 01:01:55,699 | IP: 127.0.0.1 | USER: Visitante | Escáner detenido.
+2026-05-04 01:01:55,701 | IP: 127.0.0.1 | USER: Visitante | Escáner detenido.
+2026-05-04 01:01:55,704 | IP: 127.0.0.1 | USER: Visitante | Escáner detenido.
+2026-05-04 01:01:55,704 | IP: 127.0.0.1 | USER: Visitante | Escáner detenido.
+2026-05-04 01:01:55,708 | IP: 127.0.0.1 | USER: Visitante | Escáner detenido.
+2026-05-04 01:01:55,709 | IP: 127.0.0.1 | USER: Visitante | Escáner detenido.
+2026-05-04 01:01:55,711 | IP: 127.0.0.1 | USER: Visitante | Escáner detenido.
+2026-05-04 01:01:55,712 | IP: 127.0.0.1 | USER: Visitante | Escáner detenido.
+2026-05-04 01:01:55,714 | IP: 127.0.0.1 | USER: Visitante | Escáner detenido.
+2026-05-04 01:01:55,715 | IP: 127.0.0.1 | USER: Visitante | Escáner detenido.
+2026-05-04 01:01:55,718 | IP: 127.0.0.1 | USER: Visitante | Escáner detenido.
+2026-05-04 01:01:55,720 | IP: 127.0.0.1 | USER: Visitante | Escáner detenido.
+2026-05-04 01:01:55,724 | IP: 127.0.0.1 | USER: Visitante | Escáner detenido.
+2026-05-04 01:01:55,725 | IP: 127.0.0.1 | USER: Visitante | Escáner detenido.
+2026-05-04 01:01:55,727 | IP: 127.0.0.1 | USER: Visitante | Escáner detenido.
+2026-05-04 01:01:55,728 | IP: 127.0.0.1 | USER: Visitante | Escáner detenido.
+2026-05-04 01:01:55,729 | IP: 127.0.0.1 | USER: Visitante | Escáner detenido.
+2026-05-04 01:01:55,730 | IP: 127.0.0.1 | USER: Visitante | Escáner detenido.
+2026-05-04 01:01:55,737 | IP: 127.0.0.1 | USER: Visitante | Escáner detenido.
+2026-05-04 01:01:55,739 | IP: 127.0.0.1 | USER: Visitante | Escáner detenido.
+2026-05-04 01:01:55,740 | IP: 127.0.0.1 | USER: Visitante | Escáner detenido.
+2026-05-04 01:01:55,741 | IP: 127.0.0.1 | USER: Visitante | Escáner detenido.
+2026-05-04 01:01:55,743 | IP: 127.0.0.1 | USER: Visitante | Escáner detenido.
+2026-05-04 01:01:55,744 | IP: 127.0.0.1 | USER: Visitante | Escáner detenido.
+2026-05-04 01:01:55,747 | IP: 127.0.0.1 | USER: Visitante | Escáner detenido.
+2026-05-04 01:01:55,750 | IP: 127.0.0.1 | USER: Visitante | Escáner detenido.
+2026-05-04 01:01:55,751 | IP: 127.0.0.1 | USER: Visitante | Escáner detenido.
+2026-05-04 01:01:55,752 | IP: 127.0.0.1 | USER: Visitante | Escáner detenido.
+2026-05-04 01:01:55,754 | IP: 127.0.0.1 | USER: Visitante | Escáner detenido.
+2026-05-04 01:01:55,755 | IP: 127.0.0.1 | USER: Visitante | Escáner detenido.
+2026-05-04 01:01:55,757 | IP: 127.0.0.1 | USER: Visitante | Escáner detenido.
+2026-05-04 01:01:55,760 | IP: 127.0.0.1 | USER: Visitante | Escáner detenido.
+2026-05-04 01:01:55,761 | IP: 127.0.0.1 | USER: Visitante | Escáner detenido.
+2026-05-04 01:01:55,761 | IP: 127.0.0.1 | USER: Visitante | Escáner detenido.
+2026-05-04 01:01:55,764 | IP: 127.0.0.1 | USER: Visitante | Escáner detenido.
+2026-05-04 01:01:55,764 | IP: 127.0.0.1 | USER: Visitante | Escáner detenido.
+2026-05-04 01:01:55,766 | IP: 127.0.0.1 | USER: Visitante | Escáner detenido.
+2026-05-04 01:01:55,771 | IP: 127.0.0.1 | USER: Visitante | Escáner detenido.
+2026-05-04 01:01:55,771 | IP: 127.0.0.1 | USER: Visitante | Escáner detenido.
+2026-05-04 01:01:55,772 | IP: 127.0.0.1 | USER: Visitante | Escáner detenido.
+2026-05-04 01:01:55,774 | IP: 127.0.0.1 | USER: Visitante | Escáner detenido.
+2026-05-04 01:01:55,774 | IP: 127.0.0.1 | USER: Visitante | Escáner detenido.
+2026-05-04 01:01:55,775 | IP: 127.0.0.1 | USER: Visitante | Escáner detenido.
+2026-05-04 01:01:55,781 | IP: 127.0.0.1 | USER: Visitante | Escáner detenido.
+2026-05-04 01:01:55,782 | IP: 127.0.0.1 | USER: Visitante | Escáner detenido.
+2026-05-04 01:01:55,783 | IP: 127.0.0.1 | USER: Visitante | Escáner detenido.
+2026-05-04 01:01:55,784 | IP: 127.0.0.1 | USER: Visitante | Escáner detenido.
+2026-05-04 01:01:55,785 | IP: 127.0.0.1 | USER: Visitante | Escáner detenido.
+2026-05-04 01:01:55,786 | IP: 127.0.0.1 | USER: Visitante | Escáner detenido.
+2026-05-04 01:01:55,791 | IP: 127.0.0.1 | USER: Visitante | Escáner detenido.
+2026-05-04 01:01:55,792 | IP: 127.0.0.1 | USER: Visitante | Escáner detenido.
+2026-05-04 01:01:55,793 | IP: 127.0.0.1 | USER: Visitante | Escáner detenido.
+2026-05-04 01:01:55,794 | IP: 127.0.0.1 | USER: Visitante | Escáner detenido.
+2026-05-04 01:01:55,794 | IP: 127.0.0.1 | USER: Visitante | Escáner detenido.
+2026-05-04 01:01:55,795 | IP: 127.0.0.1 | USER: Visitante | Escáner detenido.
+2026-05-04 01:01:55,798 | IP: 127.0.0.1 | USER: Visitante | Escáner detenido.
+2026-05-04 01:01:55,801 | IP: 127.0.0.1 | USER: Visitante | Escáner detenido.
+2026-05-04 01:01:55,802 | IP: 127.0.0.1 | USER: Visitante | Escáner detenido.
+2026-05-04 01:01:55,803 | IP: 127.0.0.1 | USER: Visitante | Escáner detenido.
+2026-05-04 01:01:55,804 | IP: 127.0.0.1 | USER: Visitante | Escáner detenido.
+2026-05-04 01:01:55,806 | IP: 127.0.0.1 | USER: Visitante | Escáner detenido.
+2026-05-04 01:01:55,809 | IP: 127.0.0.1 | USER: Visitante | Escáner detenido.
+2026-05-04 01:01:59,468 | IP: 127.0.0.1 | USER: Visitante | Escáner iniciado ESMB:192.168.29.72 1570.0-1580.0 MHz
+2026-05-04 01:02:17,958 | IP: 127.0.0.1 | USER: Visitante | Escáner detenido.
+2026-05-04 01:02:18,528 | IP: 127.0.0.1 | USER: Visitante | Escáner iniciado ESMB:192.168.29.72 1570.0-1580.0 MHz
+2026-05-04 01:02:26,369 | IP: 127.0.0.1 | USER: Visitante | Escáner detenido.
+2026-05-04 01:04:37,763 | IP: 127.0.0.1 | USER: Visitante | Escáner iniciado ESMB:192.168.29.72 1570.0-1580.0 MHz
+2026-05-04 01:04:44,961 | IP: 127.0.0.1 | USER: visitante | Acceso al visor público.
+2026-05-04 01:04:58,913 | IP: 127.0.0.1 | USER: visitante | Acceso al visor público.
+2026-05-04 01:05:09,437 | IP: 127.0.0.1 | USER: Visitante | Escáner iniciado ESMB:192.168.29.72 1570.0-1580.0 MHz
+2026-05-04 01:05:35,741 | IP: 127.0.0.1 | USER: Visitante | Escáner detenido.
+2026-05-04 01:05:40,825 | IP: 127.0.0.1 | USER: Visitante | Escáner iniciado ESMB:192.168.29.72 100.0-108.0 MHz
+2026-05-04 01:05:48,203 | IP: 127.0.0.1 | USER: Visitante | Escáner detenido.
+2026-05-04 01:05:49,064 | IP: 127.0.0.1 | USER: Visitante | Escáner iniciado ESMB:192.168.29.72 100.0-108.0 MHz
+2026-05-04 01:05:57,677 | IP: 127.0.0.1 | USER: Visitante | Escáner detenido.
+2026-05-04 01:06:48,857 | IP: 127.0.0.1 | USER: visitante | Acceso al visor público.
+2026-05-04 01:07:04,818 | IP: 127.0.0.1 | USER: visitante | Acceso al visor público.
+2026-05-04 01:07:07,897 | IP: 127.0.0.1 | USER: Visitante | Escáner iniciado ESMB:192.168.29.72 100.0-108.0 MHz
+2026-05-04 01:07:27,389 | IP: 127.0.0.1 | USER: Visitante | Escáner detenido.
+2026-05-04 01:07:33,526 | IP: 127.0.0.1 | USER: Visitante | Escáner iniciado ESMB:192.168.29.72 1570.0-1580.0 MHz
+2026-05-04 01:07:53,652 | IP: 127.0.0.1 | USER: Visitante | Escáner detenido.
+2026-05-04 09:46:41,590 | IP: 127.0.0.1 | USER: admin | Login exitoso.
+2026-05-04 09:46:44,558 | IP: 127.0.0.1 | USER: admin | Acceso al visor Sentinel.

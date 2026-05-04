@@ -21,12 +21,12 @@ async function loadSources() {
         comboFuentes.innerHTML = '';
         const tbody = document.getElementById('tbody-fuentes');
         tbody.innerHTML = '';
-        
+
         fuentes.forEach(f => {
             const opt = document.createElement('option');
             opt.value = f.id; opt.textContent = f.id;
             comboFuentes.appendChild(opt);
-            
+
             // Añadir a la tabla del modal
             const tr = document.createElement('tr');
             tr.innerHTML = `
@@ -42,16 +42,16 @@ async function loadSources() {
         console.error("Error al cargar fuentes. ¿Está encendido el Http Server?", e);
     }
 }
-window.deleteSource = async function(id) {
+window.deleteSource = async function (id) {
     try {
         const resp = await fetch('/api/fuentes');
         let fuentes = await resp.json();
         fuentes = fuentes.filter(f => f.id !== id);
         await fetch('/api/fuentes', {
-            method: 'POST', body: JSON.stringify(fuentes), headers: {'Content-Type': 'application/json'}
+            method: 'POST', body: JSON.stringify(fuentes), headers: { 'Content-Type': 'application/json' }
         });
         loadSources();
-    } catch(e){}
+    } catch (e) { }
 };
 
 document.getElementById('btn-config-fuentes').onclick = () => {
@@ -61,23 +61,23 @@ document.getElementById('btn-close-modal').onclick = () => {
     document.getElementById('modal-fuentes').style.display = 'none';
 };
 
-window.addFuente = async function() {
+window.addFuente = async function () {
     const id = document.getElementById('new-id').value;
     const path = document.getElementById('new-path').value;
     const user = document.getElementById('new-user').value;
     const pass = document.getElementById('new-pass').value;
-    if(!id || !path) return;
+    if (!id || !path) return;
     try {
         const resp = await fetch('/api/fuentes');
         const fuentes = await resp.json();
-        fuentes.push({id, path, user, password: pass});
+        fuentes.push({ id, path, user, password: pass });
         await fetch('/api/fuentes', {
-            method: 'POST', body: JSON.stringify(fuentes), headers: {'Content-Type': 'application/json'}
+            method: 'POST', body: JSON.stringify(fuentes), headers: { 'Content-Type': 'application/json' }
         });
         loadSources();
         document.getElementById('new-id').value = '';
         document.getElementById('new-path').value = '';
-    } catch(e){}
+    } catch (e) { }
 };
 
 loadSources();
@@ -107,16 +107,16 @@ function playBeep() {
     const now = Date.now();
     if (now - lastBeepTime < 500) return; // Máximo 2 beeps por segundo
     lastBeepTime = now;
-    
+
     if (audioCtx.state === 'suspended') audioCtx.resume();
     const osc = audioCtx.createOscillator();
     const gain = audioCtx.createGain();
     osc.type = 'sawtooth';
     osc.frequency.setValueAtTime(880, audioCtx.currentTime); // 880 Hz
-    
+
     gain.gain.setValueAtTime(0.2, audioCtx.currentTime);
     gain.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.3);
-    
+
     osc.connect(gain);
     gain.connect(audioCtx.destination);
     osc.start();
@@ -128,38 +128,38 @@ const layout3D = {
     title: false,
     autosize: true,
     margin: { l: 0, r: 0, b: 0, t: 0 },
-    paper_bgcolor: '#0d0d0d',
-    plot_bgcolor: '#0d0d0d',
+    paper_bgcolor: '#363434ff',
+    plot_bgcolor: '#0d0e0dff',
     font: { color: '#ffffff' },
     scene: {
         camera: {
             // eye controla la cámara por defecto. 
             // x e y controlan la rotación (para intercambiar izquierda/derecha).
             // z controla la altura o inclinación vertical.
-            eye: { x: 1.2, y: -1.2, z: 0.8 }, 
+            eye: { x: 1.2, y: -1.2, z: 0.4 },
             projection: { type: 'orthographic' }
         },
         xaxis: { title: 'Frecuencia', backgroundcolor: "black", showbackground: true, color: "#ffffff" },
-        yaxis: { 
-            title: 'Tiempo (1 Fotograma ≈ 500ms)<br>', 
-            backgroundcolor: "black", 
-            showbackground: true, 
+        yaxis: {
+            title: 'Tiempo (1 Fotograma ≈ 500ms)<br>',
+            backgroundcolor: "black",
+            showbackground: true,
             color: "#ffffff",
             tickmode: 'array',
-            tickvals: Array.from({length: 13}, (_, j) => -12.0 + (j * 2) * 0.5),
-            ticktext: Array.from({length: 13}, (_, j) => { let i = j * 2; return `${i}-${(12.0 - i * 0.5).toFixed(1).replace('.0','')}sg`; })
+            tickvals: Array.from({ length: 13 }, (_, j) => -12.0 + (j * 2) * 0.5),
+            ticktext: Array.from({ length: 13 }, (_, j) => { let i = j * 2; return `${i}-${(12.0 - i * 0.5).toFixed(1).replace('.0', '')}sg`; })
         },
-        zaxis: { 
-            title: 'dBµV', 
-            backgroundcolor: "black", 
-            showbackground: true, 
-            range: [-10, 80], 
+        zaxis: {
+            title: 'dBµV',
+            backgroundcolor: "black",
+            showbackground: true,
+            range: [-10, 80],
             color: "#ffffff",
             tickmode: 'linear',
             tick0: -10,
             dtick: 10
         },
-        aspectratio: { x: 1.5, y: 1.5, z: 0.5 } // Cúbico y equilibrado
+        aspectratio: { x: 1.5, y: 1.5, z: 0.6 } // Cúbico y equilibrado
     }
 };
 
@@ -168,43 +168,43 @@ const layout2D = {
     autosize: true,
     margin: { l: 40, r: 20, b: 30, t: 10 },
     paper_bgcolor: '#000000',
-    plot_bgcolor: '#000000',
+    plot_bgcolor: '#0e0e2eff',
     font: { color: '#ffffff' },
     xaxis: { title: 'Frecuencia (MHz)', gridcolor: '#333', color: '#ffffff' },
-    yaxis: { title: 'Nivel (dBµV)', gridcolor: '#333', range: [-10, 80], color: '#ffffff' },
+    yaxis: { title: 'Nivel (dBµV)', gridcolor: '#393a39ff', range: [-10, 80], color: '#ffffff' },
     showlegend: false
 };
 
-Plotly.newPlot('plot3D', [{ z: [[0,0],[0,0]], type: 'surface' }], layout3D, {displayModeBar: false});
-Plotly.newPlot('plot2D', [{ x: [0], y: [0], type: 'scatter' }], layout2D, {displayModeBar: false});
+Plotly.newPlot('plot3D', [{ z: [[0, 0], [0, 0]], type: 'surface' }], layout3D, { displayModeBar: false });
+Plotly.newPlot('plot2D', [{ x: [0], y: [0], type: 'scatter' }], layout2D, { displayModeBar: false });
 
 // Limpieza de memoria (UI y Servidor)
-window.clearPlots = function() {
+window.clearPlots = function () {
     if (ws && ws.readyState === WebSocket.OPEN) {
         ws.send(JSON.stringify({ action: "clear_cache", source: currentSource }));
     }
-    Plotly.react('plot3D', [{ z: [[0,0],[0,0]], type: 'surface', showscale: false }], layout3D, {displayModeBar: false});
-    Plotly.react('plot2D', [{ x: [0], y: [0], type: 'scatter' }], layout2D, {displayModeBar: false});
+    Plotly.react('plot3D', [{ z: [[0, 0], [0, 0]], type: 'surface', showscale: false }], layout3D, { displayModeBar: false });
+    Plotly.react('plot2D', [{ x: [0], y: [0], type: 'scatter' }], layout2D, { displayModeBar: false });
     writeLog("Visores gráficos y búfer C++ borrados por orden de usuario.");
 };
 
-window.resetCamera3D = function() {
+window.resetCamera3D = function () {
     layout3D.scene.camera = { eye: { x: 0.5, y: -2.0, z: 0.6 } };
-    Plotly.relayout('plot3D', {'scene.camera': layout3D.scene.camera});
+    Plotly.relayout('plot3D', { 'scene.camera': layout3D.scene.camera });
 };
 
-window.resetZoom2D = function() {
-    Plotly.relayout('plot2D', {'xaxis.autorange': true, 'yaxis.range': [-10, 80]});
+window.resetZoom2D = function () {
+    Plotly.relayout('plot2D', { 'xaxis.autorange': true, 'yaxis.range': [-10, 80] });
 };
 
 // Ajuste dinámico de Plotly al estirar la ventana
 window.addEventListener('resize', () => {
     Plotly.Plots.resize(document.getElementById('plot3D'));
     Plotly.Plots.resize(document.getElementById('plot2D'));
-    
+
     // Ancla la cámara 3D para evitar que el cubo de WebGL salga volando fuera del cuadro
     const p3d = document.getElementById('plot3D');
-    if(p3d && p3d.layout && p3d.layout.scene && p3d.layout.scene.camera){
+    if (p3d && p3d.layout && p3d.layout.scene && p3d.layout.scene.camera) {
         layout3D.scene.camera = p3d.layout.scene.camera;
         Plotly.relayout('plot3D', {
             'scene.camera': layout3D.scene.camera,
@@ -217,10 +217,10 @@ window.addEventListener('resize', () => {
 
 function updateFilters() {
     if (!ws || ws.readyState !== WebSocket.OPEN) return;
-    
+
     let fmin = parseFloat(entryFmin.value);
     let fmax = parseFloat(entryFmax.value);
-    
+
     ws.send(JSON.stringify({
         action: "update_filters",
         source: currentSource,
@@ -231,11 +231,11 @@ function updateFilters() {
 
 // ==== Light / Dark Mode ====
 let isLightMode = false;
-window.toggleTheme = function() {
+window.toggleTheme = function () {
     isLightMode = !isLightMode;
     const body = document.body;
     const btnTheme = document.getElementById("btn-theme-toggle");
-    
+
     // Tweak body class
     if (isLightMode) {
         body.classList.add("light-mode");
@@ -282,42 +282,42 @@ entryFmax.addEventListener('change', updateFilters);
 async function doFullCapture() {
     const p3d = document.getElementById("plot3D");
     const p2d = document.getElementById("plot2D");
-    
+
     const w3 = p3d.offsetWidth || 800; const h3 = p3d.offsetHeight || 600;
     const w2 = p2d.offsetWidth || 800; const h2 = p2d.offsetHeight || 400;
 
     const img3dURL = await Plotly.toImage(p3d, { format: 'jpeg', width: w3, height: h3 });
     const img2dURL = await Plotly.toImage(p2d, { format: 'jpeg', width: w2, height: h2 });
-    
+
     const img3d = document.createElement("img");
     img3d.src = img3dURL;
     img3d.style.position = "absolute"; img3d.style.left = "0"; img3d.style.top = "0";
     img3d.style.zIndex = "99";
-    
+
     const img2d = document.createElement("img");
     img2d.src = img2dURL;
     img2d.style.position = "absolute"; img2d.style.left = "0"; img2d.style.top = "0";
     img2d.style.zIndex = "99";
-    
+
     p3d.style.position = "relative"; p3d.appendChild(img3d);
     p2d.style.position = "relative"; p2d.appendChild(img2d);
-    
+
     // Escondemos los lienzos de plotly nativos
     const plotsC = document.querySelectorAll('.plotly');
     plotsC.forEach(c => c.style.opacity = '0');
-    
+
     const canvas = await html2canvas(document.body, { backgroundColor: isLightMode ? '#eef2f5' : '#111' });
-    
+
     // Restauramos
     p3d.removeChild(img3d);
     p2d.removeChild(img2d);
     plotsC.forEach(c => c.style.opacity = '1');
-    
+
     return canvas;
 }
 
 // Guardado automático rápido sin congelar la web (sin html2canvas)
-window.takeScreenshotAndUploadFast = async function() {
+window.takeScreenshotAndUploadFast = async function () {
     try {
         const p3d = document.getElementById("plot3D");
         // Capturar solo la gráfica 3D que es lo más importante y es instantáneo
@@ -325,27 +325,27 @@ window.takeScreenshotAndUploadFast = async function() {
         fetch('/api/captura', {
             method: 'POST',
             body: JSON.stringify({ src: currentSource, image: base64Data }),
-            headers: {'Content-Type': 'application/json'}
+            headers: { 'Content-Type': 'application/json' }
         });
-    } catch(e) { console.error("Error en autocaptura rápida:", e); }
+    } catch (e) { console.error("Error en autocaptura rápida:", e); }
 };
 
 // Guardado automático en el servidor (original)
-window.takeScreenshotAndUpload = async function() {
+window.takeScreenshotAndUpload = async function () {
     try {
         const canvas = await doFullCapture();
         const base64Data = canvas.toDataURL('image/jpeg', 0.8);
         fetch('/api/captura', {
             method: 'POST',
             body: JSON.stringify({ src: currentSource, image: base64Data }),
-            headers: {'Content-Type': 'application/json'}
+            headers: { 'Content-Type': 'application/json' }
         });
         writeLog("Auto-Captura rotativa subida al servidor.");
-    } catch(e) { console.error("Error en autocaptura:", e); }
+    } catch (e) { console.error("Error en autocaptura:", e); }
 };
 
 // Descarga manual local (Para que el usuario elija dónde guardar)
-window.captureManual = async function() {
+window.captureManual = async function () {
     try {
         const canvas = await doFullCapture();
         const base64Data = canvas.toDataURL('image/jpeg', 0.95);
@@ -366,10 +366,10 @@ btnStart.addEventListener("click", () => {
 
     currentSource = comboFuentes.value;
     const wsUrl = `ws://${window.location.hostname}:8081`;
-    
+
     writeLog(`Conectando a motor motor espacial C++ en ${wsUrl}...`);
     ws = new WebSocket(wsUrl);
-    
+
     ws.onerror = () => {
         writeLog("[Error Critico] El navegador no puede conectar con el puerto 8081.");
         writeLog("Asegúrese de que el C++.exe está abierto y el Firewall de Windows no lo está bloqueando.");
@@ -390,20 +390,20 @@ btnStart.addEventListener("click", () => {
         btnStart.disabled = true;
         btnStop.disabled = false;
         writeLog(`Conexión establecida. Recibiendo datos de [${currentSource}]`);
-        
+
         ws.send(JSON.stringify({
             action: "subscribe",
             source: currentSource
         }));
         updateFilters();
-        
+
         // Iniciar Game Loop de renderizado
         if (!isRenderLoopRunning) {
             isRenderLoopRunning = true;
             requestAnimationFrame(renderLoop);
         }
     };
-    
+
     ws.onmessage = (event) => {
         const data = JSON.parse(event.data);
         if (data.type === "log_msg") {
@@ -416,19 +416,19 @@ btnStart.addEventListener("click", () => {
         else if (data.type === "radar_frame") {
             // Guardar para el renderizado asíncrono
             latestRadarData = data;
-            
+
             // Algoritmo de Detección de Múltiples Picos Locales (Procesa el 100% de las tramas)
             let thres = parseFloat(entryThreshold.value) || 15;
             for (let i = 1; i < data.y2d.length - 1; i++) {
                 if (data.y2d[i] >= thres) {
                     // Es un pico real si sobresale de su montículo (mayor que los vecinos)
-                    if (data.y2d[i] > data.y2d[i-1] && data.y2d[i] > data.y2d[i+1]) {
+                    if (data.y2d[i] > data.y2d[i - 1] && data.y2d[i] > data.y2d[i + 1]) {
                         writeDetection(`T:${data.time} -> F:${data.x2d[i].toFixed(4)} L:${data.y2d[i].toFixed(1)}`);
                         picos_detectados++;
                     }
                 }
             }
-            
+
             // Salvavidas por si la señal es muy plana o está en los bordes
             let max_y = Math.max(...data.y2d);
             if (picos_detectados === 0 && max_y >= thres) {
@@ -436,7 +436,7 @@ btnStart.addEventListener("click", () => {
                 writeDetection(`T:${data.time} -> F:${data.x2d[idx].toFixed(4)} L:${max_y.toFixed(1)}`);
                 picos_detectados++;
             }
-            
+
             if (picos_detectados > 0) {
                 const chk = document.getElementById("chk-alarm");
                 if (chk && chk.checked) {
@@ -445,7 +445,7 @@ btnStart.addEventListener("click", () => {
             }
         }
     };
-    
+
     ws.onclose = () => {
         isConnected = false;
         lblStatus.innerText = "Estado: Desconectado";
@@ -469,26 +469,26 @@ function renderLoop() {
         latestRadarData = null; // Limpiar para no repintar lo mismo
 
         document.getElementById("lbl-time-sync").innerHTML = data.time;
-        
+
         // Render 3D Surface
         const trace3D = {
             z: data.z3d,
-            x: data.x3d, 
-            y: Array.from({length: 25}, (_, i) => -12.0 + i * 0.5), // Eje Y en segundos
+            x: data.x3d,
+            y: Array.from({ length: 25 }, (_, i) => -12.0 + i * 0.5), // Eje Y en segundos
             colorscale: 'Jet',
             type: 'surface',
             cmin: data.db_min,
             cmax: data.db_max,
             showscale: false
         };
-        
+
         const plot3DDiv = document.getElementById("plot3D");
         if (plot3DDiv && plot3DDiv.layout && plot3DDiv.layout.scene && plot3DDiv.layout.scene.camera) {
             layout3D.scene.camera = plot3DDiv.layout.scene.camera;
         }
-        
-        Plotly.react('plot3D', [trace3D], layout3D, {displayModeBar: false});
-        
+
+        Plotly.react('plot3D', [trace3D], layout3D, { displayModeBar: false });
+
         // Render 2D Line & Threshold Line
         let thres = parseFloat(entryThreshold.value) || 15;
         const trace2D = {
@@ -496,14 +496,14 @@ function renderLoop() {
             y: data.y2d,
             type: 'scatter',
             mode: 'lines+markers',
-            marker: { 
-                color: data.y2d, 
+            marker: {
+                color: data.y2d,
                 colorscale: 'Jet',
                 cmin: data.db_min,
                 cmax: data.db_max,
-                size: 4 
+                size: 5
             },
-            line: { color: 'rgba(128, 128, 128, 0.4)', width: 1 }
+            line: { color: 'rgba(6, 243, 18, 0.91)', width: 2 }
         };
         const thres2D = {
             x: [Math.min(...data.x2d), Math.max(...data.x2d)],
@@ -512,8 +512,8 @@ function renderLoop() {
             mode: 'lines',
             line: { color: '#FFD700', width: 1, dash: 'dash' }
         };
-        Plotly.react('plot2D', [trace2D, thres2D], layout2D, {displayModeBar: false});
-        
+        Plotly.react('plot2D', [trace2D, thres2D], layout2D, { displayModeBar: false });
+
         // ================= AUTO CAPTURA ROTATIVA (Rápida) =================
         autoCaptureCounter++;
         if (autoCaptureCounter >= 10) {
@@ -540,12 +540,12 @@ document.getElementById('btn-zoom-in').addEventListener('click', () => {
     layout3D.scene.camera.eye.x *= 0.8;
     layout3D.scene.camera.eye.y *= 0.8;
     layout3D.scene.camera.eye.z *= 0.8;
-    Plotly.relayout('plot3D', {'scene.camera': layout3D.scene.camera });
+    Plotly.relayout('plot3D', { 'scene.camera': layout3D.scene.camera });
 });
 
 document.getElementById('btn-zoom-out').addEventListener('click', () => {
     layout3D.scene.camera.eye.x *= 1.25;
     layout3D.scene.camera.eye.y *= 1.25;
     layout3D.scene.camera.eye.z *= 1.25;
-    Plotly.relayout('plot3D', {'scene.camera': layout3D.scene.camera });
+    Plotly.relayout('plot3D', { 'scene.camera': layout3D.scene.camera });
 });

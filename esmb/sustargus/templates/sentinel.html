@@ -1,0 +1,99 @@
+<!DOCTYPE html>
+<html lang="es">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SustArgus | Sentinel Viewer</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+    <script src="{{ url_for('static', filename='js/plotly-2.27.0.min.js') }}"></script>
+</head>
+
+<body class="app-body sentinel-mode">
+    <nav class="navbar glass-panel">
+        <div class="nav-brand">Sust<span class="accent">Argus</span> <span class="badge guest">VISOR</span>
+            <span class="text-muted" style="font-size:0.75rem;font-weight:400;margin-left:0.5rem">{{ username }}</span>
+        </div>
+        <div class="nav-links">
+            {% if role == 'admin' %}
+            <a href="{{ url_for('dashboard') }}" class="btn btn-outline">Volver a Admin</a>
+            {% endif %}
+            {% if role != 'guest' %}
+            <a href="{{ url_for('logout') }}" class="btn btn-danger">Cerrar Sesión</a>
+            {% else %}
+            <a href="{{ url_for('login') }}" class="btn btn-outline">Iniciar Sesión</a>
+            {% endif %}
+        </div>
+    </nav>
+
+    <div class="container sentinel-grid">
+        <!-- Panel de Control y Log -->
+        <div class="glass-panel control-panel" style="display: flex; flex-direction: column;">
+            <h2>Control ESMB</h2>
+
+            <div class="form-group">
+                <label>Estación</label>
+                <select id="viewerStationSelect" onchange="onStationChange()">
+                    <option value="">-- Seleccionar --</option>
+                    {% for st in stations %}
+                    <option value="{{ st.ip_esmb }}" data-id="{{ st.id }}">{{ st.name }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+
+            <div class="form-row">
+                <div class="form-group">
+                    <label>Frec. Inicio (MHz)</label>
+                    <input type="number" id="freqStart" value="100.0" step="0.1" min="0.1">
+                </div>
+                <div class="form-group">
+                    <label>Frec. Fin (MHz)</label>
+                    <input type="number" id="freqEnd" value="108.0" step="0.1" min="0.1">
+                </div>
+            </div>
+
+            <div class="form-group">
+                <label>Paso (kHz)</label>
+                <input type="number" id="stepKhz" value="100" step="1" min="1">
+            </div>
+
+            <div class="form-group">
+                <label>Umbral Picos (dBm)</label>
+                <input type="number" id="peakThreshold" value="0" step="0.1">
+            </div>
+
+            <button class="btn btn-primary btn-block pulse" id="btnStart" onclick="startScan()">▶ INICIAR
+                ESCÁNER</button>
+            <button class="btn btn-danger btn-block mt-1" id="btnStop" onclick="stopScan()" style="display:none">⏹
+                DETENER ESCÁNER</button>
+
+            <div class="status-indicator mt-2" id="scanStatus">
+                <div class="led led-off" id="statusLed"></div>
+                <span id="statusText">Desconectado</span>
+            </div>
+
+            <hr style="border: 0; border-top: 1px solid var(--border-glass); margin: 1.5rem 0;">
+
+            <div class="log-panel" style="padding: 0; margin-top: 1rem;">
+                <div class="panel-header">
+                    <h3>Log ESMB</h3>
+                    <button class="btn btn-small btn-outline" onclick="clearLog()">Limpiar</button>
+                </div>
+                <div id="esmbLog" class="esmb-log" style="height: 200px; overflow-y: auto;">
+                    <p class="text-muted log-empty">Esperando datos...</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Gráficos -->
+        <div class="glass-panel chart-panel" style="padding: 0; gap: 0; background: transparent; border: none; flex: 1;">
+            <div id="chart3D" class="chart-container" style="height: 75%; min-height: 400px;"></div>
+            <div id="chart2D" class="chart-container" style="height: 25%; min-height: 200px;"></div>
+        </div>
+    </div>
+
+    <script src="{{ url_for('static', filename='js/sentinel.js') }}"></script>
+</body>
+
+</html>

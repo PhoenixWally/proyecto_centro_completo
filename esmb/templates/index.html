@@ -1,0 +1,86 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Escáner de Frecuencias ESMB</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+</head>
+<body>
+    <div class="background-animation"></div>
+    
+    <div class="container glass-panel">
+        <header>
+            <div class="logo-container">
+                <div class="pulse-indicator" id="status-indicator"></div>
+                <h1>Panel de Control ESMB</h1>
+            </div>
+            <p class="subtitle">Monitor de barrido de frecuencias RF</p>
+        </header>
+
+        <main>
+            <form id="scan-form">
+                <div class="input-grid">
+                    <div class="input-group">
+                        <label for="freq_inicio">Frecuencia Inicial (MHz)</label>
+                        <input type="number" id="freq_inicio" name="freq_inicio" step="0.001" value="100.0" required>
+                    </div>
+                    <div class="input-group">
+                        <label for="freq_fin">Frecuencia Final (MHz)</label>
+                        <input type="number" id="freq_fin" name="freq_fin" step="0.001" value="105.0" required>
+                    </div>
+                    <div class="input-group">
+                        <label for="paso">Salto (MHz)</label>
+                        <input type="number" id="paso" name="paso" step="0.001" value="0.1" required>
+                    </div>
+                </div>
+
+                <div class="duration-section">
+                    <h3>Duración del Análisis</h3>
+                    <div class="input-grid-2">
+                        <div class="input-group">
+                            <label for="dias">Días</label>
+                            <input type="number" id="dias" name="dias" min="0" value="0" required>
+                        </div>
+                        <div class="input-group">
+                            <label for="horas">Horas</label>
+                            <input type="number" id="horas" name="horas" min="0" value="1" required>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="actions">
+                    <button type="submit" id="btn-start" class="btn btn-primary">Iniciar Escaneo</button>
+                    <button type="button" id="btn-stop" class="btn btn-danger" disabled>Detener</button>
+                </div>
+            </form>
+
+            <div id="status-panel" class="status-panel hidden">
+                <div class="status-header">
+                    <h3>Estado del Escaneo</h3>
+                    <span id="scan-badge" class="badge">En curso</span>
+                </div>
+                <div class="status-details">
+                    <div class="detail-item">
+                        <span class="label">Archivo CSV:</span>
+                        <span class="value" id="val-csv">-</span>
+                    </div>
+                    <div class="detail-item">
+                        <span class="label">Tiempo Restante:</span>
+                        <span class="value" id="val-time">00:00:00</span>
+                    </div>
+                    <div class="detail-item">
+                        <span class="label">Progreso:</span>
+                        <div class="progress-bar">
+                            <div class="progress-fill" id="progress-fill"></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <script src="{{ url_for('static', filename='js/app.js') }}"></script>
+</body>
+</html>
