@@ -563,6 +563,22 @@ def scan_stop():
     audit_log(username, f"Escáner detenido en {ip}")
     return jsonify({"success": True})
 
+@app.route('/api/esmb/stats/<ip>')
+def esmb_stats(ip):
+    state = get_scanner(ip)
+    def generate():
+        while True:
+            with state['lock']:
+                out = {
+                    "trace": state['latest_trace'],
+                    "running": state['running'],
+                    "owner": state['owner'],
+                    "error": state['error']
+                }
+                yield f"data: {json.dumps(out)}\n\n"
+            time.sleep(1)
+    return Response(generate(), mimetype='text/event-stream')
+
 @app.route('/api/esmb/data')
 @login_required
 def esmb_data():

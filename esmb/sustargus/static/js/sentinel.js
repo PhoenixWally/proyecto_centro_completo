@@ -97,53 +97,59 @@ async function stopScan() {
     addLog('Monitor detenido', 'system');
 }
 
-// ─── AJAX Polling – datos en tiempo real ────────────────────
-let pollInterval = null;
-
+// ─── SSE – Datos en tiempo real ──────────────────────────────
 function startSSE() {
-    if (pollInterval) clearInterval(pollInterval);
-    pollInterval = setInterval(fetchData, 100); // 100ms polling rigido
-}
-
-function closeSEE() {
-    if (pollInterval) { clearInterval(pollInterval); pollInterval = null; }
-}
-
-async function fetchData() {
     const ip = document.getElementById('viewerStationSelect').value;
     if (!ip) return;
 
-    try {
-        const res = await fetch(`/api/esmb/data?ip=${ip}`);
-        const payload = await res.json();
-        
+    if (sseSource) sseSource.close();
+    
+    addLog(`Conectando a stream de datos: ${ip}...`, 'system');
+    sseSource = new EventSource(`/api/esmb/stats/${ip}`);
+
+    sseSource.onmessage = (e) => {
+        const data = JSON.parse(e.data);
         const btnStart = document.getElementById('btnStart');
         const btnStop = document.getElementById('btnStop');
 
-        if (payload.is_running) {
-            isScanning = true;
-            // Si el dueño no soy yo, ocultar controles
-            if (payload.owner !== payload.current_user) {
-                btnStart.style.display = 'none';
-                btnStop.style.display  = 'none';
-                setStatus(true, `Escaneando (Controlado por ${payload.owner})`);
+        if (data.running) {
+            // Alguien está escaneando
+            if (data.owner !== USERNAME_ACTUAL) {
+                if (btnStart) btnStart.style.display = 'none';
+                if (btnStop) btnStop.style.display = 'none';
+                setStatus(true, `Escaneando (Controlado por ${data.owner})`);
             } else {
-                btnStart.style.display = 'none';
-                btnStop.style.display  = 'block';
+                if (btnStart) btnStart.style.display = 'none';
+                if (btnStop) btnStop.style.display = 'block';
                 setStatus(true, 'Escaneando (Controlado por TI)');
             }
 
-            if (payload.trace && payload.trace.frequencies.length > 0) {
-                processNewData(payload.trace.frequencies, payload.trace.levels);
+            if (data.trace && data.trace.frequencies && data.trace.frequencies.length > 0) {
+                processNewData(data.trace.frequencies, data.trace.levels);
             }
         } else {
-            isScanning = false;
-            btnStart.style.display = 'block';
-            btnStop.style.display  = 'none';
+            // Estación libre
+            if (btnStart) btnStart.style.display = 'block';
+            if (btnStop) btnStop.style.display = 'none';
             setStatus(false, 'Estación Libre');
+            isScanning = false;
         }
-    } catch (err) {
-        console.error("Error polling:", err);
+
+        if (data.error) {
+            addLog('Error ESMB: ' + data.error, 'error');
+        }
+    };
+
+    sseSource.onerror = () => {
+        console.error("Error en SSE, reintentando...");
+        // EventSource reintenta solo, pero podemos loguear
+    };
+}
+
+function closeSEE() {
+    if (sseSource) {
+        sseSource.close();
+        sseSource = null;
     }
 }
 
