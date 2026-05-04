@@ -609,7 +609,8 @@ if __name__ == '__main__':
     try:
         import recorder
         print("[*] Iniciando servicio de Grabación en segundo plano...")
-        recorder_thread = threading.Thread(target=recorder.main, daemon=True)
+        # Pasamos el diccionario active_scanners para crear el puente de Live View
+        recorder_thread = threading.Thread(target=recorder.main, args=(active_scanners,), daemon=True)
         recorder_thread.start()
     except Exception as e:
         print(f"[!] Error iniciando grabador: {e}")

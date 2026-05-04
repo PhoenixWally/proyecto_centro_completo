@@ -30,7 +30,7 @@ def parse_db_date(date_str):
     return None
 
 class RecordingWorker(threading.Thread):
-    def __init__(self, rid, ip, antenna, f_start, f_end, output_dir, station_name, time_end_str):
+    def __init__(self, rid, ip, antenna, f_start, f_end, output_dir, station_name, time_end_str, shared_state=None):
         super().__init__()
         self.rid = rid
         self.ip = ip
@@ -40,6 +40,7 @@ class RecordingWorker(threading.Thread):
         self.output_dir = output_dir if output_dir else "C:/Grabaciones"
         self.station_name = station_name
         self.time_end_str = time_end_str # Formato HH:MM
+        self.shared_state = shared_state # Diccionario de app.py
         self.running = True
 
     def select_antenna(self):
@@ -57,7 +58,16 @@ class RecordingWorker(threading.Thread):
             print(f"    [!] Error seleccionando antena en ID {self.rid}: {e}")
 
     def run(self):
-        print(f"[+] INICIANDO GRABACIÓN ID {self.rid} | {self.station_name} | Fin: {self.end_time}")
+        print(f"[+] INICIANDO GRABACIÓN ID {self.rid} | {self.station_name}")
+        
+        # Sincronizar estado con la WEB si existe el puente
+        if self.shared_state:
+            with self.shared_state['lock']:
+                self.shared_state['running'] = True
+                self.shared_state['owner']   = f"GRABADOR (ID:{self.rid})"
+                self.shared_state['freq_start'] = self.f_start
+                self.shared_state['freq_end']   = self.f_end
+
         self.select_antenna()
         
         instr = None
@@ -133,7 +143,14 @@ class RecordingWorker(threading.Thread):
                             if lvl < -9e36: continue
                             freq = round(self.f_start + (i * paso_real), 6)
                             writer.writerow([fecha_str, hora_str, freq, lvl])
+                            f_list.append(freq)
+                            v_list.append(lvl)
                         
+                        # Actualizar Live View
+                        if self.shared_state:
+                            with self.shared_state['lock']:
+                                self.shared_state['latest_trace'] = {"frequencies": f_list, "levels": v_list}
+
                         csv_file.flush()
                         trace_count += 1
                         if trace_count % 20 == 0:
@@ -158,10 +175,14 @@ class RecordingWorker(threading.Thread):
             db.close()
         finally:
             if instr: instr.close()
+            if self.shared_state:
+                with self.shared_state['lock']:
+                    self.shared_state['running'] = False
+                    self.shared_state['owner']   = None
             if self.rid in active_threads: del active_threads[self.rid]
 
-def main():
-    print("══ SustArgus Recorder Service v2.0 (Long-Term) ══")
+def main(shared_scanners=None):
+    print("══ ESMB-Control Recorder Service (Integrated) ══")
     
     while True:
         try:
@@ -193,7 +214,20 @@ def main():
                         db.execute("UPDATE recordings SET status='running' WHERE id=?", (r['id'],))
                         db.commit()
                     
-                    t = RecordingWorker(r['id'], r['s_ip'], r['antenna'], r['freq_start'], r['freq_end'], r['output_dir'], r['s_name'], r['time_end'])
+                    # Buscar o crear el estado compartido para esta IP
+                    s_state = None
+                    if shared_scanners:
+                        # Acceder a la lógica de app.get_scanner sin importar app
+                        if r['s_ip'] not in shared_scanners:
+                            shared_scanners[r['s_ip']] = {
+                                'running': False, 'owner': None, 'ip': r['s_ip'],
+                                'freq_start': 0, 'freq_end': 0, 'step_khz': 100,
+                                'latest_trace': {'frequencies': [], 'levels': []},
+                                'error': None, 'lock': threading.Lock()
+                            }
+                        s_state = shared_scanners[r['s_ip']]
+
+                    t = RecordingWorker(r['id'], r['s_ip'], r['antenna'], r['freq_start'], r['freq_end'], r['output_dir'], r['s_name'], r['time_end'], shared_state=s_state)
                     active_threads[r['id']] = t
                     t.start()
                 
