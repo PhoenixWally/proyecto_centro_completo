@@ -6,7 +6,12 @@ import threading
 import csv
 from RsInstrument import *
 
-BASE_DIR = os.path.dirname(os.path.abspath(__file__))
+import sys
+if getattr(sys, 'frozen', False):
+    BASE_DIR = os.path.dirname(sys.executable)
+else:
+    BASE_DIR = os.path.dirname(os.path.abspath(__file__))
+
 DB_PATH  = os.path.join(BASE_DIR, 'data', 'sustargus.db')
 
 # Configuración de rotación
@@ -184,6 +189,18 @@ class RecordingWorker(threading.Thread):
 def main(shared_scanners=None):
     print("══ ESMB-Control Recorder Service (Integrated) ══")
     
+    # Esperar a que la DB esté lista (inicializada por app.py)
+    ready = False
+    while not ready:
+        try:
+            db = get_db()
+            db.execute("SELECT 1 FROM recordings LIMIT 1")
+            db.close()
+            ready = True
+        except:
+            print("[...] Esperando inicialización de base de datos...")
+            time.sleep(2)
+
     while True:
         try:
             db = get_db()
