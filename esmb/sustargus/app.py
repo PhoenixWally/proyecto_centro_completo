@@ -441,7 +441,7 @@ def delete_station(sid):
 
 # ─── API Grabaciones ─────────────────────────────────────────
 @app.route('/api/recordings', methods=['GET'])
-@admin_required
+@login_required
 def list_recordings():
     db = get_db()
     rows = db.execute('''SELECT r.*, s.name as station_name FROM recordings r
@@ -478,7 +478,7 @@ def add_recording():
     return jsonify({"success": True, "id": cur.lastrowid})
 
 @app.route('/api/recordings/<int:rid>', methods=['GET'])
-@admin_required
+@login_required
 def get_recording(rid):
     db = get_db()
     row = db.execute("SELECT * FROM recordings WHERE id=?", (rid,)).fetchone()

@@ -16,8 +16,8 @@
             <span class="text-muted" style="font-size:0.75rem;font-weight:400;margin-left:0.5rem">{{ username }}</span>
         </div>
         <div class="nav-links">
-            {% if role == 'admin' %}
-            <a href="{{ url_for('dashboard') }}" class="btn btn-outline">Volver a Admin</a>
+            {% if role != 'guest' %}
+            <a href="{{ url_for('dashboard') }}" class="btn btn-outline">Dashboard</a>
             {% endif %}
             {% if role != 'guest' %}
             <a href="{{ url_for('logout') }}" class="btn btn-danger">Cerrar Sesión</a>

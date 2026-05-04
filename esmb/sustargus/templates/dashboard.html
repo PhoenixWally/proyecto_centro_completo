@@ -9,7 +9,11 @@
 </head>
 <body class="app-body">
     <nav class="navbar glass-panel">
-        <div class="nav-brand">Sust<span class="accent">Argus</span> <span class="badge">ADMIN</span></div>
+        <div class="nav-brand">Sust<span class="accent">Argus</span> 
+            {% if role == 'admin' %}<span class="badge">ADMIN</span>
+            {% elif role == 'manager' %}<span class="badge">GESTOR</span>
+            {% else %}<span class="badge guest">VISOR</span>{% endif %}
+        </div>
         <div class="nav-links">
             {% if role == 'admin' %}
             <button class="btn btn-outline" onclick="openUserModal()">👥 Gestionar Usuarios</button>
