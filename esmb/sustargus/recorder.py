@@ -4,6 +4,7 @@ import os
 import time
 import threading
 import csv
+import json
 from RsInstrument import *
 
 import sys
@@ -78,21 +79,36 @@ class RecordingWorker(threading.Thread):
         self.select_antenna()
         
         instr = None
-        try:
-            # Lógica maestra de grabador_esmb_ok.py
-            instr = RsInstrument(f'TCPIP::{self.ip}::5555::SOCKET', True, False)
-            instr.visa_timeout = 5000
-            instr.write("*CLS; ABORT")
-            instr.write("INIT:CONT ON")
-            instr.write(":FREQ:MODE SWE")
-            instr.write(":TRAC:FEED:CONT MTRACE, ALW")
-            instr.write(":STAT:TRAC:ENAB #B10010")
-            instr.write(f":FREQ:STAR {self.f_start} MHz;STOP {self.f_end} MHz")
+        
+        def connect_and_setup_instr():
+            nonlocal instr
+            if instr:
+                try: instr.close()
+                except: pass
             
-            span = self.f_end - self.f_start
-            paso = 0.1 if span > 1 else 0.01
-            instr.write(f":SWE:STEP {paso} MHz")
-            instr.write(":FORM ASC")
+            try:
+                print(f"    [*] ID {self.rid}: (Re)conectando a {self.ip}...")
+                instr = RsInstrument(f'TCPIP::{self.ip}::5555::SOCKET', True, False)
+                instr.visa_timeout = 5000
+                instr.write("*CLS; ABORT")
+                instr.write("INIT:CONT ON")
+                instr.write(":FREQ:MODE SWE")
+                instr.write(":TRAC:FEED:CONT MTRACE, ALW")
+                instr.write(":STAT:TRAC:ENAB #B10010")
+                instr.write(f":FREQ:STAR {self.f_start} MHz;STOP {self.f_end} MHz")
+                
+                span = self.f_end - self.f_start
+                paso = 0.1 if span > 1 else 0.01
+                instr.write(f":SWE:STEP {paso} MHz")
+                instr.write(":FORM ASC")
+                return True
+            except Exception as e:
+                print(f"    [!] ID {self.rid}: Error al conectar: {e}")
+                instr = None
+                return False
+
+        try:
+            connect_and_setup_instr()
             
             file_start_time = time.time()
             current_file = None
@@ -159,6 +175,9 @@ class RecordingWorker(threading.Thread):
                         break
 
                 try:
+                    if not instr:
+                        raise Exception("Instrumento no conectado. Reintentando...")
+
                     instr.write(":INIT;*WAI")
                     time.sleep(0.5) 
                     
@@ -179,10 +198,17 @@ class RecordingWorker(threading.Thread):
                             f_list.append(freq)
                             v_list.append(lvl)
                         
-                        # Actualizar Live View
+                        # Actualizar Live View con Pre-Serialización para 100+ usuarios
                         if self.shared_state:
                             with self.shared_state['lock']:
                                 self.shared_state['latest_trace'] = {"frequencies": f_list, "levels": v_list}
+                                self.shared_state['cached_json'] = json.dumps({
+                                    "trace": self.shared_state['latest_trace'],
+                                    "running": True,
+                                    "owner": self.shared_state['owner'],
+                                    "error": None
+                                })
+                                self.shared_state['version'] += 1
 
                         if trace_count % 20 == 0:
                             csv_file.flush()
@@ -193,8 +219,10 @@ class RecordingWorker(threading.Thread):
                     if (time.time() - file_start_time) > (MAX_FILE_MINUTES * 60) or os.path.getsize(current_file) > MAX_FILE_BYTES:
                         open_new_file()
                 except Exception as e:
-                    print(f"    [!] ID {self.rid} Error: {e}")
-                    time.sleep(1)
+                    print(f"    [!] ID {self.rid} Error (Se perdió la conexión): {e}")
+                    # Auto-reconectar en la siguiente iteración
+                    time.sleep(2)
+                    connect_and_setup_instr()
 
                 time.sleep(0.1)
 

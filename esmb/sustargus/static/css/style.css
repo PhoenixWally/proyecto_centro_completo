@@ -6,6 +6,9 @@
     --text-muted:   #94a3b8;
     --accent:       #3b82f6;
     --accent-h:     #2563eb;
+    --flame-1:      #ff4500;
+    --flame-2:      #ff8c00;
+    --flame-3:      #ffd700;
     --danger:       #ef4444;
     --success:      #10b981;
     --warning:      #f59e0b;
@@ -37,7 +40,35 @@ body {
 h1,h2,h3 { font-weight: 700; margin-bottom: .85rem; }
 h2 { font-size: 1.15rem; }
 h3 { font-size: 1rem; }
-.accent      { color: var(--accent); }
+.accent {
+    background: linear-gradient(
+        0deg, 
+        #ff0000 0%, 
+        #ff4500 25%, 
+        #ff8c00 50%, 
+        #ffd700 75%, 
+        #ffffff 100%
+    );
+    background-size: 100% 300%;
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    font-weight: 900;
+    display: inline-block;
+    filter: drop-shadow(0 0 5px rgba(255, 69, 0, 0.6));
+    animation: 
+        flame-move 3s infinite alternate ease-in-out,
+        flame-wobble 2s infinite alternate ease-in-out;
+}
+
+@keyframes flame-move {
+    0% { background-position: 0% 0%; }
+    100% { background-position: 0% 100%; }
+}
+
+@keyframes flame-wobble {
+    0% { transform: skewX(-0.5deg) scale(1); filter: drop-shadow(0 0 4px #ff4500); }
+    100% { transform: skewX(0.8deg) scale(1.02); filter: drop-shadow(0 0 12px #ff8c00); }
+}
 .text-muted  { color: var(--text-muted); }
 .mt-1        { margin-top: .5rem; }
 .mt-2        { margin-top: 1rem; }

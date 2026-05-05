@@ -14,7 +14,9 @@
     <nav class="navbar glass-panel">
         <div class="nav-brand">ESMB-<span class="accent">Control</span> <span class="badge guest">VISOR</span>
             <span class="text-muted" style="font-size:0.75rem;font-weight:400;margin-left:0.5rem">{{ username }}</span>
-            <span id="lowPrecisionWarn" class="blink-red" style="display:none; margin-left:2rem; font-size:0.9rem; font-weight:800;">[!] PRECISIÓN BAJA, POCOS PUNTOS</span>
+            <span id="lowPrecisionWarn" class="blink-red"
+                style="display:none; margin-left:2rem; font-size:0.9rem; font-weight:800;">[!] PRECISIÓN BAJA, POCOS
+                PUNTOS</span>
         </div>
         <div class="nav-links">
             {% if role != 'guest' %}
@@ -64,9 +66,11 @@
                 <input type="number" id="peakThreshold" value="0" step="0.1">
             </div>
 
-            {% if role != 'guest' and role != 'viewer' %}
-            <button class="btn btn-primary btn-block pulse" id="btnStart" onclick="startScan()">▶ INICIAR ESCÁNER</button>
-            <button class="btn btn-danger btn-block mt-1" id="btnStop" onclick="stopScan()" style="display:none">⏹ DETENER ESCÁNER</button>
+            {% if role != 'guest' %}
+            <button class="btn btn-primary btn-block pulse" id="btnStart" onclick="startScan()">▶ INICIAR
+                ESCÁNER</button>
+            <button class="btn btn-danger btn-block mt-1" id="btnStop" onclick="stopScan()" style="display:none">⏹
+                DETENER ESCÁNER</button>
             {% else %}
             <div class="alert alert-danger mt-2" style="text-align:center; font-size: 0.8rem;">
                 ⚠️ Modo Solo Lectura<br>No tienes permisos para controlar el hardware.
@@ -92,7 +96,8 @@
         </div>
 
         <!-- Gráficos -->
-        <div class="glass-panel chart-panel" style="padding: 0; gap: 0; background: transparent; border: none; flex: 1;">
+        <div class="glass-panel chart-panel"
+            style="padding: 0; gap: 0; background: transparent; border: none; flex: 1;">
             <div id="chart3D" class="chart-container" style="height: 75%; min-height: 400px;"></div>
             <div id="chart2D" class="chart-container" style="height: 25%; min-height: 200px;"></div>
         </div>

@@ -233,17 +233,30 @@ def get_scanner(ip):
     with scanners_lock:
         if ip not in active_scanners:
             active_scanners[ip] = {
+                'lock': threading.Lock(),
                 'running': False,
                 'owner': None,
-                'ip': ip,
-                'freq_start': 0,
-                'freq_end': 0,
-                'step_khz': 100,
+                'freq_start': 100.0,
+                'freq_end': 105.0,
+                'step_khz': 100.0,
                 'latest_trace': {'frequencies': [], 'levels': []},
-                'error': None,
-                'lock': threading.Lock()
+                'cached_json': '', # Para optimización masiva de 100+ usuarios
+                'version': 0,
+                'error': None
             }
         return active_scanners[ip]
+
+def _update_scanner_cache(state):
+    """Actualiza la versión serializada del estado para optimización masiva"""
+    with state['lock']:
+        data = {
+            "trace": state['latest_trace'],
+            "running": state['running'],
+            "owner": state['owner'],
+            "error": state['error']
+        }
+        state['cached_json'] = json.dumps(data)
+        state['version'] += 1
 
 def esmb_scan_thread(ip, freq_start, freq_end, step_khz=100.0, owner=None):
     """Hilo que gestiona el escaneo de una IP específica"""
@@ -320,6 +333,7 @@ def esmb_scan_thread(ip, freq_start, freq_end, step_khz=100.0, owner=None):
                 with state['lock']:
                     state['latest_trace'] = {"frequencies": f_list, "levels": v_list}
                     state['error'] = None
+                _update_scanner_cache(state)
             
             time.sleep(0.05)
             
@@ -339,6 +353,7 @@ def esmb_scan_thread(ip, freq_start, freq_end, step_khz=100.0, owner=None):
             else:
                 with state['lock']:
                     state['error'] = f"Reconectando... {str(e)}"
+                _update_scanner_cache(state)
                 time.sleep(2)
 
     if instr:
@@ -350,6 +365,7 @@ def esmb_scan_thread(ip, freq_start, freq_end, step_khz=100.0, owner=None):
         if state['owner'] == owner:
             state['running'] = False
             state['owner'] = None
+    _update_scanner_cache(state)
     print(f"[*] Hilo de escaneo en {ip} finalizado.")
 
 # ─── Rutas principales ───────────────────────────────────────
@@ -594,7 +610,7 @@ def delete_recording(rid):
 
 # ─── API Scanner ESMB (real) ─────────────────────────────────
 @app.route('/api/esmb/scan/start', methods=['POST'])
-@manager_required
+@login_required
 def scan_start():
     d = request.json
     ip         = d.get('ip_esmb')
@@ -627,7 +643,7 @@ def scan_start():
     return jsonify({"success": True})
 
 @app.route('/api/esmb/scan/stop', methods=['POST'])
-@manager_required
+@login_required
 def scan_stop():
     ip = request.json.get('ip_esmb')
     if not ip: return jsonify({"success": False, "error": "IP requerida"}), 400
@@ -640,11 +656,12 @@ def scan_stop():
         if not state['running']:
             return jsonify({"success": True})
             
-        if state['owner'] is not None and state['owner'] != username and session.get('role') != 'admin':
+        if state['owner'] is not None and state['owner'] != username and session.get('role') not in ['admin', 'manager']:
             return jsonify({"success": False, "error": f"No puedes detener este escáner, pertenece a {state['owner']}"}), 403
             
         state['running'] = False
         
+    _update_scanner_cache(state)
     audit_log(username, f"Escáner detenido en {ip}")
     return jsonify({"success": True})
 
@@ -652,16 +669,15 @@ def scan_stop():
 def esmb_stats(ip):
     state = get_scanner(ip)
     def generate():
+        last_v = -1
         while True:
-            with state['lock']:
-                out = {
-                    "trace": state['latest_trace'],
-                    "running": state['running'],
-                    "owner": state['owner'],
-                    "error": state['error']
-                }
-                yield f"data: {json.dumps(out)}\n\n"
-            time.sleep(1)
+            # OPTIMIZACIÓN MASIVA: Si la versión no ha cambiado, no enviamos nada
+            # para ahorrar ancho de banda y CPU en los 100+ clientes
+            if state['version'] != last_v:
+                last_v = state['version']
+                yield f"data: {state['cached_json']}\n\n"
+            
+            time.sleep(0.1) # 10 FPS de límite para visores externos (ahorra CPU)
     return Response(generate(), mimetype='text/event-stream')
 
 @app.route('/api/esmb/data')
@@ -697,8 +713,8 @@ if __name__ == '__main__':
 
     try:
         from waitress import serve
-        print("[+] ESMB-Control (Web) iniciado en http://0.0.0.0:8000")
-        serve(app, host='0.0.0.0', port=8000)
+        print("[+] ESMB-Control (Web) optimizado para 100+ usuarios en http://0.0.0.0:8000")
+        serve(app, host='0.0.0.0', port=8000, threads=200, channel_timeout=120)
     except ImportError:
         print("[!] Waitress no detectado, usando modo debug...")
         app.run(host='0.0.0.0', port=8000, debug=False)

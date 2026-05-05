@@ -2,34 +2,34 @@
 // sentinel.js  –  Visor ESMB en Tiempo Real
 // ═══════════════════════════════════════════════════════
 
-let sseSource   = null;
-let isScanning  = false;
-let zHistory    = [];   // Historial de trazas para el 3D
-let freqAxis    = [];   // Eje X de frecuencias (se fija al iniciar el scan)
+let sseSource = null;
+let isScanning = false;
+let zHistory = [];   // Historial de trazas para el 3D
+let freqAxis = [];   // Eje X de frecuencias (se fija al iniciar el scan)
 const MAX_Z_ROWS = 30;  // Filas de historial en 3D
-const MAX_LOG    = 50;  // Máx entradas en log
-let lastLogTime  = 0;   // Para no saturar el log con medidas
+const MAX_LOG = 50;  // Máx entradas en log
+let lastLogTime = 0;   // Para no saturar el log con medidas
 
 function addLog(message, type = 'system') {
     const logBox = document.getElementById('esmbLog');
     if (!logBox) return;
-    
+
     const entry = document.createElement('div');
     const now = new Date();
-    const timeStr = now.getHours().toString().padStart(2, '0') + ':' + 
-                  now.getMinutes().toString().padStart(2, '0') + ':' + 
-                  now.getSeconds().toString().padStart(2, '0');
-    
+    const timeStr = now.getHours().toString().padStart(2, '0') + ':' +
+        now.getMinutes().toString().padStart(2, '0') + ':' +
+        now.getSeconds().toString().padStart(2, '0');
+
     entry.className = `log-row ${type}`;
     entry.innerHTML = `<span style="opacity:0.5">[${timeStr}]</span> ${message}`;
-    
+
     logBox.appendChild(entry);
     logBox.scrollTop = logBox.scrollHeight;
-    
+
     if (logBox.children.length > MAX_LOG) {
         logBox.removeChild(logBox.firstChild);
     }
-    
+
     const emptyMsg = logBox.querySelector('.log-empty');
     if (emptyMsg) emptyMsg.remove();
 }
@@ -40,7 +40,7 @@ function onStationChange() {
     freqAxis = [];
     // Limpiar gráficas
     if (window.Plotly) {
-        Plotly.react('chart3D', [{ z: [[0,0],[0,0]], type: 'surface' }], { title: 'Cargando...' });
+        Plotly.react('chart3D', [{ z: [[0, 0], [0, 0]], type: 'surface' }], { title: 'Cargando...' });
         Plotly.react('chart2D', [{ x: [], y: [] }], { title: 'Cargando...' });
     }
     // Reiniciar polling para la nueva estación
@@ -53,8 +53,8 @@ async function startScan() {
     if (!ip) { alert('Selecciona una estación primero.'); return; }
 
     const freqStart = parseFloat(document.getElementById('freqStart').value);
-    const freqEnd   = parseFloat(document.getElementById('freqEnd').value);
-    const stepKhz   = parseFloat(document.getElementById('stepKhz').value) || 100;
+    const freqEnd = parseFloat(document.getElementById('freqEnd').value);
+    const stepKhz = parseFloat(document.getElementById('stepKhz').value) || 100;
     if (freqStart >= freqEnd) { alert('Frecuencia de inicio debe ser menor que la de fin.'); return; }
 
     const res = await fetch('/api/esmb/scan/start', {
@@ -70,11 +70,11 @@ async function startScan() {
         return;
     }
 
-    isScanning  = true;
-    zHistory    = [];
-    freqAxis    = [];
+    isScanning = true;
+    zHistory = [];
+    freqAxis = [];
     document.getElementById('btnStart').style.display = 'none';
-    document.getElementById('btnStop').style.display  = 'block';
+    document.getElementById('btnStop').style.display = 'block';
     setStatus(true, 'Conectando...');
     addLog(`Monitor Iniciado: ${ip} (${freqStart}-${freqEnd} MHz)`, 'system');
     initCharts(freqStart, freqEnd);
@@ -85,14 +85,14 @@ async function stopScan() {
     const ip = document.getElementById('viewerStationSelect').value;
     if (!ip) return;
     isScanning = false;
-    await fetch('/api/esmb/scan/stop', { 
+    await fetch('/api/esmb/scan/stop', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ ip_esmb: ip })
     });
     closeSEE();
     document.getElementById('btnStart').style.display = 'block';
-    document.getElementById('btnStop').style.display  = 'none';
+    document.getElementById('btnStop').style.display = 'none';
     setStatus(false, 'Detenido');
     addLog('Monitor detenido', 'system');
 }
@@ -103,7 +103,7 @@ function startSSE() {
     if (!ip) return;
 
     if (sseSource) sseSource.close();
-    
+
     addLog(`Conectando a stream de datos: ${ip}...`, 'system');
     sseSource = new EventSource(`/api/esmb/stats/${ip}`);
 
@@ -159,7 +159,7 @@ function processNewData(xRow, yRow) {
 
     // Añadir al log visual
     const logEl = document.getElementById('esmbLog');
-    
+
     // Solo logueamos picos que pasen el threshold para no saturar la web
     const ts = new Date().toLocaleTimeString();
     let picos = [];
@@ -168,10 +168,10 @@ function processNewData(xRow, yRow) {
             picos.push({ f: xRow[i], db: yRow[i] });
         }
     }
-    
+
     // Ordenar picos de mayor a menor y logear el más alto
     if (picos.length > 0) {
-        picos.sort((a,b) => b.db - a.db);
+        picos.sort((a, b) => b.db - a.db);
         const top = picos[0];
         addLog(`${top.f.toFixed(4)} MHz | ${top.db.toFixed(1)} dBm (Pico Máx)`, 'log-peak');
     }
@@ -211,15 +211,15 @@ function processNewData(xRow, yRow) {
         }
     ], {
         paper_bgcolor: 'rgba(0,0,0,0)',
-        plot_bgcolor:  'rgba(0,0,0,0)',
+        plot_bgcolor: 'rgba(0,0,0,0)',
         font: { color: '#e2e8f0', family: 'Inter' },
         margin: { l: 60, r: 20, b: 80, t: 35 },
         xaxis: { title: 'Frecuencia (MHz)', color: '#94a3b8', gridcolor: 'rgba(255,255,255,0.05)' },
         yaxis: { title: 'dBm', color: '#94a3b8', gridcolor: 'rgba(255,255,255,0.05)' },
         legend: { font: { color: '#e2e8f0' } },
         uirevision: 'true'
-    }, { 
-        responsive: true, 
+    }, {
+        responsive: true,
         displayModeBar: true,
         toImageButtonOptions: { format: 'png', filename: filename + '_2D' }
     });
@@ -256,8 +256,8 @@ function processNewData(xRow, yRow) {
         }
     };
 
-    Plotly.react('chart3D', [trace3D], layout3D, { 
-        displayModeBar: true, 
+    Plotly.react('chart3D', [trace3D], layout3D, {
+        displayModeBar: true,
         responsive: true,
         toImageButtonOptions: { format: 'png', filename: filename + '_3D' }
     });
@@ -288,7 +288,7 @@ function switchTab(tab) {
 function initCharts(freqStart, freqEnd) {
     const baseLayout = {
         paper_bgcolor: 'rgba(0,0,0,0)',
-        plot_bgcolor:  'rgba(0,0,0,0)',
+        plot_bgcolor: 'rgba(0,0,0,0)',
         font: { color: '#e2e8f0', family: 'Inter' },
         margin: { l: 50, r: 20, b: 50, t: 35 }
     };
@@ -339,7 +339,7 @@ function initCharts(freqStart, freqEnd) {
         }
     ], {
         paper_bgcolor: 'rgba(0,0,0,0)',
-        plot_bgcolor:  'rgba(0,0,0,0)',
+        plot_bgcolor: 'rgba(0,0,0,0)',
         font: { color: '#e2e8f0', family: 'Inter' },
         margin: { l: 50, r: 20, b: 50, t: 35 },
         xaxis: { title: 'Frecuencia (MHz)', color: '#94a3b8', gridcolor: 'rgba(255,255,255,0.05)' },
