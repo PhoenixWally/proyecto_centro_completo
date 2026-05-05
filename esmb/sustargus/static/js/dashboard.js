@@ -106,6 +106,7 @@ async function loadRecordings(filterStationId = null) {
             <td><span class="badge ${statusClass}">${r.status}</span></td>
             <td>
                 ${(USER_ROLE !== 'viewer') ? `
+                    ${r.status === 'running' ? `<button class="btn btn-small btn-danger" onclick="stopRecording(${r.id})" title="Parar ahora">⏹ Parar</button>` : ''}
                     <button class="btn btn-small btn-outline" onclick="editRecording(${r.id})">✏️</button>
                     <button class="btn btn-small btn-danger" onclick="deleteRecording(${r.id})">🗑</button>
                 ` : `<span class="badge guest">Solo lectura</span>`}
@@ -151,6 +152,16 @@ async function editRecording(id) {
     document.getElementById('recordOutputDir').value = r.output_dir;
     
     document.getElementById('btnSubmitRecord').textContent = '💾 ACTUALIZAR GRABACIÓN';
+}
+
+async function stopRecording(id) {
+    if (!confirm('¿Detener esta grabación ahora?')) return;
+    const res = await fetch(`/api/recordings/${id}/stop`, { method: 'POST' });
+    if (res.ok) {
+        loadRecordings();
+    } else {
+        alert('Error al detener la grabación.');
+    }
 }
 
 async function deleteRecording(id) {

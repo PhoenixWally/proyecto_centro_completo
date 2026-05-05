@@ -238,7 +238,7 @@ def get_scanner(ip):
                 'owner': None,
                 'freq_start': 100.0,
                 'freq_end': 105.0,
-                'step_khz': 100.0,
+                'step_khz': 10.0,
                 'latest_trace': {'frequencies': [], 'levels': []},
                 'cached_json': '', # Para optimización masiva de 100+ usuarios
                 'version': 0,
@@ -258,7 +258,7 @@ def _update_scanner_cache(state):
         state['cached_json'] = json.dumps(data)
         state['version'] += 1
 
-def esmb_scan_thread(ip, freq_start, freq_end, step_khz=100.0, owner=None):
+def esmb_scan_thread(ip, freq_start, freq_end, step_khz=10.0, owner=None):
     """Hilo que gestiona el escaneo de una IP específica"""
     state = get_scanner(ip)
     
@@ -608,6 +608,22 @@ def delete_recording(rid):
     audit_log(session['username'], f"Grabación borrada ID:{rid}")
     return jsonify({"success": True})
 
+@app.route('/api/recordings/<int:rid>/stop', methods=['POST'])
+@manager_required
+def stop_recording(rid):
+    """Para una grabación activa inmediatamente."""
+    from recorder import active_threads
+    db = get_db()
+    # 1. Marcar en DB para que el hilo lo detecte en su próxima comprobación
+    db.execute("UPDATE recordings SET status='stopped' WHERE id=?", (rid,))
+    db.commit()
+    # 2. Señalar directamente al hilo si está en memoria
+    if rid in active_threads:
+        active_threads[rid].running = False
+    audit_log(session['username'], f"Grabación detenida ID:{rid}")
+    return jsonify({"success": True})
+
+
 # ─── API Scanner ESMB (real) ─────────────────────────────────
 @app.route('/api/esmb/scan/start', methods=['POST'])
 @login_required
@@ -616,7 +632,7 @@ def scan_start():
     ip         = d.get('ip_esmb')
     freq_start = float(d.get('freq_start', 100.0))
     freq_end   = float(d.get('freq_end',   105.0))
-    step_khz   = float(d.get('step_khz',   100.0))
+    step_khz   = float(d.get('step_khz',   10.0))
     username   = session.get('username', 'Visitante')
 
     if not ip:

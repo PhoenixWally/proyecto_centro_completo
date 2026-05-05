@@ -178,8 +178,8 @@ class RecordingWorker(threading.Thread):
                     if not instr:
                         raise Exception("Instrumento no conectado. Reintentando...")
 
-                    # Secuencia SCPI correcta: disparar barrido, esperar, leer
-                    instr.write(":INIT;*WAI")
+                    # Con INIT:CONT ON el ESMB barre solo continuamente.
+                    # Solo leemos la traza más reciente directamente, sin relanzar barrido.
                     raw_data = instr.query(":TRAC? MTRACE")
                     levels = [float(x) for x in raw_data.split(',') if x.strip()]
                     f_list = []
