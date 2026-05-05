@@ -101,6 +101,10 @@ class RecordingWorker(threading.Thread):
                 paso = 0.1 if span > 1 else 0.01
                 instr.write(f":SWE:STEP {paso} MHz")
                 instr.write(":FORM ASC")
+                # Disparar el primer barrido y esperar a que complete
+                # antes de entrar al bucle de lectura
+                instr.write(":INIT")
+                instr.query("*OPC?")  # Espera el primer barrido completo
                 return True
             except Exception as e:
                 print(f"    [!] ID {self.rid}: Error al conectar: {e}")
