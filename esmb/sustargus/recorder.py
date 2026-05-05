@@ -149,8 +149,8 @@ class RecordingWorker(threading.Thread):
                 current_file = os.path.join(final_dir, filename)
                 
                 csv_file = open(current_file, 'w', newline='')
-                writer = csv.writer(csv_file)
-                writer.writerow(['Fecha', 'Hora', 'Frecuencia (MHz)', 'Nivel (dBuV)'])
+                writer = csv.writer(csv_file, delimiter=';')
+                writer.writerow(['T', 'F', 'L'])
                 file_start_time = time.time()
                 print(f"    [File] ID {self.rid}: Nuevo archivo -> {current_file}")
 
@@ -187,15 +187,16 @@ class RecordingWorker(threading.Thread):
                     v_list = []
                     
                     if len(levels) > 1:
-                        fecha_str = now_dt.strftime("%Y-%m-%d")
-                        hora_str = now_dt.strftime("%H:%M:%S.%f")[:-3]
+                        time_str = now_dt.strftime("%d/%m/%Y %H:%M:%S.%f")
                         paso_real = (self.f_end - self.f_start) / (len(levels) - 1)
                         
                         for i, lvl in enumerate(levels):
                             if lvl < -9e36: continue
-                            freq = round(self.f_start + (i * paso_real), 6)
-                            writer.writerow([fecha_str, hora_str, freq, lvl])
-                            f_list.append(freq)
+                            freq_mhz = round(self.f_start + (i * paso_real), 6)
+                            freq_hz = int(round(freq_mhz * 1000000))
+                            lvl_str = f"{lvl:.1f}".replace('.', ',')
+                            writer.writerow([time_str, freq_hz, lvl_str])
+                            f_list.append(freq_mhz)
                             v_list.append(lvl)
                         
                         # Actualizar Live View con Pre-Serialización para 100+ usuarios
