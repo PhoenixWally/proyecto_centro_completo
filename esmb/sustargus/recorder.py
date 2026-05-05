@@ -101,10 +101,12 @@ class RecordingWorker(threading.Thread):
                 paso = 0.1 if span > 1 else 0.01
                 instr.write(f":SWE:STEP {paso} MHz")
                 instr.write(":FORM ASC")
-                # Disparar el primer barrido y esperar a que complete
-                # antes de entrar al bucle de lectura
+                # Disparar el primer barrido y esperar 2s para que MTRACE
+                # acumule datos suficientes antes de la primera lectura.
+                # (Necesario en firmwares V01.72 donde *OPC? retorna
+                # antes de que el buffer esté lleno)
                 instr.write(":INIT")
-                instr.query("*OPC?")  # Espera el primer barrido completo
+                time.sleep(2)
                 return True
             except Exception as e:
                 print(f"    [!] ID {self.rid}: Error al conectar: {e}")
