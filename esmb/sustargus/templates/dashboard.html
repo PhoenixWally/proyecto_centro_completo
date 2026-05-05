@@ -40,6 +40,7 @@
                         <div class="form-row">
                             <div class="form-group">
                                 <label>Estación</label>
+                                <input type="text" id="searchDashboardSelect" placeholder="🔍 Buscar estación..." onkeyup="filterSelect('searchDashboardSelect', 'stationSelect')" style="margin-bottom: 5px; padding: 0.5rem; width: 100%; border-radius: 4px; border: 1px solid var(--border-glass); background: rgba(0,0,0,0.2); color: white;">
                                 <select id="stationSelect" required>
                                     <option value="">-- Seleccionar --</option>
                                     {% for st in stations %}
@@ -115,6 +116,7 @@
                     <button class="btn btn-small btn-success" onclick="openStationModal()">+ Añadir</button>
                     {% endif %}
                 </div>
+                <input type="text" id="searchDashboardList" placeholder="🔍 Filtrar lista..." onkeyup="filterList('searchDashboardList', 'stationList')" style="margin-bottom: 15px; padding: 0.5rem; width: 100%; border-radius: 4px; border: 1px solid var(--border-glass); background: rgba(0,0,0,0.2); color: white;">
                 <ul class="station-list" id="stationList">
                     {% for st in stations %}
                     <li class="station-item" id="st-{{ st.id }}">

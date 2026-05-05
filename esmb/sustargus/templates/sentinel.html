@@ -37,6 +37,7 @@
 
             <div class="form-group">
                 <label>Estación</label>
+                <input type="text" id="searchSentinel" placeholder="🔍 Buscar estación..." onkeyup="filterSelect('searchSentinel', 'viewerStationSelect')" style="margin-bottom: 5px; padding: 0.5rem; width: 100%; border-radius: 4px; border: 1px solid var(--border-glass); background: rgba(0,0,0,0.2); color: white;">
                 <select id="viewerStationSelect" onchange="onStationChange()">
                     <option value="">-- Seleccionar --</option>
                     {% for st in stations %}

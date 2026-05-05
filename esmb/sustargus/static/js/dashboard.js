@@ -329,3 +329,41 @@ document.addEventListener('DOMContentLoaded', () => {
     flatpickr("#timeStart", timeConfig);
     flatpickr("#timeEnd", timeConfig);
 });
+
+// ─── Buscadores ────────────────────────────────────────────
+function filterSelect(inputId, selectId) {
+    const input = document.getElementById(inputId);
+    const filter = input.value.toUpperCase();
+    const select = document.getElementById(selectId);
+    const options = select.getElementsByTagName('option');
+
+    for (let i = 0; i < options.length; i++) {
+        const txtValue = options[i].textContent || options[i].innerText;
+        if (options[i].value === "") continue;
+        
+        if (txtValue.toUpperCase().indexOf(filter) > -1) {
+            options[i].style.display = "";
+        } else {
+            options[i].style.display = "none";
+        }
+    }
+}
+
+function filterList(inputId, listId) {
+    const input = document.getElementById(inputId);
+    const filter = input.value.toUpperCase();
+    const ul = document.getElementById(listId);
+    const li = ul.getElementsByTagName('li');
+
+    for (let i = 0; i < li.length; i++) {
+        const div = li[i].getElementsByClassName("station-info")[0];
+        if (div) {
+            const txtValue = div.textContent || div.innerText;
+            if (txtValue.toUpperCase().indexOf(filter) > -1) {
+                li[i].style.display = "";
+            } else {
+                li[i].style.display = "none";
+            }
+        }
+    }
+}

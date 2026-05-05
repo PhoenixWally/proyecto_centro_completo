@@ -347,3 +347,22 @@ function initCharts(freqStart, freqEnd) {
         legend: { font: { color: '#e2e8f0' } }
     }, { responsive: true, displayModeBar: true });
 }
+
+// ─── Buscador de Estaciones ────────────────────────────────
+function filterSelect(inputId, selectId) {
+    const input = document.getElementById(inputId);
+    const filter = input.value.toUpperCase();
+    const select = document.getElementById(selectId);
+    const options = select.getElementsByTagName('option');
+
+    for (let i = 0; i < options.length; i++) {
+        const txtValue = options[i].textContent || options[i].innerText;
+        if (options[i].value === "") continue;
+        
+        if (txtValue.toUpperCase().indexOf(filter) > -1) {
+            options[i].style.display = "";
+        } else {
+            options[i].style.display = "none";
+        }
+    }
+}
