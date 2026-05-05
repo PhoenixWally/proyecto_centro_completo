@@ -91,7 +91,7 @@ class RecordingWorker(threading.Thread):
                 instr = RsInstrument(f'TCPIP::{self.ip}::5555::SOCKET', True, False)
                 instr.visa_timeout = 5000
                 instr.write("*CLS; ABORT")
-                instr.write("INIT:CONT ON")
+                instr.write("INIT:CONT ON")  # Modo continuo estable
                 instr.write(":FREQ:MODE SWE")
                 instr.write(":TRAC:FEED:CONT MTRACE, ALW")
                 instr.write(":STAT:TRAC:ENAB #B10010")
@@ -165,8 +165,8 @@ class RecordingWorker(threading.Thread):
                     print(f"[*] ID {self.rid}: Fin de turno diario ({now_time_str} >= {self.time_end_str})")
                     break
                 
-                # Cada 50 trazas (aprox 25-50 seg) verificamos si el usuario la ha parado en la web
-                if trace_count % 50 == 0:
+                # Cada 10 trazas verificamos si el usuario la ha parado/borrado en la web
+                if trace_count % 10 == 0:
                     db = get_db()
                     row = db.execute("SELECT status FROM recordings WHERE id=?", (self.rid,)).fetchone()
                     db.close()
@@ -178,9 +178,8 @@ class RecordingWorker(threading.Thread):
                     if not instr:
                         raise Exception("Instrumento no conectado. Reintentando...")
 
+                    # Secuencia SCPI correcta: disparar barrido, esperar, leer
                     instr.write(":INIT;*WAI")
-                    time.sleep(0.5) 
-                    
                     raw_data = instr.query(":TRAC? MTRACE")
                     levels = [float(x) for x in raw_data.split(',') if x.strip()]
                     f_list = []
@@ -191,7 +190,9 @@ class RecordingWorker(threading.Thread):
                         paso_real = (self.f_end - self.f_start) / (len(levels) - 1)
                         
                         for i, lvl in enumerate(levels):
-                            if lvl < -9e36: continue
+                            # Filtramos los valores 9.91E37 (NaN de R&S) o errores negativos muy altos
+                            if lvl > 9e36 or lvl < -9e36: continue
+                            
                             freq_mhz = round(self.f_start + (i * paso_real), 6)
                             freq_hz = int(round(freq_mhz * 1000000))
                             lvl_str = f"{lvl:.1f}".replace('.', ',')
