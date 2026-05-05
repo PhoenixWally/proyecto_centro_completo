@@ -592,7 +592,7 @@ def update_recording(rid):
     d = request.json
     db = get_db()
     db.execute('''UPDATE recordings SET station_id=?, antenna=?, freq_start=?, freq_end=?, 
-                  date_start=?, date_end=?, time_start=?, time_end=?, output_dir=? WHERE id=?''',
+                  date_start=?, date_end=?, time_start=?, time_end=?, output_dir=?, status='pending' WHERE id=?''',
                (d['station_id'], d['antenna'], d['freq_start'], d['freq_end'],
                 d['date_start'], d['date_end'], d['time_start'], d['time_end'], d.get('output_dir',''), rid))
     db.commit()

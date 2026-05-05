@@ -136,10 +136,18 @@ async function editRecording(id) {
     document.getElementById('antennaSelect').value = r.antenna;
     document.getElementById('freqStart').value    = r.freq_start;
     document.getElementById('freqEnd').value      = r.freq_end;
-    document.getElementById('dateStart').value = r.date_start;
-    document.getElementById('dateEnd').value   = r.date_end;
-    document.getElementById('timeStart').value = r.time_start;
-    document.getElementById('timeEnd').value   = r.time_end;
+    
+    const setPicker = (id, val) => {
+        const el = document.getElementById(id);
+        if (el._flatpickr) el._flatpickr.setDate(val);
+        else el.value = val;
+    };
+    
+    setPicker('dateStart', r.date_start);
+    setPicker('dateEnd', r.date_end);
+    setPicker('timeStart', r.time_start);
+    setPicker('timeEnd', r.time_end);
+    
     document.getElementById('recordOutputDir').value = r.output_dir;
     
     document.getElementById('btnSubmitRecord').textContent = '💾 ACTUALIZAR GRABACIÓN';
