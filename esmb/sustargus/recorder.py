@@ -101,12 +101,20 @@ class RecordingWorker(threading.Thread):
                 paso = 0.1 if span > 1 else 0.01
                 instr.write(f":SWE:STEP {paso} MHz")
                 instr.write(":FORM ASC")
-                # Disparar el primer barrido y esperar 2s para que MTRACE
-                # acumule datos suficientes antes de la primera lectura.
-                # (Necesario en firmwares V01.72 donde *OPC? retorna
-                # antes de que el buffer esté lleno)
+                # Esperar activamente a que MTRACE tenga datos reales.
+                # Necesario en firmwares V01.72 donde *OPC? retorna prematuramente.
+                # Tiempo máximo de espera: 15s (para spans grandes o ESMBs lentos).
                 instr.write(":INIT")
-                time.sleep(2)
+                deadline = time.time() + 15
+                while time.time() < deadline:
+                    try:
+                        raw = instr.query(":TRAC? MTRACE")
+                        pts = [x for x in raw.split(',') if x.strip()]
+                        if len(pts) >= 2:
+                            break  # Buffer listo
+                    except:
+                        pass
+                    time.sleep(0.5)
                 return True
             except Exception as e:
                 print(f"    [!] ID {self.rid}: Error al conectar: {e}")
