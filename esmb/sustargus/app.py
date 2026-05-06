@@ -289,12 +289,19 @@ def esmb_scan_thread(ip, freq_start, freq_end, step_khz=10.0, owner=None):
         try:
             if not instr:
                 instr = RsInstrument(f'TCPIP::{ip}::5555::SOCKET', True, False)
-                instr.visa_timeout = 3000
-                instr.write("*CLS; ABORT; :FREQ:MODE SWE; :TRAC:FEED:CONT MTRACE, ALW; :STAT:TRAC:ENAB #B10010")
-                instr.write(f":FREQ:STAR {freq_start} MHz;STOP {freq_end} MHz; :SWE:STEP {step_khz/1000.0} MHz; :FORM ASC")
+                instr.visa_timeout = 10000  # Hasta 10s para barridos lentos
+                instr.write("*CLS; ABORT")
+                instr.write(":FREQ:MODE SWE")
+                instr.write(":TRAC:FEED:CONT MTRACE, ALW")
+                instr.write(":STAT:TRAC:ENAB #B10010")
+                instr.write("INIT:CONT OFF")  # Un barrido por INIT = traza completa garantizada
+                instr.write(f":FREQ:STAR {freq_start} MHz;STOP {freq_end} MHz")
+                instr.write(f":SWE:STEP {step_khz/1000.0} MHz")
+                instr.write(":FORM ASC")
 
-            instr.write(":INIT;*WAI")
-            time.sleep(0.2)
+            # INIT dispara un barrido, *OPC? BLOQUEA Python hasta que completa
+            instr.write(":INIT")
+            instr.query("*OPC?")  # Bloquea hasta barrido completo
             raw_data = instr.query(":TRAC? MTRACE")
             
             niveles = [float(x) for x in raw_data.split(',') if x.strip()]
