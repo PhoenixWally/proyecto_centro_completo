@@ -4,6 +4,7 @@
 
 let sseSource = null;
 let isScanning = false;
+let isObserverMode = false;  // True cuando la estación está grabando (solo lectura SSE)
 let zHistory = [];   // Historial de trazas para el 3D
 let freqAxis = [];   // Eje X de frecuencias (se fija al iniciar el scan)
 const MAX_Z_ROWS = 30;  // Filas de historial en 3D
@@ -66,13 +67,15 @@ async function startScan() {
     const json = await res.json();
 
     if (!json.success && json.recording) {
-        // Modo Observador: la estación está grabando, solo visualizamos
+        // MODO OBSERVADOR: la estación está grabando.
+        // No lanzamos ningún hilo de escaneo. Solo conectamos al SSE para visualizar.
         const fStart = json.freq_start || freqStart;
         const fEnd   = json.freq_end   || freqEnd;
         document.getElementById('freqStart').value = fStart;
         document.getElementById('freqEnd').value   = fEnd;
         if (json.step_khz) document.getElementById('stepKhz').value = json.step_khz;
 
+        isObserverMode = true;
         isScanning = true;
         zHistory = [];
         freqAxis = [];
@@ -91,6 +94,7 @@ async function startScan() {
         return;
     }
 
+    isObserverMode = false;
     isScanning = true;
     zHistory = [];
     freqAxis = [];
@@ -104,18 +108,23 @@ async function startScan() {
 
 async function stopScan() {
     const ip = document.getElementById('viewerStationSelect').value;
-    if (!ip) return;
+
     isScanning = false;
-    await fetch('/api/esmb/scan/stop', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ ip_esmb: ip })
-    });
     closeSEE();
     document.getElementById('btnStart').style.display = 'block';
     document.getElementById('btnStop').style.display = 'none';
-    setStatus(false, 'Detenido');
-    addLog('Monitor detenido', 'system');
+    setStatus(false, isObserverMode ? 'Observación detenida' : 'Detenido');
+    addLog(isObserverMode ? 'Observación detenida (grabación sigue activa)' : 'Monitor detenido', 'system');
+
+    if (!isObserverMode && ip) {
+        // Solo llamamos a la API de parada si eramos el controlador activo
+        await fetch('/api/esmb/scan/stop', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ ip_esmb: ip })
+        });
+    }
+    isObserverMode = false;
 }
 
 // ─── SSE – Datos en tiempo real ──────────────────────────────
