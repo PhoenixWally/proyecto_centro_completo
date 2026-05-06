@@ -624,10 +624,14 @@ def scan_start():
     state = get_scanner(ip)
     with state['lock']:
         current_owner = state['owner']
-        # Bloqueamos solo si hay otro usuario manual activo.
-        # Si el owner es el GRABADOR, el ESMB soporta conexiones simultáneas
-        # y el escáner manual puede coexistir sin problema.
-        if state['running'] and current_owner and not current_owner.startswith('GRABADOR'):
+        role = session.get('role')
+        # Permitir si: es el GRABADOR (coexistencia), es el mismo owner, o es admin/manager
+        # Solo bloqueamos si es otro usuario manual sin privilegios
+        is_grabador = current_owner and current_owner.startswith('GRABADOR')
+        is_same_owner = current_owner == username
+        is_privileged = role in ['admin', 'manager']
+        
+        if state['running'] and not is_grabador and not is_same_owner and not is_privileged:
             return jsonify({"success": False, "error": f"La estación ya está siendo usada por {current_owner}"}), 409
 
         state['running']    = True
