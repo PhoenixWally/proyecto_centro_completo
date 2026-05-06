@@ -64,6 +64,27 @@ async function startScan() {
     });
 
     const json = await res.json();
+
+    if (!json.success && json.recording) {
+        // Modo Observador: la estación está grabando, solo visualizamos
+        const fStart = json.freq_start || freqStart;
+        const fEnd   = json.freq_end   || freqEnd;
+        document.getElementById('freqStart').value = fStart;
+        document.getElementById('freqEnd').value   = fEnd;
+        if (json.step_khz) document.getElementById('stepKhz').value = json.step_khz;
+
+        isScanning = true;
+        zHistory = [];
+        freqAxis = [];
+        document.getElementById('btnStart').style.display = 'none';
+        document.getElementById('btnStop').style.display = 'block';
+        setStatus(true, '🔴 Grabando (Obs.)');
+        addLog(`📡 Modo Observador: ${ip} (${fStart}–${fEnd} MHz) — ${json.error}`, 'system');
+        initCharts(fStart, fEnd);
+        startSSE();
+        return;
+    }
+
     if (!json.success) {
         addLog('Error: ' + (json.error || 'desconocido'), 'error');
         alert('Error al iniciar: ' + (json.error || 'desconocido'));

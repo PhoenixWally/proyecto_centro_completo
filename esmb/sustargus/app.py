@@ -624,10 +624,27 @@ def scan_start():
     state = get_scanner(ip)
     with state['lock']:
         current_owner = state['owner']
-        # Bloqueamos solo si hay otro usuario manual activo.
-        # Si el owner es el GRABADOR, el ESMB soporta conexiones simultáneas
-        # y el escáner manual puede coexistir sin problema.
-        if state['running'] and current_owner and not current_owner.startswith('GRABADOR'):
+        role = session.get('role')
+        is_grabador = bool(current_owner and current_owner.startswith('GRABADOR'))
+        is_same_owner = (current_owner == username)
+        is_privileged = role in ['admin', 'manager']
+
+        if state['running'] and is_grabador:
+            # Estación grabando: bloquear pero devolver parámetros para modo observador
+            db2 = get_db()
+            rec = db2.execute(
+                '''SELECT r.freq_start, r.freq_end, r.time_end
+                   FROM recordings r JOIN stations s ON r.station_id=s.id
+                   WHERE s.ip_esmb=? AND r.status='running' LIMIT 1''', (ip,)).fetchone()
+            payload = {"success": False, "recording": True,
+                       "error": f"Estación grabando hasta {rec['time_end'] if rec else '?'}"}
+            if rec:
+                payload["freq_start"] = rec['freq_start']
+                payload["freq_end"]   = rec['freq_end']
+                payload["step_khz"]   = 100
+            return jsonify(payload), 409
+
+        if state['running'] and not is_same_owner and not is_privileged:
             return jsonify({"success": False, "error": f"La estación ya está siendo usada por {current_owner}"}), 409
 
         state['running']    = True
@@ -637,6 +654,7 @@ def scan_start():
         state['step_khz']   = step_khz
         state['latest_trace'] = {'frequencies': [], 'levels': []}
         state['error']      = None
+
 
     t = threading.Thread(target=esmb_scan_thread, args=(ip, freq_start, freq_end, step_khz, username))
     t.daemon = True
