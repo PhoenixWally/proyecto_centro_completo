@@ -286,23 +286,6 @@ def esmb_scan_thread(ip, freq_start, freq_end, step_khz=10.0, owner=None):
     
     last_valid_n = -10.0
     while state['running']:
-        # SI EL GRABADOR TOMA EL CONTROL, CEDEMOS EL HARDWARE PERO MANTENEMOS EL HILO
-        with state['lock']:
-            current_owner = state['owner']
-        
-        if current_owner and current_owner.startswith('GRABADOR') and current_owner != owner:
-            if instr:
-                try: instr.close()
-                except: pass
-                instr = None
-            time.sleep(1)
-            continue
-        
-        # SI EL GRABADOR YA TERMINÓ (owner es None), RECLAMAMOS EL DUEÑO
-        if current_owner is None:
-            with state['lock']:
-                state['owner'] = owner
-
         try:
             if not instr:
                 instr = RsInstrument(f'TCPIP::{ip}::5555::SOCKET', True, False)
@@ -640,8 +623,12 @@ def scan_start():
 
     state = get_scanner(ip)
     with state['lock']:
-        if state['running']:
-            return jsonify({"success": False, "error": f"La estación ya está siendo usada por {state['owner']}"}), 409
+        current_owner = state['owner']
+        # Bloqueamos solo si hay otro usuario manual activo.
+        # Si el owner es el GRABADOR, el ESMB soporta conexiones simultáneas
+        # y el escáner manual puede coexistir sin problema.
+        if state['running'] and current_owner and not current_owner.startswith('GRABADOR'):
+            return jsonify({"success": False, "error": f"La estación ya está siendo usada por {current_owner}"}), 409
 
         state['running']    = True
         state['owner']      = username
