@@ -345,6 +345,12 @@ DecodedData Decoder::decode_file(const std::string &filepath) {
 
     // Ejecución ciega basada en el estado criptográfico de la constante
     time_t unix_time = static_cast<time_t>(total_sec - const_sec);
+
+    // Validación de seguridad para evitar crashes fatales de gmtime_s/localtime_s con timestamps corruptos del footer
+    if (unix_time < 1577836800LL || unix_time > 2524608000LL) {
+      continue;
+    }
+
     struct tm parts_utc = {0}, parts_loc = {0};
 
 #ifdef _WIN32

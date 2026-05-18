@@ -1,0 +1,79 @@
+<!DOCTYPE html>
+<html lang="es">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Sentinel AWACS - Tactical Visualizer</title>
+    <link rel="stylesheet" href="style.css">
+    <!-- ECharts & ECharts GL -->
+    <script src="https://cdn.jsdelivr.net/npm/echarts@5.5.0/dist/echarts.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/echarts-gl@2.0.9/dist/echarts-gl.min.js"></script>
+</head>
+
+<body>
+    <!-- Alertas y Errores (Overlays) -->
+    <div class="hud-alert" id="hudAlert">¡ALERTA TÁCTICA: UMBRAL SUPERADO!</div>
+
+    <div class="hwid-error" id="hwidError">
+        <div class="glitch-text">HWID AUTH ERROR</div>
+        <div class="sub-text">CRYPTOGRAPHIC SIGNATURE MISMATCH DETECTED</div>
+    </div>
+
+    <!-- Contenedor Principal Búnker -->
+    <div class="bunker-container">
+
+        <!-- Panel Lateral (Sidebar) -->
+        <aside class="side-panel" id="sidePanel">
+            <div class="panel-header">
+                <h2>SENTINEL AWACS</h2>
+                <div class="status-indicator">
+                    <span class="dot blink" id="statusDot"></span>
+                    <span id="statusText">STANDBY</span>
+                </div>
+            </div>
+
+            <div class="panel-section">
+                <h3>TARGET SOURCE</h3>
+                <select id="sourceSelect" class="cyber-select" disabled>
+                    <option value="">⏳ Conectando con el servidor...</option>
+                </select>
+                <button id="connectBtn" class="cyber-btn" disabled>INICIAR BARRIDO</button>
+            </div>
+
+            <div class="panel-section stats">
+                <div class="stat-box">
+                    <span class="stat-label">ANTENNA MAC/ID</span>
+                    <span class="stat-value text-neon" id="macId">AWAITING SYNC...</span>
+                </div>
+                <div class="stat-box">
+                    <span class="stat-label">CENTER FREQ</span>
+                    <span class="stat-value text-cyan" id="centerFreq">--- MHz</span>
+                </div>
+                <div class="stat-box">
+                    <span class="stat-label">ALERT THRESHOLD</span>
+                    <input type="range" id="thresholdSlider" min="-120" max="-20" value="-60">
+                    <span class="stat-value" id="thresholdValue">-60 dBµV</span>
+                </div>
+            </div>
+
+            <div class="panel-footer">
+                <div class="scan-line"></div>
+                <span>SECURE ENCLAVE ACTIVE</span>
+            </div>
+        </aside>
+
+        <!-- Botón de colapso -->
+        <div class="toggle-btn" id="toggleBtn">❮</div>
+
+        <!-- Vista Principal (3D Waterfall) -->
+        <main class="main-viewport">
+            <div id="waterfallContainer"></div>
+        </main>
+
+    </div>
+
+    <script src="app.js"></script>
+</body>
+
+</html>
