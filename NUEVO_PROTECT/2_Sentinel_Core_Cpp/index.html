@@ -1,0 +1,226 @@
+<!DOCTYPE html>
+<html lang="es">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SENTINEL | Radar Visualizer</title>
+    <script src="https://cdn.jsdelivr.net/npm/echarts@5.5.0/dist/echarts.min.js"></script>
+    <style>
+        body {
+            background-color: #0b0f19;
+            color: #00ffcc;
+            font-family: 'Courier New', Courier, monospace;
+            margin: 0;
+            padding: 20px;
+        }
+
+        .header {
+            border-bottom: 1px solid #00ffcc;
+            padding-bottom: 10px;
+            margin-bottom: 20px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .control-panel {
+            background: rgba(0, 255, 204, 0.05);
+            border: 1px solid #004433;
+            padding: 15px;
+            margin-bottom: 20px;
+            display: flex;
+            gap: 10px;
+        }
+
+        input[type="text"] {
+            background: #000;
+            color: #00ffcc;
+            border: 1px solid #00ffcc;
+            padding: 8px;
+            font-family: inherit;
+            width: 300px;
+        }
+
+        button {
+            background: #00ffcc;
+            color: #000;
+            border: none;
+            padding: 8px 15px;
+            cursor: pointer;
+            font-weight: bold;
+            font-family: inherit;
+            text-transform: uppercase;
+        }
+
+        button:hover {
+            background: #00ccaa;
+        }
+
+        button:disabled {
+            background: #333;
+            color: #666;
+            cursor: not-allowed;
+        }
+
+        #chart-container {
+            width: 100%;
+            height: 70vh;
+            border: 1px solid #004433;
+        }
+
+        .status {
+            font-size: 0.9em;
+        }
+
+        .status.offline {
+            color: #ff3333;
+        }
+
+        .status.online {
+            color: #00ffcc;
+        }
+    </style>
+</head>
+
+<body>
+
+    <div class="header">
+        <h2>[ SENTINEL CORE VISUALIZER ]</h2>
+        <span id="connection-status" class="status offline">ESTADO: DESCONECTADO</span>
+    </div>
+
+    <div class="control-panel">
+        <input type="text" id="ws-url" value="ws://127.0.0.1:8081/ws" placeholder="URL del WebSocket">
+        <button id="btn-connect" onclick="connectRadar()">1. Conectar al Búnker</button>
+
+        <input type="text" id="file-path" value="D:/jpit/Remotas/argus_full/DATA_PG/argus_db/01dcc03cbdf1779c"
+            placeholder="Ruta del binario" style="margin-left: 20px; width: 400px;">
+        <button id="btn-fire" onclick="fireRadar()" disabled>2. Solicitar Extracción</button>
+    </div>
+
+    <div id="chart-container"></div>
+
+    <script>
+        let socket;
+        let radarChart;
+
+        // Inicializar la gráfica en modo oscuro
+        function initChart() {
+            radarChart = echarts.init(document.getElementById('chart-container'), 'dark');
+
+            // Configuración táctica de la gráfica
+            const option = {
+                backgroundColor: 'transparent',
+                title: {
+                    text: 'Análisis de Espectro',
+                    left: 'center',
+                    textStyle: { color: '#00ffcc' }
+                },
+                tooltip: {
+                    trigger: 'axis',
+                    axisPointer: { type: 'cross' },
+                    backgroundColor: 'rgba(0, 0, 0, 0.8)',
+                    borderColor: '#00ffcc',
+                    textStyle: { color: '#fff' }
+                },
+                toolbox: {
+                    feature: {
+                        dataZoom: { yAxisIndex: 'none' },
+                        restore: {},
+                        saveAsImage: {}
+                    }
+                },
+                xAxis: {
+                    type: 'category',
+                    name: 'Tiempo / Frecuencia',
+                    data: [], // Aquí inyectaremos los tiempos o frecuencias
+                    axisLine: { lineStyle: { color: '#004433' } },
+                    axisLabel: { color: '#00ccaa' }
+                },
+                yAxis: {
+                    type: 'value',
+                    name: 'Nivel (dB)',
+                    axisLine: { lineStyle: { color: '#004433' } },
+                    splitLine: { lineStyle: { color: '#002211' } },
+                    axisLabel: { color: '#00ccaa' }
+                },
+                dataZoom: [
+                    { type: 'inside', start: 0, end: 100 },
+                    { start: 0, end: 100, borderColor: '#004433', textStyle: { color: '#00ffcc' } }
+                ],
+                series: [{
+                    name: 'Señal RF',
+                    type: 'line',
+                    data: [], // Aquí inyectaremos los niveles
+                    symbol: 'none', // Quitar los puntos individuales para máxima velocidad
+                    itemStyle: { color: '#00ffcc' },
+                    lineStyle: { width: 1 },
+                    large: true, // ¡CRÍTICO! Activa la optimización para >75k puntos
+                    largeThreshold: 5000 // A partir de 5000 puntos, renderiza en bloque
+                }]
+            };
+            radarChart.setOption(option);
+
+            // Hacer la gráfica responsive
+            window.addEventListener('resize', function () {
+                radarChart.resize();
+            });
+        }
+
+        function connectRadar() {
+            const wsUrl = document.getElementById('ws-url').value;
+            socket = new WebSocket(wsUrl);
+
+            socket.onopen = function () {
+                document.getElementById('connection-status').textContent = "ESTADO: CONECTADO [ONLINE]";
+                document.getElementById('connection-status').className = "status online";
+                document.getElementById('btn-fire').disabled = false;
+            };
+
+            socket.onmessage = function (event) {
+                console.log("[DATA] Paquete recibido. Renderizando...");
+                const startRender = performance.now();
+
+                const radarData = JSON.parse(event.data);
+
+                // Actualizamos la gráfica inyectando los arrays paralelos directamente
+                radarChart.setOption({
+                    xAxis: {
+                        data: radarData.tiempos // Si prefieres ver frecuencia en X, cambia a radarData.frecuencias
+                    },
+                    series: [{
+                        data: radarData.niveles
+                    }]
+                });
+
+                const endRender = performance.now();
+                console.log(`[RENDER] Completado en ${(endRender - startRender).toFixed(2)} ms`);
+            };
+
+            socket.onerror = function (error) {
+                console.error("Error en WebSocket:", error);
+                alert("Fallo de conexión. ¿Está el motor C++ arrancado?");
+            };
+
+            socket.onclose = function () {
+                document.getElementById('connection-status').textContent = "ESTADO: DESCONECTADO";
+                document.getElementById('connection-status').className = "status offline";
+                document.getElementById('btn-fire').disabled = true;
+            };
+        }
+
+        function fireRadar() {
+            if (socket && socket.readyState === WebSocket.OPEN) {
+                const targetFile = document.getElementById('file-path').value;
+                console.log(`[TX] Solicitando archivo: ${targetFile}`);
+                socket.send(targetFile);
+            }
+        }
+
+        // Arrancar el motor gráfico al cargar la página
+        window.onload = initChart;
+    </script>
+</body>
+
+</html>
