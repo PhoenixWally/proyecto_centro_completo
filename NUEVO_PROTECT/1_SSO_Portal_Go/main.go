@@ -14,6 +14,8 @@ import (
 	"regexp"
 	"strings"
 	"time"
+	"io"
+	"sort"
 
 	"github.com/golang-jwt/jwt/v5"
 	"github.com/jackc/pgx/v5"
@@ -1445,6 +1447,125 @@ type PuntoRadar struct {
 	Time string  `json:"time"`
 }
 
+func copyLastBytesAligned(srcPath, destPath string, maxBytes int64) (int64, error) {
+	src, err := os.Open(srcPath)
+	if err != nil {
+		return 0, err
+	}
+	defer src.Close()
+
+	info, err := src.Stat()
+	if err != nil {
+		return 0, err
+	}
+	size := info.Size()
+	if size < 28 {
+		return 0, fmt.Errorf("file too small")
+	}
+
+	startPos := int64(2)
+	if size > maxBytes {
+		startPos = size - maxBytes
+		residuo := (startPos - 2) % 26
+		if residuo != 0 {
+			startPos -= residuo
+		}
+		if startPos < 2 {
+			startPos = 2
+		}
+	}
+
+	_, err = src.Seek(startPos, io.SeekStart)
+	if err != nil {
+		return 0, err
+	}
+
+	destDir := filepath.Dir(destPath)
+	if err := os.MkdirAll(destDir, 0755); err != nil {
+		return 0, err
+	}
+
+	dest, err := os.OpenFile(destPath, os.O_CREATE|os.O_WRONLY|os.O_TRUNC, 0666)
+	if err != nil {
+		return 0, err
+	}
+	defer dest.Close()
+
+	_, err = dest.Write([]byte{0x00, 0x00})
+	if err != nil {
+		return 0, err
+	}
+
+	n, err := io.Copy(dest, src)
+	return n + 2, err
+}
+
+func interpolateSweep(puntos []PuntoRadar, bins int, fmin, fmax float64) []float64 {
+	df := make(map[float64]float64)
+	for _, p := range puntos {
+		if val, exists := df[p.F]; !exists || p.L > val {
+			df[p.F] = p.L
+		}
+	}
+
+	var rx []float64
+	for f := range df {
+		rx = append(rx, f)
+	}
+	if len(rx) == 0 {
+		sweep := make([]float64, bins)
+		for i := range sweep {
+			sweep[i] = -120.0
+		}
+		return sweep
+	}
+	sort.Float64s(rx)
+
+	ry := make([]float64, len(rx))
+	for i, f := range rx {
+		ry[i] = df[f]
+	}
+
+	sweep := make([]float64, bins)
+	step := 1.0
+	if bins > 1 {
+		step = (fmax - fmin) / float64(bins-1)
+	}
+
+	for i := 0; i < bins; i++ {
+		qx := fmin + float64(i)*step
+
+		idx := sort.Search(len(rx), func(j int) bool {
+			return rx[j] >= qx
+		})
+
+		if idx == len(rx) || idx == 0 {
+			if idx == 0 {
+				sweep[i] = ry[0]
+			} else {
+				sweep[i] = ry[len(ry)-1]
+			}
+		} else {
+			x0 := rx[idx-1]
+			y0 := ry[idx-1]
+			x1 := rx[idx]
+			y1 := ry[idx]
+
+			if x1 == x0 {
+				sweep[i] = y0
+			} else {
+				sweep[i] = y0 + (y1-y0)*(qx-x0)/(x1-x0)
+			}
+		}
+
+		if sweep[i] < -150.0 || sweep[i] > 150.0 || sweep[i] != sweep[i] {
+			sweep[i] = -120.0
+		}
+	}
+
+	return sweep
+}
+
 func HandleRadarStream(w http.ResponseWriter, r *http.Request) {
 	conn, err := upgrader.Upgrade(w, r, nil)
 	if err != nil {
@@ -1476,7 +1597,6 @@ func HandleRadarStream(w http.ResponseWriter, r *http.Request) {
 
 			log.Printf("[WS] Suscribiendose a ruta: %s", physicalPath)
 
-			// Iniciar loop de streaming de datos en un goroutine
 			go func(dirPath string) {
 				var calibrated bool
 				var calFmin, calFmax float64
@@ -1485,33 +1605,67 @@ func HandleRadarStream(w http.ResponseWriter, r *http.Request) {
 				ticker := time.NewTicker(200 * time.Millisecond)
 				defer ticker.Stop()
 
+				var stallTicks int
+				randId := fmt.Sprintf("%d_%d", time.Now().UnixNano(), os.Getpid())
+				tempFile := filepath.Join(os.TempDir(), fmt.Sprintf("temp_chunk_%s.bin", randId))
+				defer os.Remove(tempFile)
+
 				for range ticker.C {
-					newestFile, size, err := getNewestRadarFile(dirPath)
-					if err != nil || newestFile == "" || size == 0 {
-						continue
+					var shouldProcess bool
+
+					if currentFile == "" {
+						newest, size, err := getNewestRadarFile(dirPath)
+						if err == nil && newest != "" && size > 0 {
+							currentFile = newest
+							lastSize = size
+							stallTicks = 0
+							shouldProcess = true
+						}
+					} else {
+						info, err := os.Stat(currentFile)
+						if err != nil {
+							currentFile = ""
+							lastSize = 0
+							continue
+						}
+
+						newSize := info.Size()
+						if newSize > lastSize {
+							lastSize = newSize
+							stallTicks = 0
+							shouldProcess = true
+						} else {
+							stallTicks++
+							if stallTicks >= 25 {
+								stallTicks = 0
+								newest, size, err := getNewestRadarFile(dirPath)
+								if err == nil && newest != "" && newest != currentFile {
+									log.Printf("[WS] Detectado archivo mas nuevo: %s", newest)
+									currentFile = newest
+									lastSize = size
+									shouldProcess = true
+								}
+							}
+						}
 					}
 
-					if newestFile != currentFile || size > lastSize {
-						currentFile = newestFile
-						lastSize = size
-
-						// Invocar al decodificador C++ con directorio de trabajo absoluto para validar licencia
-						cmdPath := `C:\nginx\html\sentinel_core.exe`
-						absCmdPath := cmdPath
-						absFile, err := filepath.Abs(newestFile)
-						if err == nil {
-							newestFile = absFile
+					if shouldProcess && currentFile != "" {
+						_, err := copyLastBytesAligned(currentFile, tempFile, 4096*26)
+						if err != nil {
+							continue
 						}
-						cmd := exec.Command(absCmdPath, newestFile)
-						cmd.Dir = filepath.Dir(absCmdPath)
+
+						cmdPath := `C:\nginx\html\sentinel_core.exe`
+						cmd := exec.Command(cmdPath, tempFile)
+						cmd.Dir = filepath.Dir(cmdPath)
 						stdout, err := cmd.StdoutPipe()
 						if err != nil {
-							log.Printf("[WS_DECODER] Error al abrir pipe para %s: %v", newestFile, err)
+							log.Printf("[WS_DECODER] Error pipe: %v", err)
 							continue
 						}
 
 						if err := cmd.Start(); err != nil {
-							log.Printf("[WS_DECODER] Error al iniciar subproceso: %v", err)
+							log.Printf("[WS_DECODER] Error start: %v", err)
 							continue
 						}
 
@@ -1536,42 +1690,32 @@ func HandleRadarStream(w http.ResponseWriter, r *http.Request) {
 							if p.F > fmax { fmax = p.F }
 						}
 						if fmax <= fmin {
-							fmax = fmin + 1e6
+							fmax = fmin + 1.0
 						}
 
-						sweep := make([]float64, bins)
-						for i := range sweep {
-							sweep[i] = -120.0
-						}
-
-						step := (fmax - fmin) / float64(bins-1)
-						for _, p := range puntos {
-							binIdx := int((p.F - fmin) / step)
-							if binIdx >= 0 && binIdx < bins {
-								if p.L > sweep[binIdx] {
-									sweep[binIdx] = p.L
-								}
-							}
-						}
+						sweep := interpolateSweep(puntos, bins, fmin, fmax)
 
 						if !calibrated {
 							calFmin = fmin
 							calFmax = fmax
 							calibrated = true
-							
+
 							conn.WriteJSON(map[string]interface{}{
-								"type": "init_frame",
-								"fmin": calFmin * 1e6,
-								"fmax": calFmax * 1e6,
-								"bins": bins,
+								"type":  "init_frame",
+								"fmin":  calFmin * 1e6,
+								"fmax":  calFmax * 1e6,
+								"bins":  bins,
 								"sweep": sweep,
 							})
-							log.Printf("[WS] init_frame enviado (fmin=%f, fmax=%f, bins=%d)", calFmin, calFmax, bins)
+							log.Printf("[WS] init_frame (Fmin=%f, Fmax=%f)", calFmin, calFmax)
 						} else {
-							conn.WriteJSON(map[string]interface{}{
+							err = conn.WriteJSON(map[string]interface{}{
 								"type":  "delta_frame",
 								"sweep": sweep,
 							})
+							if err != nil {
+								break
+							}
 						}
 					}
 				}
