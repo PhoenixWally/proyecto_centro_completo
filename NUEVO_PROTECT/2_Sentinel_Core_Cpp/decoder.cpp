@@ -232,7 +232,7 @@ void Decoder::verify_security(int argc, char *argv[]) {
 
   // Ocultación Matemática Constante FILETIME (116444736000000000ULL)
   // XOR Precalculado de (116444736000000000ULL ^ SECRET_MASK)
-  const uint64_t OBFUSCATED_FILETIME = 6613524312891970138ULL;
+  const uint64_t OBFUSCATED_FILETIME = 6613513532390824538ULL;
   const uint64_t SECRET_MASK = 6510615555426900570ULL;
 
   SentinelSecurity::active_filetime_const =

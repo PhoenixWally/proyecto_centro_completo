@@ -1600,6 +1600,7 @@ func HandleRadarStream(w http.ResponseWriter, r *http.Request) {
 			go func(dirPath string) {
 				var calibrated bool
 				var calFmin, calFmax float64
+				var streamFmin, streamFmax float64
 				bins := 256
 
 				ticker := time.NewTicker(200 * time.Millisecond)
@@ -1622,14 +1623,20 @@ func HandleRadarStream(w http.ResponseWriter, r *http.Request) {
 							shouldProcess = true
 						}
 					} else {
-						info, err := os.Stat(currentFile)
+						fCheck, err := os.Open(currentFile)
+						if err != nil {
+							currentFile = ""
+							lastSize = 0
+							continue
+						}
+						newSize, err := fCheck.Seek(0, io.SeekEnd)
+						fCheck.Close()
 						if err != nil {
 							currentFile = ""
 							lastSize = 0
 							continue
 						}
 
-						newSize := info.Size()
 						if newSize > lastSize {
 							lastSize = newSize
 							stallTicks = 0
@@ -1650,7 +1657,7 @@ func HandleRadarStream(w http.ResponseWriter, r *http.Request) {
 					}
 
 					if shouldProcess && currentFile != "" {
-						_, err := copyLastBytesAligned(currentFile, tempFile, 4096*26)
+						_, err := copyLastBytesAligned(currentFile, tempFile, 512*26)
 						if err != nil {
 							continue
 						}
@@ -1683,6 +1690,11 @@ func HandleRadarStream(w http.ResponseWriter, r *http.Request) {
 							continue
 						}
 
+						// Esperar a tener suficientes puntos para una calibración inicial completa
+						if len(puntos) < 256 && !calibrated {
+							continue
+						}
+
 						fmin := puntos[0].F
 						fmax := puntos[0].F
 						for _, p := range puntos {
@@ -1693,11 +1705,19 @@ func HandleRadarStream(w http.ResponseWriter, r *http.Request) {
 							fmax = fmin + 1.0
 						}
 
-						sweep := interpolateSweep(puntos, bins, fmin, fmax)
+						// Registrar envolvente estática absoluta (nunca se contrae)
+						if streamFmin == 0 || fmin < streamFmin {
+							streamFmin = fmin
+						}
+						if streamFmax == 0 || fmax > streamFmax {
+							streamFmax = fmax
+						}
+
+						sweep := interpolateSweep(puntos, bins, streamFmin, streamFmax)
 
 						if !calibrated {
-							calFmin = fmin
-							calFmax = fmax
+							calFmin = streamFmin
+							calFmax = streamFmax
 							calibrated = true
 
 							conn.WriteJSON(map[string]interface{}{
