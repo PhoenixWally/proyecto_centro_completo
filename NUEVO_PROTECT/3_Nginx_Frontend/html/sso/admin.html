@@ -226,7 +226,12 @@
                 <h1 style="font-size: 2rem; font-weight: 800;">Panel Admin</h1>
                 <p style="color: var(--text-secondary); font-size: 0.875rem;">Gestión de infraestructura y accesos</p>
             </div>
-            <button id="back-btn" class="logout-btn">← Volver al Portal</button>
+            <div style="display: flex; gap: 1rem; align-items: center;">
+                <a href="/procesos/winremote-manager.html" class="logout-btn" style="background: var(--accent-gradient); color: white; border: none; text-decoration: none; display: flex; align-items: center; gap: 0.5rem; font-weight: 600; padding: 0.5rem 1.25rem; border-radius: 8px; font-size: 0.875rem; box-shadow: 0 4px 12px rgba(59, 130, 246, 0.3);">
+                    🖥️ WinRM Manager
+                </a>
+                <button id="back-btn" class="logout-btn">← Volver al Portal</button>
+            </div>
         </header>
 
         <div class="admin-grid">
@@ -254,7 +259,7 @@
             </section>
 
             <!-- Gestión de Estaciones -->
-            <section class="admin-section fade-in" style="animation-delay: 0.1s;">
+            <section id="estaciones-section" class="admin-section fade-in" style="animation-delay: 0.1s;">
                 <div class="section-title-bar">
                     <h3>Gestión de Estaciones</h3>
                     <button id="new-station-btn" class="action-btn btn-add">+ Nueva Estación</button>
@@ -288,9 +293,17 @@
                     <label for="username">Identificador</label>
                     <input type="text" id="username" name="username" required autocomplete="off">
                 </div>
+                <div class="form-group">
+                    <label for="puesto">Puesto / Cargo (Opcional)</label>
+                    <input type="text" id="puesto" name="puesto" placeholder="Ej: Jefes, Jefatura, Técnico...">
+                </div>
+                <div class="form-group">
+                    <label for="email">Correo Electrónico (Opcional)</label>
+                    <input type="email" id="email" name="email" placeholder="usuario@digital.gob.es">
+                </div>
                 <div class="form-group" id="password-group">
                     <label for="password">Contraseña Inicial</label>
-                    <input type="password" id="password" name="password" required>
+                    <input type="password" id="password" name="password" required autocomplete="new-password">
                 </div>
                 <div class="form-group">
                     <label for="nivel_poder">Nivel de Poder (Rol)</label>
@@ -304,6 +317,32 @@
                     <select id="provincia" name="provincia">
                         <option value="">Global</option>
                     </select>
+                </div>
+                <div class="form-group" style="margin-top: 1.5rem; border-top: 1px solid var(--border-color); padding-top: 1.5rem;">
+                    <label style="font-weight: 600; color: var(--accent-color); margin-bottom: 0.8rem; display: block;">Acceso a Aplicaciones</label>
+                    <div style="display: flex; flex-direction: column; gap: 0.8rem;">
+                        <label id="app-procesos-container" style="display: flex; align-items: center; gap: 0.6rem; font-size: 0.875rem; color: var(--text-secondary); cursor: pointer; user-select: none;">
+                            <input type="checkbox" id="app_procesos" name="app_procesos" style="width: 16px; height: 16px; accent-color: var(--accent-color); cursor: pointer;">
+                            Gestión de Procesos (WinRM)
+                        </label>
+                    </div>
+                </div>
+                <div class="form-group" style="margin-top: 1.5rem; border-top: 1px solid var(--border-color); padding-top: 1.5rem;">
+                    <label style="font-weight: 600; color: var(--accent-color); margin-bottom: 0.8rem; display: block;">Permisos Especiales (Centro Analítico)</label>
+                    <div style="display: flex; flex-direction: column; gap: 0.8rem;">
+                        <label id="perm-extraccion-container" style="display: flex; align-items: center; gap: 0.6rem; font-size: 0.875rem; color: var(--text-secondary); cursor: pointer; user-select: none;">
+                            <input type="checkbox" id="perm_extraccion" name="permiso_extraccion" style="width: 16px; height: 16px; accent-color: var(--accent-color); cursor: pointer;">
+                            Extracción de Datos
+                        </label>
+                        <label id="perm-alarmas-container" style="display: flex; align-items: center; gap: 0.6rem; font-size: 0.875rem; color: var(--text-secondary); cursor: pointer; user-select: none;">
+                            <input type="checkbox" id="perm_alarmas" name="permiso_alarmas" style="width: 16px; height: 16px; accent-color: var(--accent-color); cursor: pointer;">
+                            Gestión de Alarmas
+                        </label>
+                        <label id="perm-visor-container" style="display: flex; align-items: center; gap: 0.6rem; font-size: 0.875rem; color: var(--text-secondary); cursor: pointer; user-select: none;">
+                            <input type="checkbox" id="perm_visor" name="permiso_visor" style="width: 16px; height: 16px; accent-color: var(--accent-color); cursor: pointer;">
+                            Visor de Archivos
+                        </label>
+                    </div>
                 </div>
                 <div class="form-actions">
                     <button type="button" class="btn-cancel modal-close">Cancelar</button>
@@ -331,6 +370,30 @@
                         <option value="">Global</option>
                     </select>
                 </div>
+                <div class="form-group" style="margin-top: 1.5rem; border-top: 1px solid var(--border-color); padding-top: 1.5rem;">
+                    <label style="color: var(--accent-color); font-weight: bold; cursor: pointer; display: flex; justify-content: space-between; font-size: 0.75rem; letter-spacing: 0.05em; text-transform: uppercase;" onclick="const fields = document.getElementById('analitico-fields'); fields.style.display = fields.style.display === 'none' ? 'block' : 'none';">
+                        <span>⚙️ Opciones Centro Analítico</span>
+                        <span>▼</span>
+                    </label>
+                    <div id="analitico-fields" style="display: none; margin-top: 1rem;">
+                        <div class="form-group">
+                            <label for="st-ruta-bin">Ruta Compartida Binarios (UNC)</label>
+                            <input type="text" id="st-ruta-bin" name="ruta_bin" placeholder="\\\\servidor\\ruta_bin">
+                        </div>
+                        <div class="form-group">
+                            <label for="st-ruta-res">Ruta Compartida Resultados (UNC)</label>
+                            <input type="text" id="st-ruta-res" name="ruta_res" placeholder="\\\\servidor\\ruta_res">
+                        </div>
+                        <div class="form-group">
+                            <label for="st-usr-red">Usuario de Red (Opcional)</label>
+                            <input type="text" id="st-usr-red" name="usr_red" placeholder="DSIC\\usuario">
+                        </div>
+                        <div class="form-group">
+                            <label for="st-pwd-red">Contraseña de Red (Opcional)</label>
+                            <input type="password" id="st-pwd-red" name="pwd_red" placeholder="••••••••">
+                        </div>
+                    </div>
+                </div>
                 <div class="form-actions">
                     <button type="button" class="btn-cancel modal-close">Cancelar</button>
                     <button type="submit" class="btn-save">Registrar Estación</button>
@@ -339,7 +402,7 @@
         </div>
     </div>
 
-    <script src="admin.js"></script>
+    <script src="admin.js?v=2.0.1"></script>
 </body>
 
 </html>

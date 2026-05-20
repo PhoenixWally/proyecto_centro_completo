@@ -9,6 +9,25 @@ document.addEventListener('DOMContentLoaded', () => {
     const appGrid      = document.getElementById('app-grid');
     const logoutBtn    = document.getElementById('logout-btn');
 
+    // ── AUTO-SESSION CHECK ──────────────────────────────────────────────────
+    async function checkSession() {
+        try {
+            const response = await fetch('/api/session');
+            if (response.ok) {
+                const data = await response.json();
+                if (data.nivel_poder !== undefined) {
+                    sessionStorage.setItem('nivel_poder', data.nivel_poder);
+                }
+                loginSection.style.display = 'none';
+                dashboard.style.display = 'flex';
+                renderDashboard(data);
+            }
+        } catch (e) {
+            console.warn('No active session detected:', e);
+        }
+    }
+    checkSession();
+
     // ── LOGIN ─────────────────────────────────────────────────────────────────
     loginForm.addEventListener('submit', async (e) => {
         e.preventDefault();

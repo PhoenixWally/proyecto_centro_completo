@@ -16,7 +16,7 @@ const lblStatus = document.getElementById('lbl-status');
 // Cargar Fuentes via API Local al Iniciar
 async function loadSources() {
     try {
-        const resp = await fetch('/api/fuentes');
+        const resp = await fetch('api/fuentes');
         const fuentes = await resp.json();
         comboFuentes.innerHTML = '';
         const tbody = document.getElementById('tbody-fuentes');
@@ -44,10 +44,10 @@ async function loadSources() {
 }
 window.deleteSource = async function (id) {
     try {
-        const resp = await fetch('/api/fuentes');
+        const resp = await fetch('api/fuentes');
         let fuentes = await resp.json();
         fuentes = fuentes.filter(f => f.id !== id);
-        await fetch('/api/fuentes', {
+        await fetch('api/fuentes', {
             method: 'POST', body: JSON.stringify(fuentes), headers: { 'Content-Type': 'application/json' }
         });
         loadSources();
@@ -68,10 +68,10 @@ window.addFuente = async function () {
     const pass = document.getElementById('new-pass').value;
     if (!id || !path) return;
     try {
-        const resp = await fetch('/api/fuentes');
+        const resp = await fetch('api/fuentes');
         const fuentes = await resp.json();
         fuentes.push({ id, path, user, password: pass });
-        await fetch('/api/fuentes', {
+        await fetch('api/fuentes', {
             method: 'POST', body: JSON.stringify(fuentes), headers: { 'Content-Type': 'application/json' }
         });
         loadSources();
@@ -322,7 +322,7 @@ window.takeScreenshotAndUploadFast = async function () {
         const p3d = document.getElementById("plot3D");
         // Capturar solo la gráfica 3D que es lo más importante y es instantáneo
         const base64Data = await Plotly.toImage(p3d, { format: 'jpeg', width: 800, height: 600 });
-        fetch('/api/captura', {
+        fetch('api/captura', {
             method: 'POST',
             body: JSON.stringify({ src: currentSource, image: base64Data }),
             headers: { 'Content-Type': 'application/json' }
@@ -335,7 +335,7 @@ window.takeScreenshotAndUpload = async function () {
     try {
         const canvas = await doFullCapture();
         const base64Data = canvas.toDataURL('image/jpeg', 0.8);
-        fetch('/api/captura', {
+        fetch('api/captura', {
             method: 'POST',
             body: JSON.stringify({ src: currentSource, image: base64Data }),
             headers: { 'Content-Type': 'application/json' }
@@ -365,7 +365,14 @@ btnStart.addEventListener("click", () => {
     }
 
     currentSource = comboFuentes.value;
-    const wsUrl = `ws://${window.location.hostname}:8081`;
+
+    let wsUrl;
+    if (window.location.hostname === '192.168.29.12' || window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1') {
+        wsUrl = `ws://192.168.29.12:8081`;
+    } else {
+        const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
+        wsUrl = `${protocol}//${window.location.hostname}/sentinel-ws/`;
+    }
 
     writeLog(`Conectando a motor motor espacial C++ en ${wsUrl}...`);
     ws = new WebSocket(wsUrl);

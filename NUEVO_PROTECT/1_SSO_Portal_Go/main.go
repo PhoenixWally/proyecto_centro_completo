@@ -65,6 +65,53 @@ func main() {
 	}
 	defer dbPool.Close()
 
+	// Migración automática del Centro Analítico
+	_, err = dbPool.Exec(context.Background(), `
+		ALTER TABLE estaciones ADD COLUMN IF NOT EXISTS ruta_bin VARCHAR(500) DEFAULT NULL;
+		ALTER TABLE estaciones ADD COLUMN IF NOT EXISTS ruta_res VARCHAR(500) DEFAULT NULL;
+		ALTER TABLE estaciones ADD COLUMN IF NOT EXISTS usr_red VARCHAR(100) DEFAULT NULL;
+		ALTER TABLE estaciones ADD COLUMN IF NOT EXISTS pwd_red VARCHAR(100) DEFAULT NULL;
+		ALTER TABLE usuarios ADD COLUMN IF NOT EXISTS puesto VARCHAR(250) DEFAULT NULL;
+		ALTER TABLE usuarios ADD COLUMN IF NOT EXISTS email VARCHAR(255) DEFAULT NULL;
+		ALTER TABLE usuarios ADD COLUMN IF NOT EXISTS permiso_extraccion BOOLEAN DEFAULT FALSE;
+		ALTER TABLE usuarios ADD COLUMN IF NOT EXISTS permiso_alarmas BOOLEAN DEFAULT FALSE;
+		ALTER TABLE usuarios ADD COLUMN IF NOT EXISTS permiso_visor BOOLEAN DEFAULT FALSE;
+	`)
+	if err != nil {
+		log.Printf("Aviso: No se pudieron crear las columnas del Centro Analítico en la base de datos: %v", err)
+	} else {
+		log.Println("Migración del Centro Analítico completada con éxito.")
+		// Activar por defecto todos los permisos para usuarios de nivel <= 60 si no estaban configurados (todos false)
+		_, _ = dbPool.Exec(context.Background(), `
+			UPDATE usuarios 
+			SET permiso_extraccion = TRUE, permiso_alarmas = TRUE, permiso_visor = TRUE
+			WHERE id IN (
+				SELECT u.id 
+				FROM usuarios u
+				JOIN roles r ON u.rol_id = r.id
+				WHERE r.nivel_poder <= 60 AND u.permiso_extraccion = FALSE AND u.permiso_alarmas = FALSE AND u.permiso_visor = FALSE
+			)
+		`)
+
+		// Registrar la aplicación de gestión de procesos (WinRM) si no existe
+		_, _ = dbPool.Exec(context.Background(), `
+			INSERT INTO aplicaciones (id, nombre, ruta_base)
+			SELECT '8fa86047-927b-4029-923f-917c913cc59b', 'Gestión de Procesos', '/procesos/'
+			WHERE NOT EXISTS (SELECT 1 FROM aplicaciones WHERE id = '8fa86047-927b-4029-923f-917c913cc59b');
+		`)
+
+		// Asignar automáticamente esta aplicación a todos los administradores (nivel >= 80)
+		_, _ = dbPool.Exec(context.Background(), `
+			INSERT INTO usuario_aplicaciones (usuario_id, aplicacion_id)
+			SELECT u.id, '8fa86047-927b-4029-923f-917c913cc59b'
+			FROM usuarios u
+			INNER JOIN roles r ON u.rol_id = r.id
+			WHERE r.nivel_poder >= 80
+			ON CONFLICT DO NOTHING;
+		`)
+	}
+
+
 	if secret := os.Getenv("JWT_SECRET"); secret != "" {
 		jwtSecret = []byte(secret)
 	}
@@ -73,6 +120,8 @@ func main() {
 	mux := http.NewServeMux()
 		mux.HandleFunc("/ws/", HandleRadarStream)
 	mux.HandleFunc("/api/login", loginHandler)
+	mux.HandleFunc("/api/logout", logoutHandler)
+	mux.HandleFunc("/api/session", sessionHandler)
 	mux.HandleFunc("/verify", verifyHandler)
 
 	// Rutas de administración protegidas
@@ -84,6 +133,7 @@ func main() {
 	mux.Handle("/api/admin/estaciones/editar", AdminMiddleware(http.HandlerFunc(adminEditarEstacionHandler)))
 	mux.Handle("/api/admin/roles", AdminMiddleware(http.HandlerFunc(adminRolesHandler)))
 	mux.Handle("/api/admin/provincias", AdminMiddleware(http.HandlerFunc(adminProvinciasHandler)))
+	mux.Handle("/api/winrm", JWTMiddleware(http.HandlerFunc(winrmHandler)))
 
 	// API Frontend (acceso por JWT de usuario)
 	mux.Handle("/api/v1/stations", JWTMiddleware(http.HandlerFunc(apiV1StationsHandler)))
@@ -195,14 +245,124 @@ func loginHandler(w http.ResponseWriter, r *http.Request) {
 		SameSite: http.SameSiteStrictMode,
 	})
 
+	// Consultar aplicaciones autorizadas
+	rowsApps, err := dbPool.Query(context.Background(), `
+		SELECT a.nombre, a.ruta_base 
+		FROM usuario_aplicaciones ua
+		JOIN aplicaciones a ON ua.aplicacion_id = a.id
+		WHERE ua.usuario_id = $1`, userID)
+	appsList := []map[string]string{}
+	if err == nil {
+		defer rowsApps.Close()
+		for rowsApps.Next() {
+			var nombre, rutaBase string
+			if errScan := rowsApps.Scan(&nombre, &rutaBase); errScan == nil {
+				appsList = append(appsList, map[string]string{"nombre": nombre, "ruta": rutaBase})
+			}
+		}
+	} else {
+		log.Printf("[loginHandler] Error al cargar aplicaciones: %v", err)
+	}
+
 	resp := map[string]interface{}{
-		"message":     "Login exitoso",
-		"nivel_poder": nivelPoder,
-		"aplicaciones": []map[string]string{
-			{"nombre": "Sentinel Radar", "ruta": "/awacs/"},
-			{"nombre": "Centro Analítico", "ruta": "/analitico/"},
-			{"nombre": "Servidor VNC", "ruta": "/vnc/"},
-		},
+		"message":      "Login exitoso",
+		"nivel_poder":  nivelPoder,
+		"aplicaciones": appsList,
+	}
+
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(http.StatusOK)
+	json.NewEncoder(w).Encode(resp)
+}
+
+// logoutHandler elimina la cookie JWT del cliente, invalidando la sesión de forma real
+func logoutHandler(w http.ResponseWriter, r *http.Request) {
+	http.SetCookie(w, &http.Cookie{
+		Name:     "jwt",
+		Value:    "",
+		Path:     "/",
+		Expires:  time.Unix(0, 0),
+		MaxAge:   -1,
+		HttpOnly: true,
+		SameSite: http.SameSiteStrictMode,
+	})
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(http.StatusOK)
+	json.NewEncoder(w).Encode(map[string]string{"message": "Sesión cerrada correctamente"})
+}
+
+// sessionHandler devuelve el estado de la sesión activa y las aplicaciones autorizadas
+func sessionHandler(w http.ResponseWriter, r *http.Request) {
+	if r.Method != http.MethodGet {
+		http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
+		return
+	}
+
+	cookie, err := r.Cookie("jwt")
+	if err != nil {
+		w.Header().Set("Content-Type", "application/json")
+		w.WriteHeader(http.StatusUnauthorized)
+		json.NewEncoder(w).Encode(map[string]string{"error": "No session"})
+		return
+	}
+
+	token, err := jwt.ParseWithClaims(cookie.Value, &Claims{}, func(token *jwt.Token) (interface{}, error) {
+		return jwtSecret, nil
+	})
+
+	if err != nil || !token.Valid {
+		w.Header().Set("Content-Type", "application/json")
+		w.WriteHeader(http.StatusUnauthorized)
+		json.NewEncoder(w).Encode(map[string]string{"error": "Invalid token"})
+		return
+	}
+
+	claims, ok := token.Claims.(*Claims)
+	if !ok {
+		w.Header().Set("Content-Type", "application/json")
+		w.WriteHeader(http.StatusUnauthorized)
+		json.NewEncoder(w).Encode(map[string]string{"error": "Invalid claims"})
+		return
+	}
+
+	// Consultar de forma síncrona los permisos individuales actualizados en la base de datos
+	var nivelPoder int
+	var pExt, pAlm, pVis bool
+	err = dbPool.QueryRow(r.Context(), `
+		SELECT r.nivel_poder, u.permiso_extraccion, u.permiso_alarmas, u.permiso_visor 
+		FROM usuarios u 
+		INNER JOIN roles r ON u.rol_id = r.id 
+		WHERE u.id = $1`, claims.UsuarioID).Scan(&nivelPoder, &pExt, &pAlm, &pVis)
+	if err != nil {
+		// Fallback por si hay algún error
+		nivelPoder = claims.NivelPoder
+	}
+
+	// Consultar aplicaciones autorizadas
+	rowsApps, err := dbPool.Query(r.Context(), `
+		SELECT a.nombre, a.ruta_base 
+		FROM usuario_aplicaciones ua
+		JOIN aplicaciones a ON ua.aplicacion_id = a.id
+		WHERE ua.usuario_id = $1`, claims.UsuarioID)
+	appsList := []map[string]string{}
+	if err == nil {
+		defer rowsApps.Close()
+		for rowsApps.Next() {
+			var nombre, rutaBase string
+			if errScan := rowsApps.Scan(&nombre, &rutaBase); errScan == nil {
+				appsList = append(appsList, map[string]string{"nombre": nombre, "ruta": rutaBase})
+			}
+		}
+	} else {
+		log.Printf("[sessionHandler] Error al cargar aplicaciones: %v", err)
+	}
+
+	resp := map[string]interface{}{
+		"nivel_poder":        nivelPoder,
+		"permiso_extraccion": pExt,
+		"permiso_alarmas":    pAlm,
+		"permiso_visor":      pVis,
+		"aplicaciones":       appsList,
 	}
 
 	w.Header().Set("Content-Type", "application/json")
@@ -242,30 +402,87 @@ func verifyHandler(w http.ResponseWriter, r *http.Request) {
 
 	nivelPoder := claims.NivelPoder
 
-	// 1. Leer qué ruta está intentando visitar el usuario a través de Nginx
-	originalURI := r.Header.Get("X-Original-URI")
-
-	// 2. EXCEPCIÓN VIP: Si es el panel de administración, validamos por nivel de poder, no por base de datos.
-	if strings.HasPrefix(originalURI, "/sso/admin.html") || strings.HasPrefix(originalURI, "/api/admin/") {
-		if nivelPoder >= 60 {
-			w.WriteHeader(http.StatusOK) // Adelante, eres Admin
-			return
-		}
-		w.WriteHeader(http.StatusForbidden) // Bloqueado, eres usuario normal
+	// 1. VIP/Superadmin: Si el nivel es >= 80 (Superadmin o Admin Global), tiene acceso universal implícito a todos los recursos
+	if nivelPoder >= 80 {
+		w.WriteHeader(http.StatusOK)
 		return
 	}
 
+	// 2. Leer qué ruta está intentando visitar el usuario a través de Nginx
+	originalURI := r.Header.Get("X-Original-URI")
+
+	// 3. EXCEPCIÓN VIP ADMIN: Si es el panel de administración, validamos estrictamente por nivel de poder >= 60.
+	if strings.HasPrefix(originalURI, "/sso/admin.html") || strings.HasPrefix(originalURI, "/api/admin/") {
+		if nivelPoder >= 60 {
+			w.WriteHeader(http.StatusOK) // Adelante, eres Admin o Gestor Provincial
+			return
+		}
+		w.WriteHeader(http.StatusForbidden) // Bloqueado, nivel insuficiente
+		return
+	}
+
+	// 4. EXCEPCIÓN VIP CENTRO ANALÍTICO: Validamos por nivel >= 80 (Superadmin/Admin Global) OR si tiene alguno de los 3 permisos habilitados en BD.
+	if strings.HasPrefix(originalURI, "/analitico/") || 
+	   strings.HasPrefix(originalURI, "/api/fuentes") || 
+	   strings.HasPrefix(originalURI, "/api/extraer") || 
+	   strings.HasPrefix(originalURI, "/api/files/") || 
+	   strings.HasPrefix(originalURI, "/api/config") || 
+	   strings.HasPrefix(originalURI, "/api/progreso") {
+		if nivelPoder >= 80 {
+			w.WriteHeader(http.StatusOK) // Superadmin / Admin Global siempre tienen acceso incondicional
+			return
+		}
+		
+		// Validar sub-permisos individuales para niveles 60 o inferiores (incluyendo Gestores Provinciales)
+		var pExt, pAlm, pVis bool
+		err = dbPool.QueryRow(r.Context(), 
+			"SELECT permiso_extraccion, permiso_alarmas, permiso_visor FROM usuarios WHERE id = $1", 
+			claims.UsuarioID).Scan(&pExt, &pAlm, &pVis)
+		if err == nil && (pExt || pAlm || pVis) {
+			w.WriteHeader(http.StatusOK) // Acceso por poseer al menos un permiso habilitado
+			return
+		}
+		
+		w.WriteHeader(http.StatusForbidden) // Bloqueado si el superadmin/admin le ha quitado los tres permisos
+		return
+	}
+
+	// Normalizar URI: agregar barra diagonal si falta al final (para que coincida con LIKE '.../%')
+	dbURI := originalURI
+	if strings.HasPrefix(dbURI, "/api/fuentes") ||
+		strings.HasPrefix(dbURI, "/api/extraer") ||
+		strings.HasPrefix(dbURI, "/api/files/") ||
+		strings.HasPrefix(dbURI, "/api/config") ||
+		strings.HasPrefix(dbURI, "/api/progreso") {
+		dbURI = "/analitico/"
+	}
+	if !strings.HasSuffix(dbURI, "/") {
+		dbURI = dbURI + "/"
+	}
+
+	// Generar variantes para admitir tanto '/awacs/' como '/sentinel/' en la base de datos
+	dbURI1 := dbURI
+	dbURI2 := dbURI
+	if strings.HasPrefix(dbURI, "/awacs/") {
+		dbURI2 = strings.Replace(dbURI, "/awacs/", "/sentinel/", 1)
+	} else if strings.HasPrefix(dbURI, "/sentinel/") {
+		dbURI2 = strings.Replace(dbURI, "/sentinel/", "/awacs/", 1)
+	}
+
 	ctx := context.Background()
-	// Verificamos en usuario_aplicaciones si hay permiso para esa ruta (Ej. la ruta original /sentinel/ subcoincide con la ruta_base de la tabla aplicaciones)
+	// Verificamos en usuario_aplicaciones si hay permiso para esa ruta (admite ruta_base '/sentinel/' y '/awacs/')
 	query := `
 		SELECT 1
 		FROM usuario_aplicaciones ua
 		JOIN aplicaciones a ON ua.aplicacion_id = a.id
-		WHERE ua.usuario_id = $1 AND $2 LIKE (a.ruta_base || '%')
+		WHERE ua.usuario_id = $1 AND (
+			$2 LIKE (a.ruta_base || '%') OR
+			$3 LIKE (a.ruta_base || '%')
+		)
 		LIMIT 1
 	`
 	var exists int
-	err = dbPool.QueryRow(ctx, query, claims.UsuarioID, originalURI).Scan(&exists)
+	err = dbPool.QueryRow(ctx, query, claims.UsuarioID, dbURI1, dbURI2).Scan(&exists)
 	if err != nil {
 		// pgx.ErrNoRows u otro error indican acceso denegado
 		http.Error(w, "Forbidden", http.StatusForbidden)
@@ -356,7 +573,12 @@ func AdminMiddleware(next http.Handler) http.Handler {
 		}
 		nivelPoder := int(nivelFloat)
 
-		if nivelPoder < 60 {
+		if nivelPoder < 20 {
+			jsonResponse(w, "Forbidden: Insufficient privileges", http.StatusForbidden)
+			return
+		}
+
+		if r.Method != http.MethodGet && nivelPoder < 60 {
 			jsonResponse(w, "Forbidden: Insufficient privileges", http.StatusForbidden)
 			return
 		}
@@ -394,11 +616,52 @@ func adminUsuariosHandler(w http.ResponseWriter, r *http.Request) {
 	if r.Method == http.MethodGet {
 		var rows pgx.Rows
 		var err error
-		if claims.NivelPoder >= 80 {
+		provFilter := r.URL.Query().Get("provincia_id")
+
+		if provFilter != "" {
+			// Si el usuario no es admin global/super (nivel < 80), verificar que tenga asignada esa provincia
+			if claims.NivelPoder < 80 {
+				tieneAcceso := false
+				for _, p := range claims.Provincias {
+					if p == provFilter {
+						tieneAcceso = true
+						break
+					}
+				}
+				if !tieneAcceso {
+					jsonResponse(w, "Forbidden: No tienes acceso a esta provincia", http.StatusForbidden)
+					return
+				}
+			}
+
+			// Filtro por provincia (utilizado por el Centro Analítico) - Excluye admins globales/super (nivel >= 80)
+			rows, err = dbPool.Query(r.Context(), `
+				SELECT DISTINCT u.id, u.username, r.nivel_poder, r.id,
+				       up.provincia_id,
+				       p.nombre AS provincia_nombre,
+				       u.puesto,
+				       u.email,
+				       u.permiso_extraccion,
+				       u.permiso_alarmas,
+				       u.permiso_visor,
+				       (SELECT EXISTS (SELECT 1 FROM usuario_aplicaciones WHERE usuario_id = u.id AND aplicacion_id = '8fa86047-927b-4029-923f-917c913cc59b')) AS permiso_procesos
+				FROM usuarios u
+				INNER JOIN roles r ON u.rol_id = r.id
+				LEFT JOIN usuario_provincias up ON up.usuario_id = u.id
+				LEFT JOIN provincias p ON p.id = up.provincia_id
+				WHERE up.provincia_id = $1 AND r.nivel_poder < 80
+				ORDER BY u.username`, provFilter)
+		} else if claims.NivelPoder >= 80 {
 			rows, err = dbPool.Query(r.Context(), `
 				SELECT u.id, u.username, r.nivel_poder, r.id,
 				       up.provincia_id,
-				       p.nombre AS provincia_nombre
+				       p.nombre AS provincia_nombre,
+				       u.puesto,
+				       u.email,
+				       u.permiso_extraccion,
+				       u.permiso_alarmas,
+				       u.permiso_visor,
+				       (SELECT EXISTS (SELECT 1 FROM usuario_aplicaciones WHERE usuario_id = u.id AND aplicacion_id = '8fa86047-927b-4029-923f-917c913cc59b')) AS permiso_procesos
 				FROM usuarios u
 				INNER JOIN roles r ON u.rol_id = r.id
 				LEFT JOIN usuario_provincias up ON up.usuario_id = u.id
@@ -409,7 +672,13 @@ func adminUsuariosHandler(w http.ResponseWriter, r *http.Request) {
 			query := `
 				SELECT DISTINCT u.id, u.username, r.nivel_poder, r.id,
 				       up.provincia_id,
-				       p.nombre AS provincia_nombre
+				       p.nombre AS provincia_nombre,
+				       u.puesto,
+				       u.email,
+				       u.permiso_extraccion,
+				       u.permiso_alarmas,
+				       u.permiso_visor,
+				       (SELECT EXISTS (SELECT 1 FROM usuario_aplicaciones WHERE usuario_id = u.id AND aplicacion_id = '8fa86047-927b-4029-923f-917c913cc59b')) AS permiso_procesos
 				FROM usuarios u
 				INNER JOIN roles r ON u.rol_id = r.id
 				LEFT JOIN usuario_provincias up ON up.usuario_id = u.id
@@ -430,23 +699,38 @@ func adminUsuariosHandler(w http.ResponseWriter, r *http.Request) {
 		for rows.Next() {
 			var id, username string
 			var nivel, rolID int
-			var provinciaID, provinciaNombre *string
-			if err := rows.Scan(&id, &username, &nivel, &rolID, &provinciaID, &provinciaNombre); err == nil {
+			var provinciaID, provinciaNombre, puesto, email *string
+			var pExt, pAlm, pVis, pProc bool
+			if err := rows.Scan(&id, &username, &nivel, &rolID, &provinciaID, &provinciaNombre, &puesto, &email, &pExt, &pAlm, &pVis, &pProc); err == nil {
 				provID := ""
 				provNombre := ""
+				puestoVal := ""
+				emailVal := ""
 				if provinciaID != nil {
 					provID = *provinciaID
 				}
 				if provinciaNombre != nil {
 					provNombre = *provinciaNombre
 				}
+				if puesto != nil {
+					puestoVal = *puesto
+				}
+				if email != nil {
+					emailVal = *email
+				}
 				users = append(users, map[string]interface{}{
-					"id":           id,
-					"usuario":      username,
-					"nivel_poder":  nivel,
-					"rol_id":       rolID,
-					"provincia_id": provID,
-					"provincia":    provNombre,
+					"id":                 id,
+					"usuario":            username,
+					"nivel_poder":        nivel,
+					"rol_id":             rolID,
+					"provincia_id":       provID,
+					"provincia":          provNombre,
+					"puesto":             puestoVal,
+					"email":              emailVal,
+					"permiso_extraccion": pExt,
+					"permiso_alarmas":    pAlm,
+					"permiso_visor":      pVis,
+					"permiso_procesos":   pProc,
 				})
 			}
 		}
@@ -463,11 +747,19 @@ func adminUsuariosHandler(w http.ResponseWriter, r *http.Request) {
 		}
 		log.Printf("[POST /api/admin/usuarios] miNivel leído del contexto: %d", miNivel)
 
+		var err error
+
 		type UsuarioInput struct {
-			Username    string  `json:"username"`
-			Password    string  `json:"password,omitempty"`
-			RolID       int     `json:"rol_id"`
-			ProvinciaID *string `json:"provincia_id"` // Puntero vital para aceptar null
+			Username          string  `json:"username"`
+			Password          string  `json:"password,omitempty"`
+			RolID             int     `json:"rol_id"`
+			ProvinciaID       *string `json:"provincia_id"` // Puntero vital para aceptar null
+			Puesto            *string `json:"puesto"`
+			Email             *string `json:"email"`
+			PermisoExtraccion bool    `json:"permiso_extraccion"`
+			PermisoAlarmas    bool    `json:"permiso_alarmas"`
+			PermisoVisor      bool    `json:"permiso_visor"`
+			PermisoProcesos   bool    `json:"permiso_procesos"`
 		}
 		var req UsuarioInput
 		if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
@@ -486,16 +778,40 @@ func adminUsuariosHandler(w http.ResponseWriter, r *http.Request) {
 			return
 		}
 
+		// Restricción de seguridad del backend: Un admin nivel 60 solo puede otorgar permiso de visor de archivos
+		if miNivel < 80 {
+			req.PermisoExtraccion = false
+			req.PermisoAlarmas = false
+
+			// Si el admin es nivel 60 o inferior, verificar que tenga acceso a Procesos antes de poder asignarlo
+			var adminHasProcesos bool
+			err = dbPool.QueryRow(r.Context(), `
+				SELECT EXISTS (
+					SELECT 1 FROM usuario_aplicaciones 
+					WHERE usuario_id = $1 AND aplicacion_id = '8fa86047-927b-4029-923f-917c913cc59b'
+				)`, claims.UsuarioID).Scan(&adminHasProcesos)
+			if err != nil || !adminHasProcesos {
+				req.PermisoProcesos = false
+			}
+		}
+
 		// Obtener nivel del rol destino y verificar jerarquía estrictamente
 		var nivelRolDestino int
-		err := dbPool.QueryRow(r.Context(), "SELECT nivel_poder FROM roles WHERE id = $1", req.RolID).Scan(&nivelRolDestino)
+		err = dbPool.QueryRow(r.Context(), "SELECT nivel_poder FROM roles WHERE id = $1", req.RolID).Scan(&nivelRolDestino)
 		if err != nil {
 			jsonResponse(w, "rol_id inválido o no encontrado", http.StatusBadRequest)
 			return
 		}
-		if nivelRolDestino >= miNivel {
-			jsonResponse(w, fmt.Sprintf("Forbidden: el nivel del rol destino (%d) debe ser estrictamente menor que el tuyo (%d)", nivelRolDestino, miNivel), http.StatusForbidden)
-			return
+		if miNivel >= 80 {
+			if nivelRolDestino > miNivel {
+				jsonResponse(w, fmt.Sprintf("Forbidden: el nivel del rol destino (%d) debe ser menor o igual que el tuyo (%d)", nivelRolDestino, miNivel), http.StatusForbidden)
+				return
+			}
+		} else {
+			if nivelRolDestino >= miNivel {
+				jsonResponse(w, fmt.Sprintf("Forbidden: el nivel del rol destino (%d) debe ser estrictamente menor que el tuyo (%d)", nivelRolDestino, miNivel), http.StatusForbidden)
+				return
+			}
 		}
 
 		// Determinar provincia_id a asignar según nivel del admin
@@ -525,9 +841,11 @@ func adminUsuariosHandler(w http.ResponseWriter, r *http.Request) {
 		// Insertar usuario y obtener su ID nuevo
 		var newUserID string
 		err = dbPool.QueryRow(r.Context(),
-			"INSERT INTO usuarios (username, password_hash, rol_id) VALUES ($1, $2, $3) RETURNING id",
-			req.Username, passHash, req.RolID).Scan(&newUserID)
+			`INSERT INTO usuarios (username, password_hash, rol_id, puesto, email, permiso_extraccion, permiso_alarmas, permiso_visor) 
+			 VALUES ($1, $2, $3, $4, $5, $6, $7, $8) RETURNING id`,
+			req.Username, passHash, req.RolID, req.Puesto, req.Email, req.PermisoExtraccion, req.PermisoAlarmas, req.PermisoVisor).Scan(&newUserID)
 		if err != nil {
+			log.Printf("[POST /api/admin/usuarios] Error insert: %v", err)
 			jsonResponse(w, "Insert error", http.StatusInternalServerError)
 			return
 		}
@@ -540,6 +858,25 @@ func adminUsuariosHandler(w http.ResponseWriter, r *http.Request) {
 			if err != nil {
 				log.Printf("[POST /api/admin/usuarios] WARN: usuario creado pero fallo asignando provincia: %v", err)
 			}
+		}
+
+		// Asignar aplicaciones por defecto (Sentinel, Centro Analítico, VNC)
+		defaultApps := []string{
+			"56169a15-796d-4fd3-8140-4ac8a0d96c4a", // Sentinel
+			"1ee3a2ea-927f-46cd-b294-86494b668895", // Centro Analítico
+			"7c848b36-00cf-45f2-8ccd-bde877797394", // Servidor VNC
+		}
+		for _, appID := range defaultApps {
+			_, _ = dbPool.Exec(r.Context(),
+				"INSERT INTO usuario_aplicaciones (usuario_id, aplicacion_id) VALUES ($1, $2) ON CONFLICT DO NOTHING",
+				newUserID, appID)
+		}
+
+		// Asignar aplicación de procesos si está marcada
+		if req.PermisoProcesos {
+			_, _ = dbPool.Exec(r.Context(),
+				"INSERT INTO usuario_aplicaciones (usuario_id, aplicacion_id) VALUES ($1, '8fa86047-927b-4029-923f-917c913cc59b') ON CONFLICT DO NOTHING",
+				newUserID)
 		}
 
 		provIDLog := "NULL"
@@ -566,6 +903,8 @@ func adminUsuariosHandler(w http.ResponseWriter, r *http.Request) {
 			Password    string  `json:"password,omitempty"`
 			RolID       int     `json:"rol_id"`
 			ProvinciaID *string `json:"provincia_id"`
+			Puesto      *string `json:"puesto"`
+			Email       *string `json:"email"`
 		}
 		var req2 EditarUsuarioInput
 		if err := json.NewDecoder(r.Body).Decode(&req2); err != nil {
@@ -630,12 +969,12 @@ func adminUsuariosHandler(w http.ResponseWriter, r *http.Request) {
 				return
 			}
 			_, putErr = dbPool.Exec(r.Context(),
-				"UPDATE usuarios SET username=$1, password_hash=$2, rol_id=$3 WHERE id=$4",
-				req2.Username, passHash2, req2.RolID, req2.ID)
+				"UPDATE usuarios SET username=$1, password_hash=$2, rol_id=$3, puesto=$4, email=$5 WHERE id=$6",
+				req2.Username, passHash2, req2.RolID, req2.Puesto, req2.Email, req2.ID)
 		} else {
 			_, putErr = dbPool.Exec(r.Context(),
-				"UPDATE usuarios SET username=$1, rol_id=$2 WHERE id=$3",
-				req2.Username, req2.RolID, req2.ID)
+				"UPDATE usuarios SET username=$1, rol_id=$2, puesto=$3, email=$4 WHERE id=$5",
+				req2.Username, req2.RolID, req2.Puesto, req2.Email, req2.ID)
 		}
 		if putErr != nil {
 			jsonResponse(w, "Update error", http.StatusInternalServerError)
@@ -688,11 +1027,17 @@ func adminEditarUsuarioHandler(w http.ResponseWriter, r *http.Request) {
 	log.Printf("[PUT /api/admin/usuarios/editar] miNivel leído del contexto: %d", miNivel)
 
 	type EditarUsuarioInput struct {
-		ID          string  `json:"id"`
-		Username    string  `json:"username"`
-		Password    string  `json:"password,omitempty"`
-		RolID       int     `json:"rol_id"`
-		ProvinciaID *string `json:"provincia_id"`
+		ID                string  `json:"id"`
+		Username          string  `json:"username"`
+		Password          string  `json:"password,omitempty"`
+		RolID             int     `json:"rol_id"`
+		ProvinciaID       *string `json:"provincia_id"`
+		Puesto            *string `json:"puesto"`
+		Email             *string `json:"email"`
+		PermisoExtraccion bool    `json:"permiso_extraccion"`
+		PermisoAlarmas    bool    `json:"permiso_alarmas"`
+		PermisoVisor      bool    `json:"permiso_visor"`
+		PermisoProcesos   bool    `json:"permiso_procesos"`
 	}
 
 	var req EditarUsuarioInput
@@ -723,14 +1068,48 @@ func adminEditarUsuarioHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// Seguridad: miNivel debe ser mayor que nivel actual del objetivo Y mayor que el nuevo nivel asignado
-	if nivelActual >= miNivel {
-		jsonResponse(w, fmt.Sprintf("Forbidden: el usuario a editar tiene nivel (%d) >= el tuyo (%d)", nivelActual, miNivel), http.StatusForbidden)
-		return
+	// Seguridad: miNivel debe ser mayor que nivel actual del objetivo Y mayor que el nuevo nivel asignado (o igual si es superadmin)
+	if miNivel >= 80 {
+		if nivelActual > miNivel {
+			jsonResponse(w, fmt.Sprintf("Forbidden: el usuario a editar tiene nivel (%d) > el tuyo (%d)", nivelActual, miNivel), http.StatusForbidden)
+			return
+		}
+		if nivelRolDestino > miNivel {
+			jsonResponse(w, fmt.Sprintf("Forbidden: el nuevo rol tiene nivel (%d) > el tuyo (%d)", nivelRolDestino, miNivel), http.StatusForbidden)
+			return
+		}
+	} else {
+		if nivelActual >= miNivel {
+			jsonResponse(w, fmt.Sprintf("Forbidden: el usuario a editar tiene nivel (%d) >= el tuyo (%d)", nivelActual, miNivel), http.StatusForbidden)
+			return
+		}
+		if nivelRolDestino >= miNivel {
+			jsonResponse(w, fmt.Sprintf("Forbidden: el nuevo rol tiene nivel (%d) >= el tuyo (%d)", nivelRolDestino, miNivel), http.StatusForbidden)
+			return
+		}
 	}
-	if nivelRolDestino >= miNivel {
-		jsonResponse(w, fmt.Sprintf("Forbidden: el nuevo rol tiene nivel (%d) >= el tuyo (%d)", nivelRolDestino, miNivel), http.StatusForbidden)
-		return
+
+	// Restricción de seguridad del backend: Un admin nivel 60 no puede otorgar permiso de extracción ni de alarmas
+	if miNivel < 80 {
+		req.PermisoExtraccion = false
+		req.PermisoAlarmas = false
+
+		// Si el admin es nivel 60 o inferior, verificar que tenga acceso a Procesos antes de poder asignarlo
+		valClaims := r.Context().Value("user_claims")
+		if valClaims != nil {
+			claims := valClaims.(*Claims)
+			var adminHasProcesos bool
+			err = dbPool.QueryRow(r.Context(), `
+				SELECT EXISTS (
+					SELECT 1 FROM usuario_aplicaciones 
+					WHERE usuario_id = $1 AND aplicacion_id = '8fa86047-927b-4029-923f-917c913cc59b'
+				)`, claims.UsuarioID).Scan(&adminHasProcesos)
+			if err != nil || !adminHasProcesos {
+				req.PermisoProcesos = false
+			}
+		} else {
+			req.PermisoProcesos = false
+		}
 	}
 
 	// Determinar provincia_id a asignar según nivel del admin
@@ -770,16 +1149,20 @@ func adminEditarUsuarioHandler(w http.ResponseWriter, r *http.Request) {
 			return
 		}
 		_, err = dbPool.Exec(r.Context(),
-			"UPDATE usuarios SET username=$1, password_hash=$2, rol_id=$3 WHERE id=$4",
-			req.Username, passHash, req.RolID, req.ID)
+			`UPDATE usuarios SET username=$1, password_hash=$2, rol_id=$3, puesto=$4, email=$5, 
+			                     permiso_extraccion=$6, permiso_alarmas=$7, permiso_visor=$8 WHERE id=$9`,
+			req.Username, passHash, req.RolID, req.Puesto, req.Email, 
+			req.PermisoExtraccion, req.PermisoAlarmas, req.PermisoVisor, req.ID)
 		if err != nil {
 			jsonResponse(w, "Update error", http.StatusInternalServerError)
 			return
 		}
 	} else {
 		_, err = dbPool.Exec(r.Context(),
-			"UPDATE usuarios SET username=$1, rol_id=$2 WHERE id=$3",
-			req.Username, req.RolID, req.ID)
+			`UPDATE usuarios SET username=$1, rol_id=$2, puesto=$3, email=$4, 
+			                     permiso_extraccion=$5, permiso_alarmas=$6, permiso_visor=$7 WHERE id=$8`,
+			req.Username, req.RolID, req.Puesto, req.Email, 
+			req.PermisoExtraccion, req.PermisoAlarmas, req.PermisoVisor, req.ID)
 		if err != nil {
 			jsonResponse(w, "Update error", http.StatusInternalServerError)
 			return
@@ -799,6 +1182,16 @@ func adminEditarUsuarioHandler(w http.ResponseWriter, r *http.Request) {
 		if insertErr != nil {
 			log.Printf("[PUT /api/admin/usuarios/editar] WARN: fallo asignando nueva provincia para id=%s: %v", req.ID, insertErr)
 		}
+	}
+
+	// Lógica de Aplicación de Procesos (WinRM)
+	_, _ = dbPool.Exec(r.Context(), `
+		DELETE FROM usuario_aplicaciones 
+		WHERE usuario_id = $1 AND aplicacion_id = '8fa86047-927b-4029-923f-917c913cc59b'`, req.ID)
+	if req.PermisoProcesos {
+		_, _ = dbPool.Exec(r.Context(), `
+			INSERT INTO usuario_aplicaciones (usuario_id, aplicacion_id) 
+			VALUES ($1, '8fa86047-927b-4029-923f-917c913cc59b') ON CONFLICT DO NOTHING`, req.ID)
 	}
 
 	log.Printf("[PUT /api/admin/usuarios/editar] Usuario id=%s actualizado a rol_id=%d (nivel=%d) por admin nivel=%d", req.ID, req.RolID, nivelRolDestino, miNivel)
@@ -821,14 +1214,29 @@ func adminEstacionesHandler(w http.ResponseWriter, r *http.Request) {
 		var err error
 		if claims.NivelPoder >= 80 {
 			rows, err = dbPool.Query(r.Context(), `
-				SELECT e.id, e.nombre, e.provincia_id, e.ip_red, p.nombre AS provincia_nombre 
+				SELECT e.id, e.nombre, e.provincia_id, e.ip_red, p.nombre AS provincia_nombre,
+				       e.ruta_bin, e.ruta_res, e.usr_red, e.pwd_red
 				FROM estaciones e 
 				LEFT JOIN provincias p ON e.provincia_id = p.id
 			`)
 		} else {
-			// Nivel 60: Estaciones asociadas a las provincias del Admin
+			// Nivel 60: Verificar si tiene acceso a la aplicación de Procesos
+			var hasProcesos bool
+			errProcesos := dbPool.QueryRow(r.Context(), `
+				SELECT EXISTS (
+					SELECT 1 FROM usuario_aplicaciones 
+					WHERE usuario_id = $1 AND aplicacion_id = '8fa86047-927b-4029-923f-917c913cc59b'
+				)`, claims.UsuarioID).Scan(&hasProcesos)
+			if errProcesos != nil || !hasProcesos {
+				w.Header().Set("Content-Type", "application/json")
+				json.NewEncoder(w).Encode([]interface{}{})
+				return
+			}
+
+			// Estaciones asociadas a las provincias del Admin
 			query := `
-				SELECT e.id, e.nombre, e.provincia_id, e.ip_red, p.nombre AS provincia_nombre 
+				SELECT e.id, e.nombre, e.provincia_id, e.ip_red, p.nombre AS provincia_nombre,
+				       e.ruta_bin, e.ruta_res, e.usr_red, e.pwd_red
 				FROM estaciones e 
 				JOIN usuario_provincias up ON e.provincia_id = up.provincia_id 
 				LEFT JOIN provincias p ON e.provincia_id = p.id
@@ -847,9 +1255,9 @@ func adminEstacionesHandler(w http.ResponseWriter, r *http.Request) {
 		estaciones := []map[string]interface{}{}
 		for rows.Next() {
 			var id, nombre string
-			var provID, ipRed, provNombre *string
-			if err := rows.Scan(&id, &nombre, &provID, &ipRed, &provNombre); err == nil {
-				pID, ip, pNom := "", "", ""
+			var provID, ipRed, provNombre, rutaBin, rutaRes, usrRed, pwdRed *string
+			if err := rows.Scan(&id, &nombre, &provID, &ipRed, &provNombre, &rutaBin, &rutaRes, &usrRed, &pwdRed); err == nil {
+				pID, ip, pNom, rBin, rRes, uRed, pRed := "", "", "", "", "", "", ""
 				if provID != nil {
 					pID = *provID
 				}
@@ -859,12 +1267,28 @@ func adminEstacionesHandler(w http.ResponseWriter, r *http.Request) {
 				if provNombre != nil {
 					pNom = *provNombre
 				}
+				if rutaBin != nil {
+					rBin = *rutaBin
+				}
+				if rutaRes != nil {
+					rRes = *rutaRes
+				}
+				if usrRed != nil {
+					uRed = *usrRed
+				}
+				if pwdRed != nil {
+					pRed = *pwdRed
+				}
 				estaciones = append(estaciones, map[string]interface{}{
 					"id":           id,
 					"nombre":       nombre,
 					"provincia_id": pID,
 					"provincia":    pNom,
 					"ip_red":       ip,
+					"ruta_bin":     rBin,
+					"ruta_res":     rRes,
+					"usr_red":      uRed,
+					"pwd_red":      pRed,
 				})
 			}
 		}
@@ -879,11 +1303,19 @@ func adminEstacionesHandler(w http.ResponseWriter, r *http.Request) {
 			http.Error(w, "Error interno de jerarquía", http.StatusInternalServerError)
 			return
 		}
+		if miNivel < 80 {
+			jsonResponse(w, "No tienes permiso para crear estaciones", http.StatusForbidden)
+			return
+		}
 
 		type EstacionInput struct {
 			Nombre    string  `json:"nombre"`
 			IP        string  `json:"ip"`
 			Provincia *string `json:"provincia"`
+			RutaBin   *string `json:"ruta_bin"`
+			RutaRes   *string `json:"ruta_res"`
+			UsrRed    *string `json:"usr_red"`
+			PwdRed    *string `json:"pwd_red"`
 		}
 
 		var req EstacionInput
@@ -918,8 +1350,8 @@ func adminEstacionesHandler(w http.ResponseWriter, r *http.Request) {
 		}
 
 		_, err := dbPool.Exec(r.Context(),
-			"INSERT INTO estaciones (nombre, provincia_id, ip_red) VALUES ($1, $2, $3)",
-			req.Nombre, provinciaIDFinal, req.IP)
+			"INSERT INTO estaciones (nombre, provincia_id, ip_red, ruta_bin, ruta_res, usr_red, pwd_red) VALUES ($1, $2, $3, $4, $5, $6, $7)",
+			req.Nombre, provinciaIDFinal, req.IP, req.RutaBin, req.RutaRes, req.UsrRed, req.PwdRed)
 		if err != nil {
 			log.Printf("[POST /api/admin/estaciones] Error insert: %v", err)
 			jsonResponse(w, "Error al crear la estación", http.StatusInternalServerError)
@@ -942,6 +1374,10 @@ func adminEstacionesHandler(w http.ResponseWriter, r *http.Request) {
 		miNivel, ok := valNivel.(int)
 		if !ok || miNivel == 0 {
 			http.Error(w, "Error interno de jerarquía", http.StatusInternalServerError)
+			return
+		}
+		if miNivel < 80 {
+			jsonResponse(w, "No tienes permiso para eliminar estaciones", http.StatusForbidden)
 			return
 		}
 
@@ -997,12 +1433,20 @@ func adminEditarEstacionHandler(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, "Error interno de jerarquía", http.StatusInternalServerError)
 		return
 	}
+	if miNivel < 80 {
+		jsonResponse(w, "No tienes permiso para editar estaciones", http.StatusForbidden)
+		return
+	}
 
 	type EditarEstacionInput struct {
 		ID        string  `json:"id"`
 		Nombre    string  `json:"nombre"`
 		IP        string  `json:"ip"`
 		Provincia *string `json:"provincia"`
+		RutaBin   *string `json:"ruta_bin"`
+		RutaRes   *string `json:"ruta_res"`
+		UsrRed    *string `json:"usr_red"`
+		PwdRed    *string `json:"pwd_red"`
 	}
 
 	var req EditarEstacionInput
@@ -1058,8 +1502,8 @@ func adminEditarEstacionHandler(w http.ResponseWriter, r *http.Request) {
 	}
 
 	_, err := dbPool.Exec(r.Context(),
-		"UPDATE estaciones SET nombre=$1, ip_red=$2, provincia_id=$3 WHERE id=$4",
-		req.Nombre, req.IP, provinciaIDFinal, req.ID)
+		"UPDATE estaciones SET nombre=$1, ip_red=$2, provincia_id=$3, ruta_bin=$4, ruta_res=$5, usr_red=$6, pwd_red=$7 WHERE id=$8",
+		req.Nombre, req.IP, provinciaIDFinal, req.RutaBin, req.RutaRes, req.UsrRed, req.PwdRed, req.ID)
 	if err != nil {
 		log.Printf("[PUT /api/admin/estaciones/editar] Error: %v", err)
 		jsonResponse(w, "Update error", http.StatusInternalServerError)
@@ -1770,4 +2214,480 @@ func getNewestRadarFile(dirPath string) (string, int64, error) {
 	}
 
 	return newestFile, size, nil
+}
+
+type WinRMMachine struct {
+	Name    string `json:"name"`
+	IP      string `json:"ip"`
+	User    string `json:"user"`
+	Pass    string `json:"pass"`
+	RutaBin string `json:"rutaBin"`
+}
+
+type WinRMPayload struct {
+	Machine WinRMMachine           `json:"machine"`
+	Action  string                 `json:"action"`
+	Params  map[string]interface{} `json:"params"`
+}
+
+func winrmHandler(w http.ResponseWriter, r *http.Request) {
+	if r.Method != http.MethodPost {
+		http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
+		return
+	}
+
+	var payload WinRMPayload
+	if err := json.NewDecoder(r.Body).Decode(&payload); err != nil {
+		w.Header().Set("Content-Type", "application/json")
+		w.WriteHeader(http.StatusBadRequest)
+		json.NewEncoder(w).Encode(map[string]string{"error": "Invalid request payload: " + err.Error()})
+		return
+	}
+
+	valClaims := r.Context().Value("user_claims")
+	if valClaims == nil {
+		jsonResponse(w, "Internal error: missing claims", http.StatusInternalServerError)
+		return
+	}
+	claims := valClaims.(*Claims)
+
+	if payload.Action != "list_files" {
+		log.Printf("[winrm] ACCIÓN RECIBIDA: %s | Máquina: %s (%s) | Usuario: ID %s (Nivel %d)", payload.Action, payload.Machine.Name, payload.Machine.IP, claims.UsuarioID, claims.NivelPoder)
+	}
+
+	// Si es un usuario de nivel < 80, validar acceso estricto a Procesos y Provincias
+	if claims.NivelPoder < 80 {
+		// 1. Verificar si tiene acceso a la aplicación de Procesos
+		var hasProcesos bool
+		err := dbPool.QueryRow(r.Context(), `
+			SELECT EXISTS (
+				SELECT 1 FROM usuario_aplicaciones 
+				WHERE usuario_id = $1 AND aplicacion_id = '8fa86047-927b-4029-923f-917c913cc59b'
+			)`, claims.UsuarioID).Scan(&hasProcesos)
+		if err != nil || !hasProcesos {
+			w.Header().Set("Content-Type", "application/json")
+			w.WriteHeader(http.StatusForbidden)
+			json.NewEncoder(w).Encode(map[string]string{"error": "Forbidden: No tienes acceso a la aplicación de Procesos"})
+			return
+		}
+
+		// 2. Verificar si la máquina remota pertenece a la provincia del usuario
+		var isAllowedMachine bool
+		err = dbPool.QueryRow(r.Context(), `
+			SELECT EXISTS (
+				SELECT 1 FROM estaciones e
+				JOIN usuario_provincias up ON e.provincia_id = up.provincia_id
+				WHERE up.usuario_id = $1 AND (e.ip_red = $2 OR e.nombre = $3)
+			)`, claims.UsuarioID, payload.Machine.IP, payload.Machine.Name).Scan(&isAllowedMachine)
+		if err != nil || !isAllowedMachine {
+			w.Header().Set("Content-Type", "application/json")
+			w.WriteHeader(http.StatusForbidden)
+			json.NewEncoder(w).Encode(map[string]string{"error": "Forbidden: No tienes permiso para administrar esta máquina"})
+			return
+		}
+	}
+
+	// Construcción dinámica de comandos PowerShell compatibles con Windows 7 (PowerShell 2.0)
+	var cmdStr string
+	escPass := strings.ReplaceAll(payload.Machine.Pass, `'`, `''`)
+	escUser := strings.ReplaceAll(payload.Machine.User, `'`, `''`)
+	
+	// Extraer únicamente el Hostname o IP limpia (evitando dobles barras UNC como \\192.168.29.71\argus_db)
+	ip := payload.Machine.IP
+	ip = strings.TrimPrefix(ip, "\\\\")
+	ip = strings.TrimPrefix(ip, "//")
+	if idx := strings.IndexAny(ip, "\\/"); idx != -1 {
+		ip = ip[:idx]
+	}
+	ip = strings.TrimSpace(ip)
+
+	switch payload.Action {
+	case "list_files":
+		pathParam := ""
+		if p, ok := payload.Params["path"].(string); ok && p != "" {
+			pathParam = p
+		} else {
+			pathParam = payload.Machine.RutaBin
+		}
+		escPath := strings.ReplaceAll(pathParam, `'`, `''`)
+		cmdStr = fmt.Sprintf(
+			`$secpasswd = ConvertTo-SecureString '%s' -AsPlainText -Force; `+
+				`$cred = New-Object System.Management.Automation.PSCredential ('%s', $secpasswd); `+
+				`Invoke-Command -ComputerName %s -Credential $cred -ScriptBlock { `+
+				`  param($path); `+
+				`  $files = Get-ChildItem -Path $path -ErrorAction SilentlyContinue | ForEach-Object { `+
+				`    $len = 0; if ($_.Length) { $len = $_.Length }; `+
+				`    $isDir = "false"; if ($_.PSIsContainer) { $isDir = "true" }; `+
+				`    '{"Name":"' + $_.Name + '","Length":' + $len + ',"LastWriteTime":"' + $_.LastWriteTime.ToString("yyyy-MM-ddTHH:mm:ss") + '","PSIsContainer":' + $isDir + '}' `+
+				`  }; `+
+				`  "[" + ($files -join ",") + "]" `+
+				`} -ArgumentList '%s'`,
+			escPass, escUser, ip, escPath,
+		)
+
+	case "list_processes":
+		// Limpiar posible dominio en escUser (ej: "cter" en lugar de "DOMAIN\cter")
+		userClean := escUser
+		if idx := strings.Index(userClean, "\\"); idx != -1 {
+			userClean = userClean[idx+1:]
+		}
+		cmdStr = fmt.Sprintf(
+			`$secpasswd = ConvertTo-SecureString '%s' -AsPlainText -Force; `+
+				`$cred = New-Object System.Management.Automation.PSCredential ('%s', $secpasswd); `+
+				`Invoke-Command -ComputerName %s -Credential $cred -ScriptBlock { `+
+				`  param($winrmUser); `+
+				`  $currUser = $env:USERNAME; `+
+				`  if (!$currUser) { $currUser = $winrmUser }; `+
+				`  $procs = Get-WmiObject Win32_Process -ErrorAction SilentlyContinue | ForEach-Object { `+
+				`    $owner = $_.GetOwner().User; `+
+				`    if ($owner -eq $currUser -or $owner -eq $winrmUser) { `+
+				`      '{"Name":"' + $_.Name + '","Id":' + $_.ProcessId + ',"SessionId":"' + $_.SessionId + '"}' `+
+				`    } `+
+				`  } | Where-Object { $_ -ne $null }; `+
+				`  "[" + ($procs -join ",") + "]" `+
+				`} -ArgumentList '%s'`,
+			escPass, escUser, ip, userClean,
+		)
+
+	case "kill_process":
+		target := ""
+		nameVal, _ := payload.Params["name"].(string)
+		if nameVal != "" {
+			target = nameVal
+		} else {
+			pidVal := payload.Params["pid"]
+			var pidInt int
+			switch v := pidVal.(type) {
+			case float64:
+				pidInt = int(v)
+			case int:
+				pidInt = v
+			case string:
+				fmt.Sscanf(v, "%d", &pidInt)
+			}
+			if pidInt > 0 {
+				target = fmt.Sprintf("%d", pidInt)
+			}
+		}
+
+		if target != "" {
+			// Intentar pskill.exe de forma nativa a través de cmd /c para solucionar Reparse Points
+			log.Printf("[winrm] Ejecutando pskill nativo: cmd /c pskill -t -nobanner \\\\%s -u %s -p **** %s", ip, payload.Machine.User, target)
+			out, err := exec.Command("cmd", "/c", "pskill", "-t", "-nobanner", "\\\\"+ip, "-u", payload.Machine.User, "-p", payload.Machine.Pass, target).CombinedOutput()
+			if err == nil {
+				log.Printf("[winrm] pskill exitoso:\n%s", string(out))
+				w.Header().Set("Content-Type", "application/json")
+				json.NewEncoder(w).Encode(map[string]string{"output": "pskill exitoso:\n" + strings.TrimSpace(string(out))})
+				return
+			}
+			log.Printf("[winrm] pskill falló con error: %v. Output:\n%s\nUsando fallback taskkill", err, string(out))
+		}
+
+		// Fallback si pskill falla o no esta disponible
+		if nameVal != "" {
+			nameClean := strings.TrimSuffix(nameVal, ".exe")
+			nameClean = strings.TrimSuffix(nameClean, ".EXE")
+			cmdStr = fmt.Sprintf(
+				`$secpasswd = ConvertTo-SecureString '%s' -AsPlainText -Force; `+
+					`$cred = New-Object System.Management.Automation.PSCredential ('%s', $secpasswd); `+
+					`Invoke-Command -ComputerName %s -Credential $cred -ScriptBlock { `+
+					`  param($pname); `+
+					`  $result = Stop-Process -Name $pname -Force 2>&1; `+
+					`  if (!$result -or $result.ToString().Contains("cannot")) { `+
+					`    $result = taskkill /F /IM "$pname.exe" /T 2>&1; `+
+					`  }; `+
+					`  Write-Output $result; `+
+					`} -ArgumentList '%s'`,
+				escPass, escUser, ip, nameClean,
+			)
+		} else {
+			pidVal := payload.Params["pid"]
+			var pidInt int
+			switch v := pidVal.(type) {
+			case float64:
+				pidInt = int(v)
+			case int:
+				pidInt = v
+			case string:
+				fmt.Sscanf(v, "%d", &pidInt)
+			}
+			if pidInt == 0 {
+				w.Header().Set("Content-Type", "application/json")
+				w.WriteHeader(http.StatusBadRequest)
+				json.NewEncoder(w).Encode(map[string]string{"error": "Invalid PID"})
+				return
+			}
+			cmdStr = fmt.Sprintf(
+				`$secpasswd = ConvertTo-SecureString '%s' -AsPlainText -Force; `+
+					`$cred = New-Object System.Management.Automation.PSCredential ('%s', $secpasswd); `+
+					`Invoke-Command -ComputerName %s -Credential $cred -ScriptBlock { `+
+					`  param($pid); `+
+					`  $result = Stop-Process -Id $pid -Force 2>&1; `+
+					`  if (!$result -or $result.ToString().Contains("cannot")) { `+
+					`    $result = taskkill /F /PID $pid /T 2>&1; `+
+					`  }; `+
+					`  Write-Output $result; `+
+					`} -ArgumentList %d`,
+				escPass, escUser, ip, pidInt,
+			)
+		}
+
+	case "list_shortcuts":
+		cmdStr = fmt.Sprintf(
+			`$secpasswd = ConvertTo-SecureString '%s' -AsPlainText -Force; `+
+				`$cred = New-Object System.Management.Automation.PSCredential ('%s', $secpasswd); `+
+				`Invoke-Command -ComputerName %s -Credential $cred -ScriptBlock { `+
+				`  $paths = @("$env:USERPROFILE\Desktop", "$env:PUBLIC\Desktop"); `+
+				`  $shortcuts = Get-ChildItem -Path $paths -Filter *.lnk -ErrorAction SilentlyContinue | ForEach-Object { `+
+				`    $sh = (New-Object -ComObject WScript.Shell).CreateShortcut($_.FullName); `+
+				`    $escName = $_.Name.Replace('\','\\').Replace('"','\"'); `+
+				`    $escPath = $_.FullName.Replace('\','\\').Replace('"','\"'); `+
+				`    $escTarget = $sh.TargetPath.Replace('\','\\').Replace('"','\"'); `+
+				`    $escArgs = $sh.Arguments.Replace('\','\\').Replace('"','\"'); `+
+				`    '{"Name":"' + $escName + '","Path":"' + $escPath + '","Target":"' + $escTarget + '","Arguments":"' + $escArgs + '"}' `+
+				`  }; `+
+				`  "[" + ($shortcuts -join ",") + "]" `+
+				`}`,
+			escPass, escUser, ip,
+		)
+
+	case "launch_shortcut":
+		pathParam, _ := payload.Params["path"].(string)
+		sessionIdVal := payload.Params["sessionId"]
+		sessionIdStr := "1"
+		if sessionIdVal != nil {
+			switch v := sessionIdVal.(type) {
+			case string:
+				if v != "" {
+					sessionIdStr = v
+				}
+			case float64:
+				sessionIdStr = fmt.Sprintf("%.0f", v)
+			case int:
+				sessionIdStr = fmt.Sprintf("%d", v)
+			}
+		}
+
+		// Generar script de PowerShell inteligente
+		psScript := fmt.Sprintf(`$path = '%s'
+if ($path -like "*.lnk") {
+    $sh = New-Object -ComObject WScript.Shell
+    $lnk = $sh.CreateShortcut($path)
+    $target = $lnk.TargetPath
+    $args = $lnk.Arguments
+    $workingDir = $lnk.WorkingDirectory
+} else {
+    $target = $path
+    $args = ""
+    $workingDir = ""
+}
+
+function Get-LocalPath($uncPath) {
+    if ($uncPath -and $uncPath.StartsWith("\\")) {
+        $parts = $uncPath -split '\\' | Where-Object { $_ }
+        if ($parts.Count -ge 2) {
+            $computer = $parts[0]
+            $shareName = $parts[1]
+            $localNames = @("localhost", "127.0.0.1", $env:COMPUTERNAME)
+            $ips = [System.Net.Dns]::GetHostAddresses("") | ForEach-Object { $_.IPAddressToString }
+            $localNames += $ips
+            $isLocal = $false
+            foreach ($name in $localNames) {
+                if ($computer.ToLower() -eq $name.ToLower()) {
+                    $isLocal = $true
+                    break
+                }
+            }
+            if ($isLocal) {
+                $rest = ""
+                if ($parts.Count -gt 2) {
+                    $rest = $parts[2..($parts.Count-1)] -join '\'
+                }
+                $localShare = Get-WmiObject Win32_Share | Where-Object { $_.Name -eq $shareName } | Select-Object -First 1
+                if ($localShare) {
+                    if ($rest) {
+                        return Join-Path $localShare.Path $rest
+                    }
+                    return $localShare.Path
+                }
+            }
+        }
+    }
+    return $uncPath
+}
+
+$localTarget = Get-LocalPath $target
+$localWorkingDir = Get-LocalPath $workingDir
+if (!$localWorkingDir -and $localTarget) {
+    if (Test-Path $localTarget) {
+        $localWorkingDir = Split-Path $localTarget
+    }
+}
+
+$psi = New-Object System.Diagnostics.ProcessStartInfo
+$psi.FileName = $localTarget
+$psi.Arguments = $args
+if ($localWorkingDir -and (Test-Path $localWorkingDir)) {
+    $psi.WorkingDirectory = $localWorkingDir
+}
+$psi.UseShellExecute = $true
+[System.Diagnostics.Process]::Start($psi)
+`, strings.ReplaceAll(pathParam, `'`, `''`))
+
+		b64Script := base64.StdEncoding.EncodeToString([]byte(psScript))
+
+		// Comando WinRM para escribir el script en C:\Windows\Temp\argus_launch.ps1
+		writeCmdStr := fmt.Sprintf(
+			`$secpasswd = ConvertTo-SecureString '%s' -AsPlainText -Force; `+
+				`$cred = New-Object System.Management.Automation.PSCredential ('%s', $secpasswd); `+
+				`Invoke-Command -ComputerName %s -Credential $cred -ScriptBlock { `+
+				`  param($b64); `+
+				`  $bytes = [System.Convert]::FromBase64String($b64); `+
+				`  $content = [System.Text.Encoding]::UTF8.GetString($bytes); `+
+				`  $path = "C:\Windows\Temp\argus_launch.ps1"; `+
+				`  Set-Content -Path $path -Value $content -Encoding UTF8 -Force; `+
+				`} -ArgumentList '%s'`,
+			escPass, escUser, ip, b64Script,
+		)
+
+		log.Printf("[winrm] Escribiendo script temporal de lanzamiento en %s...", ip)
+		outWrite, errWrite := exec.Command("powershell", "-NoProfile", "-NonInteractive", "-ExecutionPolicy", "Bypass", "-Command", writeCmdStr).CombinedOutput()
+		if errWrite != nil {
+			log.Printf("[winrm] Error al escribir script en equipo remoto: %v. Output:\n%s", errWrite, string(outWrite))
+			w.Header().Set("Content-Type", "application/json")
+			w.WriteHeader(http.StatusInternalServerError)
+			json.NewEncoder(w).Encode(map[string]string{
+				"error":   "Error al escribir script en equipo remoto: " + errWrite.Error(),
+				"details": string(outWrite),
+			})
+			return
+		}
+
+		// Intentar psexec como método principal
+		log.Printf("[winrm] Lanzando script de forma interactiva via psexec en sesión %s...", sessionIdStr)
+		psexecArgs := []string{
+			"\\\\" + ip,
+			"-u", payload.Machine.User,
+			"-p", payload.Machine.Pass,
+			"-accepteula",
+			"-nobanner",
+			"-d",
+			"-i", sessionIdStr,
+			"-h",
+			"powershell", "-NoProfile", "-NonInteractive", "-ExecutionPolicy", "Bypass", "-File", "C:\\Windows\\Temp\\argus_launch.ps1",
+		}
+
+		var successOutput string
+		outPs, errPs := exec.Command("psexec", psexecArgs...).CombinedOutput()
+		outStr := string(outPs)
+		
+		// psexec a veces retorna códigos de salida no cero (como el PID del proceso iniciado) 
+		// incluso cuando se ejecuta correctamente. Verificamos si la salida indica éxito.
+		isSuccess := errPs == nil || 
+			strings.Contains(strings.ToLower(outStr), "started") || 
+			strings.Contains(strings.ToLower(outStr), "process id")
+
+		if isSuccess {
+			successOutput = "Lanzamiento interactivo exitoso (psexec):\n" + outStr
+			log.Printf("[winrm] %s", successOutput)
+		} else {
+			log.Printf("[winrm] psexec falló (%v) o no inició el proceso, usando fallback schtasks. Output:\n%s", errPs, outStr)
+
+			// Fallback schtasks
+			timeStr := time.Now().Add(70 * time.Second).Format("15:04")
+			schCmdStr := fmt.Sprintf(
+				`$secpasswd = ConvertTo-SecureString '%s' -AsPlainText -Force; `+
+					`$cred = New-Object System.Management.Automation.PSCredential ('%s', $secpasswd); `+
+					`Invoke-Command -ComputerName %s -Credential $cred -ScriptBlock { `+
+					`  param($time); `+
+					`  $taskPath = 'powershell.exe -NoProfile -NonInteractive -ExecutionPolicy Bypass -File C:\Windows\Temp\argus_launch.ps1'; `+
+					`  schtasks /Create /TN "ArgusRemoteLaunch" /TR $taskPath /SC ONCE /ST $time /F /RL HIGHEST /RU "INTERACTIVE" 2>&1; `+
+					`  schtasks /Run /TN "ArgusRemoteLaunch" 2>&1; `+
+					`  Start-Sleep 6; `+
+					`  schtasks /Delete /TN "ArgusRemoteLaunch" /F 2>&1; `+
+					`} -ArgumentList '%s'`,
+				escPass, escUser, ip, timeStr,
+			)
+
+			outSch, errSch := exec.Command("powershell", "-NoProfile", "-NonInteractive", "-ExecutionPolicy", "Bypass", "-Command", schCmdStr).CombinedOutput()
+			if errSch != nil {
+				log.Printf("[winrm] Fallback de schtasks también falló: %v. Output:\n%s", errSch, string(outSch))
+				w.Header().Set("Content-Type", "application/json")
+				w.WriteHeader(http.StatusInternalServerError)
+				json.NewEncoder(w).Encode(map[string]string{
+					"error":   "Fallo al lanzar el acceso directo por ambos métodos (psexec y schtasks)",
+					"details": "psexec: " + outStr + "\nschtasks: " + string(outSch),
+				})
+				// Limpiar el script temporal de todas formas de forma asíncrona
+				go func() {
+					cleanupCmdStr := fmt.Sprintf(
+						`$secpasswd = ConvertTo-SecureString '%s' -AsPlainText -Force; `+
+							`$cred = New-Object System.Management.Automation.PSCredential ('%s', $secpasswd); `+
+							`Invoke-Command -ComputerName %s -Credential $cred -ScriptBlock { `+
+							`  Remove-Item -Path "C:\Windows\Temp\argus_launch.ps1" -Force -ErrorAction SilentlyContinue; `+
+							`}`,
+						escPass, escUser, ip,
+					)
+					exec.Command("powershell", "-NoProfile", "-NonInteractive", "-ExecutionPolicy", "Bypass", "-Command", cleanupCmdStr).Run()
+				}()
+				return
+			}
+			successOutput = "Lanzamiento interactivo exitoso (fallback schtasks):\n" + string(outSch)
+			log.Printf("[winrm] %s", successOutput)
+		}
+
+		// Limpieza asíncrona del script temporal
+		go func() {
+			time.Sleep(8 * time.Second)
+			cleanupCmdStr := fmt.Sprintf(
+				`$secpasswd = ConvertTo-SecureString '%s' -AsPlainText -Force; `+
+					`$cred = New-Object System.Management.Automation.PSCredential ('%s', $secpasswd); `+
+					`Invoke-Command -ComputerName %s -Credential $cred -ScriptBlock { `+
+					`  Remove-Item -Path "C:\Windows\Temp\argus_launch.ps1" -Force -ErrorAction SilentlyContinue; `+
+					`}`,
+				escPass, escUser, ip,
+			)
+			exec.Command("powershell", "-NoProfile", "-NonInteractive", "-ExecutionPolicy", "Bypass", "-Command", cleanupCmdStr).Run()
+		}()
+
+		w.Header().Set("Content-Type", "application/json")
+		json.NewEncoder(w).Encode(map[string]string{"output": successOutput})
+		return
+
+	default:
+		w.Header().Set("Content-Type", "application/json")
+		w.WriteHeader(http.StatusBadRequest)
+		json.NewEncoder(w).Encode(map[string]string{"error": "Unknown WinRM action: " + payload.Action})
+		return
+	}
+
+	// Ejecutar PowerShell de fallback localmente pasando el comando pre-autenticado
+	if payload.Action != "list_files" {
+		log.Printf("[winrm] Ejecutando PowerShell de fallback para acción %s...", payload.Action)
+	}
+	out, err := exec.Command("powershell", "-NoProfile", "-NonInteractive", "-ExecutionPolicy", "Bypass", "-Command", cmdStr).CombinedOutput()
+	if err != nil {
+		if payload.Action != "list_files" {
+			log.Printf("[winrm] PowerShell de fallback falló con error: %v. Output:\n%s", err, string(out))
+		}
+		w.Header().Set("Content-Type", "application/json")
+		w.WriteHeader(http.StatusInternalServerError)
+		json.NewEncoder(w).Encode(map[string]string{
+			"error":   "PowerShell execution failed: " + err.Error(),
+			"details": string(out),
+		})
+		return
+	}
+	if payload.Action != "list_files" {
+		log.Printf("[winrm] PowerShell de fallback exitoso. Output:\n%s", string(out))
+	}
+
+	// Escribir respuesta envolviendo en JSON si es texto plano
+	outStr := strings.TrimSpace(string(out))
+	w.Header().Set("Content-Type", "application/json")
+	if len(outStr) > 0 && (outStr[0] == '[' || outStr[0] == '{') {
+		w.Write([]byte(outStr))
+	} else {
+		json.NewEncoder(w).Encode(map[string]string{"output": outStr})
+	}
 }

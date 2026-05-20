@@ -884,7 +884,7 @@ async function startBackgroundScanner() {
 
     // Ejecutar inmediatamente para pintar los marcadores sin retraso inicial
     syncState();
-    
+
     // Mantener la sincronización periódica
     setInterval(syncState, 2000);
 }
@@ -1139,7 +1139,7 @@ function updateMapVisibility() {
 
         // Si la IP extraída del marcador está dentro del Set de filtrados, lo iluminamos
         const hasVisibleIP = Array.from(filteredIPs).some(ip => markerIp && markerIp.toLowerCase().includes(ip.toLowerCase()));
-        
+
         // Si no hay filtro, mostrar todo.
         const shouldShow = (!inputVal) || hasVisibleIP;
 

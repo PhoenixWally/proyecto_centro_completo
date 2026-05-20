@@ -14,6 +14,8 @@ document.addEventListener('DOMContentLoaded', async () => {
     let allRoles = [];
     // Lista de provincias disponibles
     let allProvincias = [];
+    // Si el usuario actual tiene acceso a la aplicación de Procesos
+    let currentUserHasProcesos = false;
 
     // ── 1. CARGA SEGURA Y AUTORIZACIÓN ────────────────────────────────────────
     async function checkAuthAndLoad() {
@@ -31,10 +33,32 @@ document.addEventListener('DOMContentLoaded', async () => {
 
             const users = await response.json();
 
-            // Obtener nivel propio desde sessionStorage (guardado en el login)
-            const storedLevel = parseInt(sessionStorage.getItem('nivel_poder'), 10);
-            if (!isNaN(storedLevel) && storedLevel > 0) {
-                currentUserLevel = storedLevel;
+            // Obtener nivel propio de forma ultra confiable desde la sesión real
+            try {
+                const sessRes = await fetch('/api/session');
+                if (sessRes.ok) {
+                    const sessData = await sessRes.json();
+                    if (sessData.nivel_poder !== undefined) {
+                        currentUserLevel = sessData.nivel_poder;
+                    }
+                    if (sessData.aplicaciones) {
+                        currentUserHasProcesos = sessData.aplicaciones.some(app => app.ruta === '/procesos/');
+                    }
+                }
+            } catch (e) {
+                console.warn("No se pudo consultar el nivel real desde la sesión:", e);
+                // Fallback a sessionStorage
+                const storedLevel = parseInt(sessionStorage.getItem('nivel_poder'), 10);
+                if (!isNaN(storedLevel) && storedLevel > 0) {
+                    currentUserLevel = storedLevel;
+                }
+            }
+
+            if (currentUserLevel < 80) {
+                const estSection = document.getElementById('estaciones-section');
+                if (estSection) {
+                    estSection.style.display = 'none';
+                }
             }
 
             // Cargar la lista de roles disponibles en el sistema
@@ -45,7 +69,9 @@ document.addEventListener('DOMContentLoaded', async () => {
             adminApp.style.display = 'block';
             populateLevelOptions();
             renderUsers(users);
-            fetchStations();
+            if (currentUserLevel >= 80) {
+                fetchStations();
+            }
             setupEventListeners();
         } catch (error) {
             console.error('Error de carga:', error);
@@ -143,6 +169,22 @@ document.addEventListener('DOMContentLoaded', async () => {
             // Columna: Usuario
             const tdUser = document.createElement('td');
             tdUser.textContent = user.usuario;
+            if (user.puesto) {
+                const puestoDiv = document.createElement('div');
+                puestoDiv.style.fontSize = '11px';
+                puestoDiv.style.color = 'var(--text-secondary)';
+                puestoDiv.style.marginTop = '2px';
+                puestoDiv.textContent = user.puesto;
+                tdUser.appendChild(puestoDiv);
+            }
+            if (user.email) {
+                const emailDiv = document.createElement('div');
+                emailDiv.style.fontSize = '11px';
+                emailDiv.style.color = 'var(--text-secondary)';
+                emailDiv.style.marginTop = '2px';
+                emailDiv.textContent = user.email;
+                tdUser.appendChild(emailDiv);
+            }
             tr.appendChild(tdUser);
 
             // Columna: Nivel con badge
@@ -245,14 +287,19 @@ document.addEventListener('DOMContentLoaded', async () => {
         // Limpiar
         while (select.firstChild) select.removeChild(select.firstChild);
 
+        const helpText = select.parentNode.querySelector('p');
+        if (helpText) {
+            helpText.textContent = currentUserLevel >= 80 ? 'Niveles autorizados para tu rango (incluido el tuyo).' : 'Solo se muestran niveles inferiores al tuyo.';
+        }
+
         const placeholder = document.createElement('option');
         placeholder.value = '';
         placeholder.textContent = 'Selecciona un nivel';
         select.appendChild(placeholder);
 
-        // Solo roles con nivel_poder < currentUserLevel
+        // Solo roles con nivel_poder < currentUserLevel (o <= si es superadmin nivel >= 80)
         const eligibleRoles = allRoles
-            .filter(r => r.nivel_poder < currentUserLevel)
+            .filter(r => currentUserLevel >= 80 ? r.nivel_poder <= currentUserLevel : r.nivel_poder < currentUserLevel)
             .sort((a, b) => a.nivel_poder - b.nivel_poder);
 
         eligibleRoles.forEach(role => {
@@ -288,14 +335,57 @@ document.addEventListener('DOMContentLoaded', async () => {
         modalTitle.textContent = 'Editar Usuario';
         submitBtn.textContent = 'Guardar Cambios';
 
-        // Campo contraseña oculto en edición
-        document.getElementById('password-group').style.display = 'none';
-        document.getElementById('password').required = false;
+        // Campo contraseña visible en edición pero no requerido
+        const passGroup = document.getElementById('password-group');
+        passGroup.style.display = 'block';
+        const passLabel = passGroup.querySelector('label');
+        if (passLabel) passLabel.textContent = 'Contraseña (vacío para mantener)';
+        const passInput = document.getElementById('password');
+        
+        passInput.type = 'text'; // Cambiar temporalmente a texto para engañar al gestor de contraseñas y evitar autocompletado
+        passInput.required = false;
+        passInput.placeholder = 'Dejar vacío para no cambiar';
+        passInput.value = ''; // Mantener vacío si no se cambia
+
+        // Cuando el usuario haga foco en el input, revertimos el tipo a password de forma segura
+        const onPassFocus = () => {
+            passInput.type = 'password';
+        };
+        passInput.removeEventListener('focus', onPassFocus);
+        passInput.addEventListener('focus', onPassFocus, { once: true });
 
         // Rellenar campos
         document.getElementById('user-id').value = user.id;
         document.getElementById('username').value = user.usuario;
         document.getElementById('username').readOnly = true;
+        document.getElementById('puesto').value = user.puesto || '';
+        document.getElementById('email').value = user.email || '';
+
+        // Rellenar sub-permisos individuales
+        document.getElementById('perm_extraccion').checked = !!user.permiso_extraccion;
+        document.getElementById('perm_alarmas').checked = !!user.permiso_alarmas;
+        document.getElementById('perm_visor').checked = !!user.permiso_visor;
+        document.getElementById('app_procesos').checked = !!user.permiso_procesos;
+
+        // Ocultar la opción de Procesos si el admin de nivel 60 o inferior no la tiene asignada
+        const procesosContainer = document.getElementById('app-procesos-container');
+        if (currentUserLevel < 80 && !currentUserHasProcesos) {
+            procesosContainer.style.display = 'none';
+            document.getElementById('app_procesos').checked = false;
+        } else {
+            procesosContainer.style.display = 'flex';
+        }
+
+        // Ocultar opciones de Extracción y Alarmas a administradores de nivel < 80 (Provinciales)
+        if (currentUserLevel < 80) {
+            document.getElementById('perm_extraccion').checked = false;
+            document.getElementById('perm_alarmas').checked = false;
+            document.getElementById('perm-extraccion-container').style.display = 'none';
+            document.getElementById('perm-alarmas-container').style.display = 'none';
+        } else {
+            document.getElementById('perm-extraccion-container').style.display = 'flex';
+            document.getElementById('perm-alarmas-container').style.display = 'flex';
+        }
 
         // Poblar select de provincia y preseleccionar por provincia_id
         populateProvinciaSelect('provincia', user.provincia_id ?? null);
@@ -317,9 +407,39 @@ document.addEventListener('DOMContentLoaded', async () => {
         modalTitle.textContent = 'Nuevo Usuario';
         submitBtn.textContent = 'Crear Usuario';
 
-        document.getElementById('password-group').style.display = 'block';
-        document.getElementById('password').required = true;
+        const passGroup = document.getElementById('password-group');
+        passGroup.style.display = 'block';
+        const passLabel = passGroup.querySelector('label');
+        if (passLabel) passLabel.textContent = 'Contraseña Inicial';
+        const passInput = document.getElementById('password');
+        passInput.type = 'password'; // Asegurar que sea password al crear
+        passInput.required = true;
+        passInput.placeholder = '';
         document.getElementById('username').readOnly = false;
+        document.getElementById('puesto').value = '';
+        document.getElementById('email').value = '';
+
+        // Resetear checkboxes de permisos individuales
+        document.getElementById('perm_extraccion').checked = false;
+        document.getElementById('perm_alarmas').checked = false;
+        document.getElementById('perm_visor').checked = false;
+        document.getElementById('app_procesos').checked = false;
+
+        const procesosContainerReset = document.getElementById('app-procesos-container');
+        if (currentUserLevel < 80 && !currentUserHasProcesos) {
+            procesosContainerReset.style.display = 'none';
+        } else {
+            procesosContainerReset.style.display = 'flex';
+        }
+
+        // Ajustar visibilidad según jerarquía del admin
+        if (currentUserLevel < 80) {
+            document.getElementById('perm-extraccion-container').style.display = 'none';
+            document.getElementById('perm-alarmas-container').style.display = 'none';
+        } else {
+            document.getElementById('perm-extraccion-container').style.display = 'flex';
+            document.getElementById('perm-alarmas-container').style.display = 'flex';
+        }
 
         userForm.dataset.editMode = 'false';
         userForm.dataset.userId = '';
@@ -341,6 +461,13 @@ document.addEventListener('DOMContentLoaded', async () => {
         stationForm.ip.value = st.ip || st.ip_red || st.ruta_unc || '';
         populateProvinciaSelect('st-provincia', st.provincia_id ?? null);
 
+        // Opciones Centro Analítico
+        document.getElementById('st-ruta-bin').value = st.ruta_bin || '';
+        document.getElementById('st-ruta-res').value = st.ruta_res || '';
+        document.getElementById('st-usr-red').value = st.usr_red || '';
+        document.getElementById('st-pwd-red').value = st.pwd_red || '';
+        document.getElementById('analitico-fields').style.display = (st.ruta_bin || st.ruta_res || st.usr_red || st.pwd_red) ? 'block' : 'none';
+
         stationForm.dataset.editMode = 'true';
         stationForm.dataset.stationId = st.id;
 
@@ -357,6 +484,12 @@ document.addEventListener('DOMContentLoaded', async () => {
         stationForm.dataset.editMode = 'false';
         stationForm.dataset.stationId = '';
         stationForm.reset();
+
+        document.getElementById('st-ruta-bin').value = '';
+        document.getElementById('st-ruta-res').value = '';
+        document.getElementById('st-usr-red').value = '';
+        document.getElementById('st-pwd-red').value = '';
+        document.getElementById('analitico-fields').style.display = 'none';
 
         populateProvinciaSelect('st-provincia', null);
     }
@@ -394,14 +527,14 @@ document.addEventListener('DOMContentLoaded', async () => {
             };
         });
 
-        // Cerrar modal al pulsar fuera del card
-        userModal.addEventListener('click', (e) => {
+        // Cerrar modal al pulsar fuera del card (usando mousedown para evitar cierres al seleccionar texto)
+        userModal.addEventListener('mousedown', (e) => {
             if (e.target === userModal) {
                 userModal.classList.remove('active');
                 resetUserForm();
             }
         });
-        stationModal.addEventListener('click', (e) => {
+        stationModal.addEventListener('mousedown', (e) => {
             if (e.target === stationModal) {
                 stationModal.classList.remove('active');
                 resetStationForm();
@@ -409,6 +542,28 @@ document.addEventListener('DOMContentLoaded', async () => {
         });
 
         backBtn.onclick = () => window.location.href = '/sso/';
+
+        // Cambiar por defecto los checks del Centro Analítico si se selecciona un nivel <= 60
+        const nivelSelect = document.getElementById('nivel_poder');
+        if (nivelSelect) {
+            nivelSelect.addEventListener('change', () => {
+                const selectedOpt = nivelSelect.options[nivelSelect.selectedIndex];
+                const nivelElegido = parseInt(selectedOpt?.dataset?.nivel ?? '-1', 10);
+                if (!isNaN(nivelElegido) && nivelElegido > 0 && nivelElegido <= 60) {
+                    document.getElementById('perm_extraccion').checked = true;
+                    // Los administradores provinciales (nivel 60) no pueden activar Extracción ni Alarmas para sí mismos
+                    // pero si un nivel >= 80 les gestiona el perfil, se marcan por defecto los tres.
+                    // Si el administrador actual es nivel 60, solo puede habilitar visor de archivos
+                    if (currentUserLevel < 80) {
+                        document.getElementById('perm_extraccion').checked = false;
+                        document.getElementById('perm_alarmas').checked = false;
+                    } else {
+                        document.getElementById('perm_alarmas').checked = true;
+                    }
+                    document.getElementById('perm_visor').checked = true;
+                }
+            });
+        }
 
         // ── FORMULARIO USUARIO ────────────────────────────────────────────────
         userForm.onsubmit = async (e) => {
@@ -423,8 +578,13 @@ document.addEventListener('DOMContentLoaded', async () => {
             const rolId = parseInt(selectEl.value, 10);                           // int — lo que el backend espera
             const nivelElegido = parseInt(selectedOpt?.dataset?.nivel ?? '-1', 10); // para validar jerarquía
 
-            if (!rolId || isNaN(nivelElegido) || nivelElegido >= currentUserLevel) {
-                alert(`Error: Selecciona un nivel válido (inferior al tuyo: ${currentUserLevel}).`);
+            const isSuperAdmin = currentUserLevel >= 80;
+            const isInvalidLevel = isSuperAdmin ? (nivelElegido > currentUserLevel) : (nivelElegido >= currentUserLevel);
+
+            if (!rolId || isNaN(nivelElegido) || isInvalidLevel) {
+                alert(isSuperAdmin 
+                    ? `Error: Selecciona un nivel válido (menor o igual al tuyo: ${currentUserLevel}).` 
+                    : `Error: Selecciona un nivel válido (inferior al tuyo: ${currentUserLevel}).`);
                 return;
             }
 
@@ -436,11 +596,21 @@ document.addEventListener('DOMContentLoaded', async () => {
                     provId = null;
                 }
                 const payload = {
-                    id:           userId,
-                    username:     document.getElementById('username').value,
-                    rol_id:       parseInt(selectEl.value, 10),
-                    provincia_id: provId
+                    id:                 userId,
+                    username:           document.getElementById('username').value,
+                    rol_id:             parseInt(selectEl.value, 10),
+                    provincia_id:       provId,
+                    puesto:             document.getElementById('puesto').value.trim() || null,
+                    email:              document.getElementById('email').value.trim() || null,
+                    permiso_extraccion: document.getElementById('perm_extraccion').checked,
+                    permiso_alarmas:    document.getElementById('perm_alarmas').checked,
+                    permiso_visor:      document.getElementById('perm_visor').checked,
+                    permiso_procesos:   document.getElementById('app_procesos').checked
                 };
+                const passVal = document.getElementById('password').value;
+                if (passVal !== '') {
+                    payload.password = passVal;
+                }
                 console.log("PAYLOAD SEGURO:", JSON.stringify(payload));
 
                 try {
@@ -471,10 +641,16 @@ document.addEventListener('DOMContentLoaded', async () => {
                     provId = null;
                 }
                 const payload = {
-                    username:     document.getElementById('username').value.trim(),
-                    password:     document.getElementById('password').value,
-                    rol_id:       parseInt(selectEl.value, 10),
-                    provincia_id: provId
+                    username:           document.getElementById('username').value.trim(),
+                    password:           document.getElementById('password').value,
+                    rol_id:             parseInt(selectEl.value, 10),
+                    provincia_id:       provId,
+                    puesto:             document.getElementById('puesto').value.trim() || null,
+                    email:              document.getElementById('email').value.trim() || null,
+                    permiso_extraccion: document.getElementById('perm_extraccion').checked,
+                    permiso_alarmas:    document.getElementById('perm_alarmas').checked,
+                    permiso_visor:      document.getElementById('perm_visor').checked,
+                    permiso_procesos:   document.getElementById('app_procesos').checked
                 };
                 console.log("PAYLOAD SEGURO:", JSON.stringify(payload));
 
@@ -510,7 +686,11 @@ document.addEventListener('DOMContentLoaded', async () => {
             const payload = {
                 nombre: stationForm.nombre.value.trim(),
                 ip: stationForm.ip.value.trim(),
-                provincia: stationForm.provincia && stationForm.provincia.value !== '' ? stationForm.provincia.value.trim() : null
+                provincia: stationForm.provincia && stationForm.provincia.value !== '' ? stationForm.provincia.value.trim() : null,
+                ruta_bin: document.getElementById('st-ruta-bin').value.trim() || null,
+                ruta_res: document.getElementById('st-ruta-res').value.trim() || null,
+                usr_red: document.getElementById('st-usr-red').value.trim() || null,
+                pwd_red: document.getElementById('st-pwd-red').value.trim() || null
             };
 
             if (isEditMode) {
