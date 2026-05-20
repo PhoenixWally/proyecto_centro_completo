@@ -1031,7 +1031,7 @@ function renderSidebar() {
 // ─────────────────────────────────────────────
 // SELECCIONAR MÁQUINA
 // ─────────────────────────────────────────────
-function selectMachine(id) {
+async function selectMachine(id) {
   selectedMachineId = isNaN(id) ? id : Number(id);
   const m = machines.find(x => x.id === selectedMachineId);
   if (!m) return;
@@ -1061,15 +1061,29 @@ function selectMachine(id) {
   // Resetear tamaños anteriores para calcular el crecimiento desde cero en la nueva máquina
   prevFileSizes = {};
 
-  refreshFiles();
+  // Ejecución secuencial con try/catch para evitar colisiones WinRM en la máquina remota al cargar
+  try {
+    await refreshFiles();
+  } catch (e) {
+    console.error("Error al cargar archivos:", e);
+  }
 
   // Refrescar automáticamente cada 3 segundos para ver si crece
   window.fileRefreshInterval = setInterval(() => {
     refreshFiles();
   }, 3000);
 
-  refreshShortcuts();
-  refreshProcesses();
+  try {
+    await refreshShortcuts();
+  } catch (e) {
+    console.error("Error al cargar accesos directos:", e);
+  }
+
+  try {
+    await refreshProcesses();
+  } catch (e) {
+    console.error("Error al cargar procesos:", e);
+  }
 
   // Cargar sesión guardada para el lanzamiento interactivo de esta máquina
   const savedSession = localStorage.getItem(`argus_session_${selectedMachineId}`) || "1";
@@ -1311,7 +1325,11 @@ function renderProcesses(procs, filtered) {
     tbody.innerHTML = `<tr><td colspan="4"><div class="empty-state" style="padding:var(--space-6)"><p>Sin resultados</p></div></td></tr>`;
     return;
   }
-  tbody.innerHTML = procs.map(p => {
+  
+  // Ordenar alfabéticamente por nombre de proceso (insensible a mayúsculas/minúsculas)
+  const sortedProcs = [...procs].sort((a, b) => a.name.localeCompare(b.name, undefined, { sensitivity: 'base' }));
+
+  tbody.innerHTML = sortedProcs.map(p => {
     const isArgus = p.name.toLowerCase().includes("argus");
     const highlight = isArgus ? "background:color-mix(in oklab, var(--color-primary) 4%, var(--color-surface));" : "";
     return `<tr style="${highlight}">
