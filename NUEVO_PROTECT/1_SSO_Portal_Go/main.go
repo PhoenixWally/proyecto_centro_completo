@@ -8,14 +8,14 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"io"
 	"log"
 	"net/http"
 	"os"
 	"regexp"
+	"sort"
 	"strings"
 	"time"
-	"io"
-	"sort"
 
 	"github.com/golang-jwt/jwt/v5"
 	"github.com/jackc/pgx/v5"
@@ -25,11 +25,12 @@ import (
 	"bufio"
 	"os/exec"
 	"path/filepath"
+
 	"github.com/gorilla/websocket"
 )
 
 var dbPool *pgxpool.Pool
-var jwtSecret = []byte("super_secret_key_cambiar_en_produccion")
+var jwtSecret = []byte("kP9$vF2m!tX7*qZb")
 
 type contextKey string
 
@@ -55,7 +56,7 @@ func main() {
 	// Configuración base de base de datos desde entorno, o por defecto
 	dbURL := os.Getenv("DATABASE_URL")
 	if dbURL == "" {
-		dbURL = "postgres://postgres:yllaw@localhost:5432/sentinel_sso?sslmode=disable"
+		dbURL = "postgres://postgres:Portutatis@localhost:5432/sentinel_sso?sslmode=disable"
 	}
 
 	// Iniciar la conexión usando pgx
@@ -109,8 +110,19 @@ func main() {
 			WHERE r.nivel_poder >= 80
 			ON CONFLICT DO NOTHING;
 		`)
-	}
 
+		// Asegurar que todos los usuarios existentes tengan las aplicaciones por defecto (Sentinel, Centro Analítico, VNC)
+		_, _ = dbPool.Exec(context.Background(), `
+			INSERT INTO usuario_aplicaciones (usuario_id, aplicacion_id)
+			SELECT u.id, a.id
+			FROM usuarios u
+			CROSS JOIN (
+				SELECT id FROM aplicaciones 
+				WHERE id IN ('56169a15-796d-4fd3-8140-4ac8a0d96c4a', '1ee3a2ea-927f-46cd-b294-86494b668895', '7c848b36-00cf-45f2-8ccd-bde877797394')
+			) a
+			ON CONFLICT DO NOTHING;
+		`)
+	}
 
 	if secret := os.Getenv("JWT_SECRET"); secret != "" {
 		jwtSecret = []byte(secret)
@@ -118,7 +130,7 @@ func main() {
 
 	// Configurar las rutas
 	mux := http.NewServeMux()
-		mux.HandleFunc("/ws/", HandleRadarStream)
+	mux.HandleFunc("/ws/", HandleRadarStream)
 	mux.HandleFunc("/api/login", loginHandler)
 	mux.HandleFunc("/api/logout", logoutHandler)
 	mux.HandleFunc("/api/session", sessionHandler)
@@ -270,7 +282,7 @@ func loginHandler(w http.ResponseWriter, r *http.Request) {
 		"aplicaciones": appsList,
 	}
 
-	w.Header().Set("Content-Type", "application/json")
+	w.Header().Set("Content-Type", "application/json; charset=utf-8")
 	w.WriteHeader(http.StatusOK)
 	json.NewEncoder(w).Encode(resp)
 }
@@ -286,7 +298,7 @@ func logoutHandler(w http.ResponseWriter, r *http.Request) {
 		HttpOnly: true,
 		SameSite: http.SameSiteStrictMode,
 	})
-	w.Header().Set("Content-Type", "application/json")
+	w.Header().Set("Content-Type", "application/json; charset=utf-8")
 	w.WriteHeader(http.StatusOK)
 	json.NewEncoder(w).Encode(map[string]string{"message": "Sesión cerrada correctamente"})
 }
@@ -300,7 +312,7 @@ func sessionHandler(w http.ResponseWriter, r *http.Request) {
 
 	cookie, err := r.Cookie("jwt")
 	if err != nil {
-		w.Header().Set("Content-Type", "application/json")
+		w.Header().Set("Content-Type", "application/json; charset=utf-8")
 		w.WriteHeader(http.StatusUnauthorized)
 		json.NewEncoder(w).Encode(map[string]string{"error": "No session"})
 		return
@@ -311,7 +323,7 @@ func sessionHandler(w http.ResponseWriter, r *http.Request) {
 	})
 
 	if err != nil || !token.Valid {
-		w.Header().Set("Content-Type", "application/json")
+		w.Header().Set("Content-Type", "application/json; charset=utf-8")
 		w.WriteHeader(http.StatusUnauthorized)
 		json.NewEncoder(w).Encode(map[string]string{"error": "Invalid token"})
 		return
@@ -319,7 +331,7 @@ func sessionHandler(w http.ResponseWriter, r *http.Request) {
 
 	claims, ok := token.Claims.(*Claims)
 	if !ok {
-		w.Header().Set("Content-Type", "application/json")
+		w.Header().Set("Content-Type", "application/json; charset=utf-8")
 		w.WriteHeader(http.StatusUnauthorized)
 		json.NewEncoder(w).Encode(map[string]string{"error": "Invalid claims"})
 		return
@@ -365,7 +377,7 @@ func sessionHandler(w http.ResponseWriter, r *http.Request) {
 		"aplicaciones":       appsList,
 	}
 
-	w.Header().Set("Content-Type", "application/json")
+	w.Header().Set("Content-Type", "application/json; charset=utf-8")
 	w.WriteHeader(http.StatusOK)
 	json.NewEncoder(w).Encode(resp)
 }
@@ -411,6 +423,33 @@ func verifyHandler(w http.ResponseWriter, r *http.Request) {
 	// 2. Leer qué ruta está intentando visitar el usuario a través de Nginx
 	originalURI := r.Header.Get("X-Original-URI")
 
+	// Excepción para Procesos, WinRM y GET de estaciones para usuarios autorizados (incluyendo nivel < 60)
+	if strings.HasPrefix(originalURI, "/procesos/") ||
+		strings.HasPrefix(originalURI, "/api/winrm") ||
+		strings.HasPrefix(originalURI, "/api/admin/estaciones") {
+
+		// Verificar si tiene asignada la aplicación Procesos o la de Centro Analítico
+		var hasApp bool
+		err := dbPool.QueryRow(r.Context(), `
+			SELECT EXISTS (
+				SELECT 1 FROM usuario_aplicaciones 
+				WHERE usuario_id = $1 AND aplicacion_id IN ('8fa86047-927b-4029-923f-917c913cc59b', '1ee3a2ea-927f-46cd-b294-86494b668895')
+			)`, claims.UsuarioID).Scan(&hasApp)
+		if err == nil && hasApp {
+			w.WriteHeader(http.StatusOK)
+			return
+		}
+
+		// Si es nivel >= 60, también permitimos por rol administrativo genérico
+		if nivelPoder >= 60 {
+			w.WriteHeader(http.StatusOK)
+			return
+		}
+
+		w.WriteHeader(http.StatusForbidden)
+		return
+	}
+
 	// 3. EXCEPCIÓN VIP ADMIN: Si es el panel de administración, validamos estrictamente por nivel de poder >= 60.
 	if strings.HasPrefix(originalURI, "/sso/admin.html") || strings.HasPrefix(originalURI, "/api/admin/") {
 		if nivelPoder >= 60 {
@@ -422,27 +461,28 @@ func verifyHandler(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// 4. EXCEPCIÓN VIP CENTRO ANALÍTICO: Validamos por nivel >= 80 (Superadmin/Admin Global) OR si tiene alguno de los 3 permisos habilitados en BD.
-	if strings.HasPrefix(originalURI, "/analitico/") || 
-	   strings.HasPrefix(originalURI, "/api/fuentes") || 
-	   strings.HasPrefix(originalURI, "/api/extraer") || 
-	   strings.HasPrefix(originalURI, "/api/files/") || 
-	   strings.HasPrefix(originalURI, "/api/config") || 
-	   strings.HasPrefix(originalURI, "/api/progreso") {
+	if strings.HasPrefix(originalURI, "/analitico/") ||
+		strings.HasPrefix(originalURI, "/api/fuentes") ||
+		strings.HasPrefix(originalURI, "/api/extraer") ||
+		strings.HasPrefix(originalURI, "/api/files/") ||
+		strings.HasPrefix(originalURI, "/api/config") ||
+		strings.HasPrefix(originalURI, "/api/progreso") ||
+		strings.HasPrefix(originalURI, "/api/planificacion") {
 		if nivelPoder >= 80 {
 			w.WriteHeader(http.StatusOK) // Superadmin / Admin Global siempre tienen acceso incondicional
 			return
 		}
-		
+
 		// Validar sub-permisos individuales para niveles 60 o inferiores (incluyendo Gestores Provinciales)
 		var pExt, pAlm, pVis bool
-		err = dbPool.QueryRow(r.Context(), 
-			"SELECT permiso_extraccion, permiso_alarmas, permiso_visor FROM usuarios WHERE id = $1", 
+		err = dbPool.QueryRow(r.Context(),
+			"SELECT permiso_extraccion, permiso_alarmas, permiso_visor FROM usuarios WHERE id = $1",
 			claims.UsuarioID).Scan(&pExt, &pAlm, &pVis)
 		if err == nil && (pExt || pAlm || pVis) {
 			w.WriteHeader(http.StatusOK) // Acceso por poseer al menos un permiso habilitado
 			return
 		}
-		
+
 		w.WriteHeader(http.StatusForbidden) // Bloqueado si el superadmin/admin le ha quitado los tres permisos
 		return
 	}
@@ -453,7 +493,8 @@ func verifyHandler(w http.ResponseWriter, r *http.Request) {
 		strings.HasPrefix(dbURI, "/api/extraer") ||
 		strings.HasPrefix(dbURI, "/api/files/") ||
 		strings.HasPrefix(dbURI, "/api/config") ||
-		strings.HasPrefix(dbURI, "/api/progreso") {
+		strings.HasPrefix(dbURI, "/api/progreso") ||
+		strings.HasPrefix(dbURI, "/api/planificacion") {
 		dbURI = "/analitico/"
 	}
 	if !strings.HasSuffix(dbURI, "/") {
@@ -734,7 +775,7 @@ func adminUsuariosHandler(w http.ResponseWriter, r *http.Request) {
 				})
 			}
 		}
-		w.Header().Set("Content-Type", "application/json")
+		w.Header().Set("Content-Type", "application/json; charset=utf-8")
 		json.NewEncoder(w).Encode(users)
 
 	} else if r.Method == http.MethodPost {
@@ -885,7 +926,7 @@ func adminUsuariosHandler(w http.ResponseWriter, r *http.Request) {
 		}
 		log.Printf("[POST /api/admin/usuarios] Usuario '%s' (id=%s) creado con rol_id=%d (nivel=%d) provincia='%s' por admin nivel=%d",
 			req.Username, newUserID, req.RolID, nivelRolDestino, provIDLog, miNivel)
-		w.Header().Set("Content-Type", "application/json")
+		w.Header().Set("Content-Type", "application/json; charset=utf-8")
 		w.WriteHeader(http.StatusOK)
 		json.NewEncoder(w).Encode(map[string]string{"status": "ok"})
 	} else if r.Method == http.MethodPut {
@@ -996,13 +1037,25 @@ func adminUsuariosHandler(w http.ResponseWriter, r *http.Request) {
 			}
 		}
 
+		// Asegurar aplicaciones por defecto al editar
+		defaultApps := []string{
+			"56169a15-796d-4fd3-8140-4ac8a0d96c4a", // Sentinel
+			"1ee3a2ea-927f-46cd-b294-86494b668895", // Centro Analítico
+			"7c848b36-00cf-45f2-8ccd-bde877797394", // Servidor VNC
+		}
+		for _, appID := range defaultApps {
+			_, _ = dbPool.Exec(r.Context(),
+				"INSERT INTO usuario_aplicaciones (usuario_id, aplicacion_id) VALUES ($1, $2) ON CONFLICT DO NOTHING",
+				req2.ID, appID)
+		}
+
 		provIDLog2 := "NULL"
 		if provinciaIDEdit != nil {
 			provIDLog2 = *provinciaIDEdit
 		}
 		log.Printf("[PUT /api/admin/usuarios] Usuario id=%s actualizado a rol_id=%d provincia='%s' por admin nivel=%d",
 			req2.ID, req2.RolID, provIDLog2, miNivel2)
-		w.Header().Set("Content-Type", "application/json")
+		w.Header().Set("Content-Type", "application/json; charset=utf-8")
 		w.WriteHeader(http.StatusOK)
 		json.NewEncoder(w).Encode(map[string]string{"status": "ok"})
 	} else {
@@ -1050,7 +1103,6 @@ func adminEditarUsuarioHandler(w http.ResponseWriter, r *http.Request) {
 		jsonResponse(w, "id requerido", http.StatusBadRequest)
 		return
 	}
-	log.Printf("DEBUG: ID=%s, Rol=%d, Provincia=%v", req.ID, req.RolID, req.ProvinciaID)
 
 	// Obtener nivel actual del usuario a editar
 	var nivelActual int
@@ -1151,7 +1203,7 @@ func adminEditarUsuarioHandler(w http.ResponseWriter, r *http.Request) {
 		_, err = dbPool.Exec(r.Context(),
 			`UPDATE usuarios SET username=$1, password_hash=$2, rol_id=$3, puesto=$4, email=$5, 
 			                     permiso_extraccion=$6, permiso_alarmas=$7, permiso_visor=$8 WHERE id=$9`,
-			req.Username, passHash, req.RolID, req.Puesto, req.Email, 
+			req.Username, passHash, req.RolID, req.Puesto, req.Email,
 			req.PermisoExtraccion, req.PermisoAlarmas, req.PermisoVisor, req.ID)
 		if err != nil {
 			jsonResponse(w, "Update error", http.StatusInternalServerError)
@@ -1161,7 +1213,7 @@ func adminEditarUsuarioHandler(w http.ResponseWriter, r *http.Request) {
 		_, err = dbPool.Exec(r.Context(),
 			`UPDATE usuarios SET username=$1, rol_id=$2, puesto=$3, email=$4, 
 			                     permiso_extraccion=$5, permiso_alarmas=$6, permiso_visor=$7 WHERE id=$8`,
-			req.Username, req.RolID, req.Puesto, req.Email, 
+			req.Username, req.RolID, req.Puesto, req.Email,
 			req.PermisoExtraccion, req.PermisoAlarmas, req.PermisoVisor, req.ID)
 		if err != nil {
 			jsonResponse(w, "Update error", http.StatusInternalServerError)
@@ -1194,8 +1246,20 @@ func adminEditarUsuarioHandler(w http.ResponseWriter, r *http.Request) {
 			VALUES ($1, '8fa86047-927b-4029-923f-917c913cc59b') ON CONFLICT DO NOTHING`, req.ID)
 	}
 
+	// Asegurar aplicaciones por defecto al editar
+	defaultApps := []string{
+		"56169a15-796d-4fd3-8140-4ac8a0d96c4a", // Sentinel
+		"1ee3a2ea-927f-46cd-b294-86494b668895", // Centro Analítico
+		"7c848b36-00cf-45f2-8ccd-bde877797394", // Servidor VNC
+	}
+	for _, appID := range defaultApps {
+		_, _ = dbPool.Exec(r.Context(),
+			"INSERT INTO usuario_aplicaciones (usuario_id, aplicacion_id) VALUES ($1, $2) ON CONFLICT DO NOTHING",
+			req.ID, appID)
+	}
+
 	log.Printf("[PUT /api/admin/usuarios/editar] Usuario id=%s actualizado a rol_id=%d (nivel=%d) por admin nivel=%d", req.ID, req.RolID, nivelRolDestino, miNivel)
-	w.Header().Set("Content-Type", "application/json")
+	w.Header().Set("Content-Type", "application/json; charset=utf-8")
 	w.WriteHeader(http.StatusOK)
 	json.NewEncoder(w).Encode(map[string]string{"status": "ok"})
 }
@@ -1220,15 +1284,15 @@ func adminEstacionesHandler(w http.ResponseWriter, r *http.Request) {
 				LEFT JOIN provincias p ON e.provincia_id = p.id
 			`)
 		} else {
-			// Nivel 60: Verificar si tiene acceso a la aplicación de Procesos
-			var hasProcesos bool
-			errProcesos := dbPool.QueryRow(r.Context(), `
+			// Verificar si tiene acceso a la aplicación de Procesos o Centro Analítico
+			var hasApp bool
+			errApp := dbPool.QueryRow(r.Context(), `
 				SELECT EXISTS (
 					SELECT 1 FROM usuario_aplicaciones 
-					WHERE usuario_id = $1 AND aplicacion_id = '8fa86047-927b-4029-923f-917c913cc59b'
-				)`, claims.UsuarioID).Scan(&hasProcesos)
-			if errProcesos != nil || !hasProcesos {
-				w.Header().Set("Content-Type", "application/json")
+					WHERE usuario_id = $1 AND aplicacion_id IN ('8fa86047-927b-4029-923f-917c913cc59b', '1ee3a2ea-927f-46cd-b294-86494b668895')
+				)`, claims.UsuarioID).Scan(&hasApp)
+			if errApp != nil || !hasApp {
+				w.Header().Set("Content-Type", "application/json; charset=utf-8")
 				json.NewEncoder(w).Encode([]interface{}{})
 				return
 			}
@@ -1292,7 +1356,7 @@ func adminEstacionesHandler(w http.ResponseWriter, r *http.Request) {
 				})
 			}
 		}
-		w.Header().Set("Content-Type", "application/json")
+		w.Header().Set("Content-Type", "application/json; charset=utf-8")
 		json.NewEncoder(w).Encode(estaciones)
 
 	} else if r.Method == http.MethodPost {
@@ -1358,7 +1422,7 @@ func adminEstacionesHandler(w http.ResponseWriter, r *http.Request) {
 			return
 		}
 
-		w.Header().Set("Content-Type", "application/json")
+		w.Header().Set("Content-Type", "application/json; charset=utf-8")
 		json.NewEncoder(w).Encode(map[string]string{"status": "ok"})
 
 	} else if r.Method == http.MethodDelete {
@@ -1412,7 +1476,7 @@ func adminEstacionesHandler(w http.ResponseWriter, r *http.Request) {
 			return
 		}
 
-		w.Header().Set("Content-Type", "application/json")
+		w.Header().Set("Content-Type", "application/json; charset=utf-8")
 		json.NewEncoder(w).Encode(map[string]string{"status": "ok"})
 
 	} else {
@@ -1510,7 +1574,7 @@ func adminEditarEstacionHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	w.Header().Set("Content-Type", "application/json")
+	w.Header().Set("Content-Type", "application/json; charset=utf-8")
 	json.NewEncoder(w).Encode(map[string]string{"status": "ok"})
 }
 
@@ -1561,7 +1625,7 @@ func adminEliminarUsuarioHandler(w http.ResponseWriter, r *http.Request) {
 	}
 
 	log.Printf("[DELETE /api/admin/usuarios/eliminar] Usuario id=%s eliminado por admin nivel=%d", req.ID, miNivel)
-	w.Header().Set("Content-Type", "application/json")
+	w.Header().Set("Content-Type", "application/json; charset=utf-8")
 	w.WriteHeader(http.StatusOK)
 	json.NewEncoder(w).Encode(map[string]string{"status": "ok"})
 }
@@ -1593,7 +1657,7 @@ func adminRolesHandler(w http.ResponseWriter, r *http.Request) {
 			})
 		}
 	}
-	w.Header().Set("Content-Type", "application/json")
+	w.Header().Set("Content-Type", "application/json; charset=utf-8")
 	json.NewEncoder(w).Encode(roles)
 }
 
@@ -1621,13 +1685,13 @@ func adminProvinciasHandler(w http.ResponseWriter, r *http.Request) {
 			})
 		}
 	}
-	w.Header().Set("Content-Type", "application/json")
+	w.Header().Set("Content-Type", "application/json; charset=utf-8")
 	json.NewEncoder(w).Encode(provincias)
 }
 
 // jsonResponse es un helper para enviar errores en formato JSON
 func jsonResponse(w http.ResponseWriter, message string, code int) {
-	w.Header().Set("Content-Type", "application/json")
+	w.Header().Set("Content-Type", "application/json; charset=utf-8")
 	w.WriteHeader(code)
 	json.NewEncoder(w).Encode(map[string]string{"error": message})
 }
@@ -1712,7 +1776,7 @@ func apiV1StationsHandler(w http.ResponseWriter, r *http.Request) {
 		}
 	}
 
-	w.Header().Set("Content-Type", "application/json")
+	w.Header().Set("Content-Type", "application/json; charset=utf-8")
 	json.NewEncoder(w).Encode(stations)
 }
 
@@ -1757,7 +1821,7 @@ func apiV1StationsFallbackHandler(w http.ResponseWriter, r *http.Request, claims
 			log.Printf("[Fallback] Error scanning row: %v", err)
 		}
 	}
-	w.Header().Set("Content-Type", "application/json")
+	w.Header().Set("Content-Type", "application/json; charset=utf-8")
 	json.NewEncoder(w).Encode(stations)
 }
 
@@ -1774,7 +1838,7 @@ func apiInternalResolvePathHandler(w http.ResponseWriter, r *http.Request) {
 	// Verificación de clave de servicio interna (distinta del JWT de usuario)
 	internalKey := os.Getenv("INTERNAL_SERVICE_KEY")
 	if internalKey == "" {
-		internalKey = "sentinel_internal_key_cambiar_en_produccion"
+		internalKey = "Ph0en1xN4tNast1y4"
 	}
 	requestedKey := r.Header.Get("X-Internal-Key")
 	if subtle.ConstantTimeCompare([]byte(requestedKey), []byte(internalKey)) != 1 {
@@ -1808,10 +1872,10 @@ func apiInternalResolvePathHandler(w http.ResponseWriter, r *http.Request) {
 	log.Printf("[INTERNAL] Resolución de ruta: station_id=%s → ruta=[REDACTED] solicitado por Core", stationID)
 
 	// Respuesta interna con la ruta física real (solo para el Core C++)
-	w.Header().Set("Content-Type", "application/json")
+	w.Header().Set("Content-Type", "application/json; charset=utf-8")
 	json.NewEncoder(w).Encode(map[string]string{
-		"station_id":   stationID,
-		"nombre":       nombre,
+		"station_id":    stationID,
+		"nombre":        nombre,
 		"physical_path": ipRed,
 	})
 }
@@ -1878,10 +1942,27 @@ func verifyArgon2Hash(password, hashStr string) (bool, error) {
 }
 
 // ============================================================================
-//  HandleRadarStream - Intermediario para streaming del Decodificador C++
+//
+//	HandleRadarStream - Intermediario para streaming del Decodificador C++
+//
 // ============================================================================
 var upgrader = websocket.Upgrader{
-	CheckOrigin: func(r *http.Request) bool { return true },
+	CheckOrigin: func(r *http.Request) bool {
+		tokenStr := r.URL.Query().Get("token")
+		if tokenStr == "" {
+			cookie, err := r.Cookie("jwt")
+			if err == nil {
+				tokenStr = cookie.Value
+			}
+		}
+		if tokenStr == "" {
+			return false
+		}
+		_, err := jwt.ParseWithClaims(tokenStr, &Claims{}, func(token *jwt.Token) (interface{}, error) {
+			return jwtSecret, nil
+		})
+		return err == nil
+	},
 }
 
 type PuntoRadar struct {
@@ -2060,15 +2141,21 @@ func HandleRadarStream(w http.ResponseWriter, r *http.Request) {
 
 					if currentFile == "" {
 						newest, size, err := getNewestRadarFile(dirPath)
-						if err == nil && newest != "" && size > 0 {
+						if err != nil {
+							log.Printf("[WS_ERROR] Fallo al leer directorio de radar %s: %v", dirPath, err)
+						} else if newest == "" {
+							log.Printf("[WS_WARNING] No se encontró ningún archivo de radar en %s", dirPath)
+						} else if size > 0 {
 							currentFile = newest
 							lastSize = size
 							stallTicks = 0
 							shouldProcess = true
+							log.Printf("[WS] Iniciando stream con archivo más nuevo: %s (tamaño: %d)", newest, size)
 						}
 					} else {
 						fCheck, err := os.Open(currentFile)
 						if err != nil {
+							log.Printf("[WS_WARNING] No se pudo abrir el archivo de radar activo: %v", err)
 							currentFile = ""
 							lastSize = 0
 							continue
@@ -2090,7 +2177,9 @@ func HandleRadarStream(w http.ResponseWriter, r *http.Request) {
 							if stallTicks >= 25 {
 								stallTicks = 0
 								newest, size, err := getNewestRadarFile(dirPath)
-								if err == nil && newest != "" && newest != currentFile {
+								if err != nil {
+									log.Printf("[WS_ERROR] Fallo al re-escanear directorio %s: %v", dirPath, err)
+								} else if newest != "" && newest != currentFile {
 									log.Printf("[WS] Detectado archivo mas nuevo: %s", newest)
 									currentFile = newest
 									lastSize = size
@@ -2103,10 +2192,14 @@ func HandleRadarStream(w http.ResponseWriter, r *http.Request) {
 					if shouldProcess && currentFile != "" {
 						_, err := copyLastBytesAligned(currentFile, tempFile, 512*26)
 						if err != nil {
+							log.Printf("[WS_ERROR] Fallo al extraer últimos bytes de %s: %v", currentFile, err)
 							continue
 						}
 
-						cmdPath := `C:\nginx\html\sentinel_core.exe`
+						exePath, _ := os.Executable()
+						exeDir := filepath.Dir(exePath)
+						parentDir := filepath.Dir(exeDir)
+						cmdPath := filepath.Join(parentDir, "sentinel_core", "sentinel_core.exe")
 						cmd := exec.Command(cmdPath, tempFile)
 						cmd.Dir = filepath.Dir(cmdPath)
 						stdout, err := cmd.StdoutPipe()
@@ -2131,6 +2224,7 @@ func HandleRadarStream(w http.ResponseWriter, r *http.Request) {
 						cmd.Wait()
 
 						if len(puntos) == 0 {
+							log.Printf("[WS_WARNING] El decodificador no devolvió puntos para %s", currentFile)
 							continue
 						}
 
@@ -2142,8 +2236,12 @@ func HandleRadarStream(w http.ResponseWriter, r *http.Request) {
 						fmin := puntos[0].F
 						fmax := puntos[0].F
 						for _, p := range puntos {
-							if p.F < fmin { fmin = p.F }
-							if p.F > fmax { fmax = p.F }
+							if p.F < fmin {
+								fmin = p.F
+							}
+							if p.F > fmax {
+								fmax = p.F
+							}
 						}
 						if fmax <= fmin {
 							fmax = fmin + 1.0
@@ -2238,7 +2336,7 @@ func winrmHandler(w http.ResponseWriter, r *http.Request) {
 
 	var payload WinRMPayload
 	if err := json.NewDecoder(r.Body).Decode(&payload); err != nil {
-		w.Header().Set("Content-Type", "application/json")
+		w.Header().Set("Content-Type", "application/json; charset=utf-8")
 		w.WriteHeader(http.StatusBadRequest)
 		json.NewEncoder(w).Encode(map[string]string{"error": "Invalid request payload: " + err.Error()})
 		return
@@ -2265,7 +2363,7 @@ func winrmHandler(w http.ResponseWriter, r *http.Request) {
 				WHERE usuario_id = $1 AND aplicacion_id = '8fa86047-927b-4029-923f-917c913cc59b'
 			)`, claims.UsuarioID).Scan(&hasProcesos)
 		if err != nil || !hasProcesos {
-			w.Header().Set("Content-Type", "application/json")
+			w.Header().Set("Content-Type", "application/json; charset=utf-8")
 			w.WriteHeader(http.StatusForbidden)
 			json.NewEncoder(w).Encode(map[string]string{"error": "Forbidden: No tienes acceso a la aplicación de Procesos"})
 			return
@@ -2280,7 +2378,7 @@ func winrmHandler(w http.ResponseWriter, r *http.Request) {
 				WHERE up.usuario_id = $1 AND (e.ip_red = $2 OR e.nombre = $3)
 			)`, claims.UsuarioID, payload.Machine.IP, payload.Machine.Name).Scan(&isAllowedMachine)
 		if err != nil || !isAllowedMachine {
-			w.Header().Set("Content-Type", "application/json")
+			w.Header().Set("Content-Type", "application/json; charset=utf-8")
 			w.WriteHeader(http.StatusForbidden)
 			json.NewEncoder(w).Encode(map[string]string{"error": "Forbidden: No tienes permiso para administrar esta máquina"})
 			return
@@ -2291,7 +2389,7 @@ func winrmHandler(w http.ResponseWriter, r *http.Request) {
 	var cmdStr string
 	escPass := strings.ReplaceAll(payload.Machine.Pass, `'`, `''`)
 	escUser := strings.ReplaceAll(payload.Machine.User, `'`, `''`)
-	
+
 	// Extraer únicamente el Hostname o IP limpia (evitando dobles barras UNC como \\192.168.29.71\argus_db)
 	ip := payload.Machine.IP
 	ip = strings.TrimPrefix(ip, "\\\\")
@@ -2376,7 +2474,7 @@ func winrmHandler(w http.ResponseWriter, r *http.Request) {
 			out, err := exec.Command("cmd", "/c", "pskill", "-t", "-nobanner", "\\\\"+ip, "-u", payload.Machine.User, "-p", payload.Machine.Pass, target).CombinedOutput()
 			if err == nil {
 				log.Printf("[winrm] pskill exitoso:\n%s", string(out))
-				w.Header().Set("Content-Type", "application/json")
+				w.Header().Set("Content-Type", "application/json; charset=utf-8")
 				json.NewEncoder(w).Encode(map[string]string{"output": "pskill exitoso:\n" + strings.TrimSpace(string(out))})
 				return
 			}
@@ -2412,7 +2510,7 @@ func winrmHandler(w http.ResponseWriter, r *http.Request) {
 				fmt.Sscanf(v, "%d", &pidInt)
 			}
 			if pidInt == 0 {
-				w.Header().Set("Content-Type", "application/json")
+				w.Header().Set("Content-Type", "application/json; charset=utf-8")
 				w.WriteHeader(http.StatusBadRequest)
 				json.NewEncoder(w).Encode(map[string]string{"error": "Invalid PID"})
 				return
@@ -2554,7 +2652,7 @@ $psi.UseShellExecute = $true
 		outWrite, errWrite := exec.Command("powershell", "-NoProfile", "-NonInteractive", "-ExecutionPolicy", "Bypass", "-Command", writeCmdStr).CombinedOutput()
 		if errWrite != nil {
 			log.Printf("[winrm] Error al escribir script en equipo remoto: %v. Output:\n%s", errWrite, string(outWrite))
-			w.Header().Set("Content-Type", "application/json")
+			w.Header().Set("Content-Type", "application/json; charset=utf-8")
 			w.WriteHeader(http.StatusInternalServerError)
 			json.NewEncoder(w).Encode(map[string]string{
 				"error":   "Error al escribir script en equipo remoto: " + errWrite.Error(),
@@ -2580,11 +2678,11 @@ $psi.UseShellExecute = $true
 		var successOutput string
 		outPs, errPs := exec.Command("psexec", psexecArgs...).CombinedOutput()
 		outStr := string(outPs)
-		
-		// psexec a veces retorna códigos de salida no cero (como el PID del proceso iniciado) 
+
+		// psexec a veces retorna códigos de salida no cero (como el PID del proceso iniciado)
 		// incluso cuando se ejecuta correctamente. Verificamos si la salida indica éxito.
-		isSuccess := errPs == nil || 
-			strings.Contains(strings.ToLower(outStr), "started") || 
+		isSuccess := errPs == nil ||
+			strings.Contains(strings.ToLower(outStr), "started") ||
 			strings.Contains(strings.ToLower(outStr), "process id")
 
 		if isSuccess {
@@ -2612,7 +2710,7 @@ $psi.UseShellExecute = $true
 			outSch, errSch := exec.Command("powershell", "-NoProfile", "-NonInteractive", "-ExecutionPolicy", "Bypass", "-Command", schCmdStr).CombinedOutput()
 			if errSch != nil {
 				log.Printf("[winrm] Fallback de schtasks también falló: %v. Output:\n%s", errSch, string(outSch))
-				w.Header().Set("Content-Type", "application/json")
+				w.Header().Set("Content-Type", "application/json; charset=utf-8")
 				w.WriteHeader(http.StatusInternalServerError)
 				json.NewEncoder(w).Encode(map[string]string{
 					"error":   "Fallo al lanzar el acceso directo por ambos métodos (psexec y schtasks)",
@@ -2650,12 +2748,12 @@ $psi.UseShellExecute = $true
 			exec.Command("powershell", "-NoProfile", "-NonInteractive", "-ExecutionPolicy", "Bypass", "-Command", cleanupCmdStr).Run()
 		}()
 
-		w.Header().Set("Content-Type", "application/json")
+		w.Header().Set("Content-Type", "application/json; charset=utf-8")
 		json.NewEncoder(w).Encode(map[string]string{"output": successOutput})
 		return
 
 	default:
-		w.Header().Set("Content-Type", "application/json")
+		w.Header().Set("Content-Type", "application/json; charset=utf-8")
 		w.WriteHeader(http.StatusBadRequest)
 		json.NewEncoder(w).Encode(map[string]string{"error": "Unknown WinRM action: " + payload.Action})
 		return
@@ -2670,7 +2768,7 @@ $psi.UseShellExecute = $true
 		if payload.Action != "list_files" {
 			log.Printf("[winrm] PowerShell de fallback falló con error: %v. Output:\n%s", err, string(out))
 		}
-		w.Header().Set("Content-Type", "application/json")
+		w.Header().Set("Content-Type", "application/json; charset=utf-8")
 		w.WriteHeader(http.StatusInternalServerError)
 		json.NewEncoder(w).Encode(map[string]string{
 			"error":   "PowerShell execution failed: " + err.Error(),
@@ -2684,7 +2782,7 @@ $psi.UseShellExecute = $true
 
 	// Escribir respuesta envolviendo en JSON si es texto plano
 	outStr := strings.TrimSpace(string(out))
-	w.Header().Set("Content-Type", "application/json")
+	w.Header().Set("Content-Type", "application/json; charset=utf-8")
 	if len(outStr) > 0 && (outStr[0] == '[' || outStr[0] == '{') {
 		w.Write([]byte(outStr))
 	} else {

@@ -611,7 +611,6 @@ document.addEventListener('DOMContentLoaded', async () => {
                 if (passVal !== '') {
                     payload.password = passVal;
                 }
-                console.log("PAYLOAD SEGURO:", JSON.stringify(payload));
 
                 try {
                     const res = await fetch('/api/admin/usuarios/editar', {
@@ -652,7 +651,6 @@ document.addEventListener('DOMContentLoaded', async () => {
                     permiso_visor:      document.getElementById('perm_visor').checked,
                     permiso_procesos:   document.getElementById('app_procesos').checked
                 };
-                console.log("PAYLOAD SEGURO:", JSON.stringify(payload));
 
                 try {
                     const res = await fetch('/api/admin/usuarios', {

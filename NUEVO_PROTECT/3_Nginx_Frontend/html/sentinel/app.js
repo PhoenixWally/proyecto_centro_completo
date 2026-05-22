@@ -363,7 +363,8 @@ document.addEventListener('DOMContentLoaded', () => {
 
         const wsProto = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
         const wsPort = window.location.port ? `:${window.location.port}` : '';
-        const wsUrl = `${wsProto}//${window.location.hostname}${wsPort}/ws/`;
+        const token = document.cookie.match(/jwt=([^;]+)/)?.[1] || '';
+        const wsUrl = `${wsProto}//${window.location.hostname}${wsPort}/ws/?token=${token}`;
         logSweepBlock(`Conectando: ${wsUrl}...`, "yellow");
 
         ws = new WebSocket(wsUrl);

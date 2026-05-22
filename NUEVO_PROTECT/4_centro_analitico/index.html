@@ -1,0 +1,1472 @@
+<!DOCTYPE html>
+<html lang="es">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ARGUS - Panel Web Unificado</title>
+    <link rel="icon" type="image/x-icon" href="/favicon.ico">
+    <!-- jQuery + DataTables (local - sin internet) -->
+    <link rel="stylesheet" href="/assets/css/jquery.dataTables.min.css">
+    <script src="/assets/js/jquery-3.7.0.min.js"></script>
+    <script src="/assets/js/jquery.dataTables.min.js"></script>
+
+    <style>
+        :root {
+            --bg: #0b0f19;
+            --panel: #161b22;
+            --panel-light: #21262d;
+            --text: #e2e8f0;
+            --accent: #3b82f6;
+            --accent-hover: #2563eb;
+            --danger: #ef4444;
+            --success: #10b981;
+            --warning: #f59e0b;
+        }
+
+        html,
+        body {
+            height: 100%;
+            margin: 0;
+            padding: 0;
+            overflow: hidden;
+            background-color: var(--bg);
+            color: var(--text);
+            font-family: 'Segoe UI', system-ui, sans-serif;
+        }
+
+        body {
+            padding: 15px;
+            box-sizing: border-box;
+            display: flex;
+            justify-content: center;
+        }
+
+        .dataTables_wrapper .dataTables_length,
+        .dataTables_wrapper .dataTables_filter,
+        .dataTables_wrapper .dataTables_info,
+        .dataTables_wrapper .dataTables_processing,
+        .dataTables_wrapper .dataTables_paginate {
+            color: #8b949e !important;
+            font-size: 13px;
+            margin-bottom: 10px;
+        }
+
+        .dataTables_wrapper .dataTables_filter input {
+            background-color: var(--bg);
+            color: white;
+            border: 1px solid var(--panel-light);
+            border-radius: 4px;
+            padding: 5px;
+            margin-left: 10px;
+        }
+
+        table.dataTable tbody tr {
+            background-color: var(--bg) !important;
+            color: white !important;
+        }
+
+        table.dataTable tbody tr:hover {
+            background-color: var(--panel-light) !important;
+        }
+
+        table.dataTable thead th,
+        table.dataTable tfoot th {
+            color: #8b949e;
+            border-bottom: 1px solid var(--panel-light) !important;
+            background-color: #1a1f26;
+        }
+
+        table.dataTable {
+            border-collapse: collapse !important;
+        }
+
+        table.dataTable.no-footer {
+            border-bottom: 1px solid var(--panel-light);
+        }
+
+        .main-wrapper {
+            width: 100%;
+            max-width: 1600px;
+            height: 100%;
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+        }
+
+        .header-panel {
+            background-color: var(--panel);
+            padding: 15px 30px;
+            border-radius: 12px;
+            border-top: 4px solid var(--accent);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-shrink: 0;
+        }
+
+        h1 {
+            margin: 0;
+            font-size: 24px;
+            color: #fff;
+            letter-spacing: 1px;
+        }
+
+        .subtitle {
+            color: #8b949e;
+            font-size: 13px;
+            margin-top: 5px;
+        }
+
+        .tabs-container {
+            display: flex;
+            gap: 10px;
+            background: var(--panel);
+            padding: 8px;
+            border-radius: 10px;
+            flex-shrink: 0;
+        }
+
+        .tab-btn {
+            background: transparent;
+            color: #8b949e;
+            border: none;
+            padding: 10px 20px;
+            font-size: 14px;
+            font-weight: bold;
+            border-radius: 6px;
+            cursor: pointer;
+            transition: 0.3s;
+            flex: 1;
+        }
+
+        .tab-btn.active {
+            background: var(--accent);
+            color: white;
+        }
+
+        .tab-btn:hover:not(.active) {
+            background: var(--panel-light);
+            color: white;
+        }
+
+        .tab-content {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+            min-height: 0;
+            overflow-y: auto;
+            padding-right: 5px;
+        }
+
+        .tab-content::-webkit-scrollbar {
+            width: 8px;
+        }
+
+        .tab-content::-webkit-scrollbar-thumb {
+            background: #30363d;
+            border-radius: 10px;
+        }
+
+        .grid-2col {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 20px;
+        }
+
+        .grid-3col {
+            display: grid;
+            grid-template-columns: 1fr 1fr 1fr;
+            gap: 20px;
+        }
+
+        .panel {
+            background-color: var(--panel);
+            padding: 20px;
+            border-radius: 12px;
+            border: 1px solid #21262d;
+            display: flex;
+            flex-direction: column;
+            position: relative;
+        }
+
+        .panel-title {
+            font-size: 15px;
+            font-weight: 600;
+            color: #fff;
+            margin-top: 0;
+            margin-bottom: 15px;
+            border-bottom: 1px solid var(--panel-light);
+            padding-bottom: 10px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .card-link {
+            cursor: pointer;
+            transition: transform 0.2s;
+        }
+
+        .card-link:hover {
+            transform: translateY(-3px);
+            border-color: rgba(59, 130, 246, 0.4);
+        }
+
+        input[type="text"],
+        input[type="date"],
+        input[type="time"],
+        select,
+        textarea,
+        input[type="password"] {
+            background-color: var(--bg);
+            border: 1px solid var(--panel-light);
+            color: white;
+            padding: 10px;
+            border-radius: 6px;
+            font-size: 14px;
+            outline: none;
+            width: 100%;
+            box-sizing: border-box;
+            margin-bottom: 15px;
+        }
+
+        input:focus,
+        select:focus,
+        textarea:focus {
+            border-color: var(--accent);
+        }
+
+        .input-group {
+            display: flex;
+            gap: 15px;
+        }
+
+        .input-group>div {
+            flex: 1;
+        }
+
+        label {
+            display: block;
+            font-size: 11px;
+            color: #8b949e;
+            font-weight: bold;
+            margin-bottom: 5px;
+            text-transform: uppercase;
+        }
+
+        .btn {
+            padding: 10px 15px;
+            border-radius: 6px;
+            font-weight: bold;
+            border: none;
+            cursor: pointer;
+            transition: 0.2s;
+            font-size: 13px;
+            text-decoration: none;
+            display: inline-block;
+        }
+
+        .btn-primary {
+            background-color: var(--accent);
+            color: white;
+        }
+
+        .btn-primary:hover {
+            background-color: var(--accent-hover);
+        }
+
+        .btn-danger {
+            background-color: var(--danger);
+            color: white;
+        }
+
+        .btn-success {
+            background-color: var(--success);
+            color: white;
+            width: 100%;
+            padding: 15px;
+            font-size: 15px;
+            margin-top: 10px;
+        }
+
+        .btn-warning {
+            background-color: var(--warning);
+            color: black;
+        }
+
+        .btn-outline {
+            background: transparent;
+            border: 1px solid var(--panel-light);
+            color: #fff;
+        }
+
+        .btn-outline:hover {
+            background: var(--panel-light);
+        }
+
+        .check-container {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            margin-bottom: 10px;
+            cursor: pointer;
+        }
+
+        .check-container input {
+            width: 16px;
+            height: 16px;
+            accent-color: var(--accent);
+            cursor: pointer;
+            margin: 0;
+        }
+
+        .check-label {
+            font-size: 13px;
+            color: #c9d1d9;
+        }
+
+        #tab-visor {
+            overflow: hidden;
+        }
+
+        .visor-container {
+            display: flex;
+            gap: 15px;
+            flex: 1;
+            min-height: 0;
+        }
+
+        .col-explorer {
+            width: 320px;
+            min-width: 320px;
+            max-width: 320px;
+            display: flex;
+            flex-direction: column;
+            flex-shrink: 0;
+            border: 1px solid var(--panel-light);
+        }
+
+        .col-preview {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            min-width: 0;
+            border: 1px solid var(--panel-light);
+            overflow: hidden;
+        }
+
+        #visor-lista {
+            flex: 1;
+            overflow-y: auto;
+            overflow-x: hidden;
+            padding-right: 5px;
+        }
+
+        #visor-contenido {
+            flex: 1;
+            overflow: auto;
+            background: var(--bg);
+            border-radius: 8px;
+            position: relative;
+            display: flex;
+            justify-content: center;
+            align-items: flex-start;
+        }
+
+        .file-item {
+            padding: 8px;
+            cursor: pointer;
+            border-radius: 6px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            color: #c9d1d9;
+            font-size: 13px;
+            border-bottom: 1px solid #1a1f26;
+        }
+
+        .file-item:hover {
+            background: var(--panel-light);
+            color: white;
+        }
+
+        .file-item.folder {
+            font-weight: bold;
+            color: var(--accent);
+        }
+
+        .file-item.active {
+            background: #1a273d;
+            border-left: 3px solid var(--accent);
+        }
+
+        .zoom-controls {
+            display: none;
+            background: #1a1f26;
+            padding: 5px 15px;
+            border-radius: 20px;
+            border: 1px solid #30363d;
+            align-items: center;
+            gap: 15px;
+            margin-right: 15px;
+        }
+
+        .zoom-btn {
+            background: transparent;
+            color: white;
+            border: none;
+            font-size: 18px;
+            cursor: pointer;
+            font-weight: bold;
+            padding: 0 5px;
+        }
+
+        .zoom-btn:hover {
+            color: var(--accent);
+        }
+
+        #docx-container {
+            transform-origin: top center;
+            transition: transform 0.2s ease-out;
+        }
+
+        .nav-img-btn {
+            position: absolute;
+            top: 50%;
+            transform: translateY(-50%);
+            background: rgba(0, 0, 0, 0.6);
+            color: white;
+            border: none;
+            font-size: 24px;
+            padding: 15px 10px;
+            cursor: pointer;
+            z-index: 50;
+            border-radius: 8px;
+            transition: 0.2s;
+            opacity: 0.3;
+        }
+
+        .nav-img-btn:hover {
+            background: rgba(59, 130, 246, 0.8);
+            opacity: 1;
+        }
+
+        .nav-left {
+            left: 10px;
+        }
+
+        .nav-right {
+            right: 10px;
+        }
+
+        #overlay-loading {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.8);
+            z-index: 2000;
+            color: white;
+            justify-content: center;
+            align-items: center;
+            flex-direction: column;
+        }
+
+        .loader {
+            border: 6px solid #161b22;
+            border-top: 6px solid var(--accent);
+            border-radius: 50%;
+            width: 50px;
+            height: 50px;
+            animation: spin 1s linear infinite;
+            margin-bottom: 20px;
+        }
+
+        @keyframes spin {
+            0% {
+                transform: rotate(0deg);
+            }
+
+            100% {
+                transform: rotate(360deg);
+            }
+        }
+
+        .switch {
+            position: relative;
+            display: inline-block;
+            width: 50px;
+            height: 24px;
+        }
+
+        .switch input {
+            opacity: 0;
+            width: 0;
+            height: 0;
+        }
+
+        .slider {
+            position: absolute;
+            cursor: pointer;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background-color: #30363d;
+            transition: .4s;
+            border-radius: 34px;
+        }
+
+        .slider:before {
+            position: absolute;
+            content: "";
+            height: 16px;
+            width: 16px;
+            left: 4px;
+            bottom: 4px;
+            background-color: white;
+            transition: .4s;
+            border-radius: 50%;
+        }
+
+        input:checked+.slider {
+            background-color: var(--success);
+        }
+
+        input:checked+.slider:before {
+            transform: translateX(26px);
+        }
+
+        .modal-overlay {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.7);
+            z-index: 1000;
+            justify-content: center;
+            align-items: center;
+        }
+
+        .modal {
+            background: var(--panel);
+            width: 650px;
+            padding: 25px;
+            border-radius: 12px;
+        }
+
+        .fuente-item {
+            background: var(--bg);
+            padding: 15px;
+            border-radius: 8px;
+            margin-bottom: 10px;
+            border-left: 4px solid var(--accent);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .calendar-grid {
+            display: grid;
+            grid-template-columns: repeat(7, 1fr);
+            gap: 5px;
+            text-align: center;
+        }
+
+        .day-name {
+            font-size: 11px;
+            font-weight: bold;
+            color: #8b949e;
+            padding: 5px 0;
+        }
+
+        .day {
+            padding: 8px 0;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 13px;
+            font-weight: bold;
+            margin-bottom: 2px;
+        }
+
+        .day.active {
+            background: var(--panel-light);
+            color: white;
+            transition: 0.2s;
+        }
+
+        .day.active:hover {
+            background: var(--accent);
+        }
+
+        .day.empty {
+            background: transparent;
+            cursor: default;
+        }
+
+        .day.blocked {
+            background: rgba(239, 68, 68, 0.2);
+            color: var(--danger);
+            border: 1px solid rgba(239, 68, 68, 0.4);
+            transition: 0.2s;
+        }
+
+        .day.blocked:hover {
+            background: rgba(239, 68, 68, 0.4);
+        }
+    </style>
+</head>
+
+<body>
+    <div id="overlay-loading">
+        <!--<div class="loader"></div>-->
+        <img src="dragonite.gif" width="80" style="margin-bottom: 20px;">
+        <h2 id="loading-text" style="text-align: center;">Procesando... Por mi hija<br><span
+                style="font-size: 14px; font-weight: normal; color: #8b949e;">Conectando con los alienigenas para
+                encontrar datos.</span></h2>
+    </div>
+
+    <div class="main-wrapper">
+        <div class="header-panel">
+            <div>
+                <h1>🦅 ARGUS <span style="font-weight: 300; opacity: 0.8;">| Centro Analítico Web</span></h1>
+                <div class="subtitle">Extracción a Demanda y Control de Alertas Automáticas</div>
+            </div>
+            <div style="display: flex; align-items: center; gap: 15px;">
+
+                <button type="button" class="btn btn-outline"
+                    style="border-color: var(--accent); color: var(--accent);" onclick="window.location.href='/sso/'">⚙️
+                    Volver al Panel</button>
+
+                <button type="button" class="btn btn-outline"
+                    style="color:#ef4444; border-color:#ef4444;" onclick="cerrarSesion()">Cerrar Sesión</button>
+            </div>
+        </div>
+
+        <div class="tabs-container">
+            <button type="button" class="tab-btn active" onclick="cambiarPestana('tab-home', this)">🏠 Inicio</button>
+            <button type="button" id="btn-tab-extraer" class="tab-btn" onclick="cambiarPestana('tab-extraer', this)">📊
+                Extraer Resultados</button>
+            <button type="button" id="btn-tab-alertas" class="tab-btn" onclick="cambiarPestana('tab-alertas', this)">⏰
+                Configurar Alertas</button>
+            <button type="button" id="btn-tab-visor" class="tab-btn" onclick="cambiarPestana('tab-visor', this)">📂
+                Visor de Archivos</button>
+        </div>
+
+        <div id="tab-home" class="tab-content" style="display: flex;">
+            <div class="grid-3col">
+                <div id="card-extraer" class="panel card-link" style="align-items: center; text-align: center;"
+                    onclick="document.getElementById('btn-tab-extraer').click()">
+                    <h1 style="font-size: 40px; margin-bottom: 10px;">📊</h1>
+                    <h3>Extracción Directa</h3>
+                    <p style="color: #8b949e; font-size: 13px;">Genera gráficas y reportes a demanda.</p>
+                </div>
+                <div id="card-alertas" class="panel card-link" style="align-items: center; text-align: center;"
+                    onclick="document.getElementById('btn-tab-alertas').click()">
+                    <h1 style="font-size: 40px; margin-bottom: 10px;">⏰</h1>
+                    <h3>Gestión de Alertas</h3>
+                    <p style="color: #8b949e; font-size: 13px;">Modifica JSON, horarios y destinatarios.</p>
+                </div>
+                <div id="card-visor" class="panel card-link" style="align-items: center; text-align: center;"
+                    onclick="document.getElementById('btn-tab-visor').click()">
+                    <h1 style="font-size: 40px; margin-bottom: 10px;">📂</h1>
+                    <h3>Visor de Archivos</h3>
+                    <p style="color: #8b949e; font-size: 13px;">Navega, visualiza y descarga reportes PDF, CSV o
+                        imágenes.</p>
+                </div>
+            </div>
+        </div>
+
+        <div id="tab-extraer" class="tab-content" style="display: none;">
+            <div class="grid-2col">
+                <div class="panel">
+                    <div class="panel-title"><span>1. Origen y Fechas</span><button type="button"
+                            class="btn btn-outline"
+                            style="padding: 5px 10px; font-size: 11px; color: var(--warning); border-color: var(--warning);"
+                            onclick="window.location.href='/sso/admin.html'">⚙️ Gestionar Estaciones</button></div>
+                    <label>Seleccione la Fuente de Datos</label>
+                    <select id="ext_fuente" onchange="actualizarPlaceholderSalida()"></select>
+
+                    <label>Tipo de Extracción</label>
+                    <div
+                        style="background: var(--bg); padding: 12px; border-radius: 8px; margin-bottom: 15px; border: 1px solid var(--panel-light);">
+                        <label class="check-container"><input type="radio" name="origen_datos" value="csv" checked><span
+                                class="check-label" style="color:var(--accent); font-weight:bold;">CSVs de la Carpeta
+                                Resultados (Rápido)</span></label>
+                        <label class="check-container"><input type="radio" name="origen_datos" value="binario"><span
+                                class="check-label">Binarios Originales (Proceso Completo)</span></label>
+                    </div>
+
+                    <div class="input-group">
+                        <div><label>Fecha Inicio</label><input type="date" id="ext_f_ini"><input type="time"
+                                id="ext_h_ini" value="00:00"></div>
+                        <div><label>Fecha Fin</label><input type="date" id="ext_f_fin"><input type="time" id="ext_h_fin"
+                                value="23:59"></div>
+                    </div>
+                    <div style="display: none;">
+                        <input type="text" id="ext_salida" style="margin-bottom:0; flex:1;">
+                    </div>
+                    <div style="display:flex; align-items:center; margin-top: 10px; margin-bottom: 15px; background: rgba(59, 130, 246, 0.05); padding: 12px 15px; border-radius: 6px; border: 1px solid rgba(59, 130, 246, 0.2);">
+                        <label class="check-container" style="margin-bottom:0;">
+                            <input type="checkbox" id="chk_descargar_local">
+                            <span class="check-label" style="font-weight:bold; color:var(--accent); font-size: 14px;">Descargar entregables automáticamente en este equipo (ZIP)</span>
+                        </label>
+                    </div>
+                </div>
+
+                <div class="panel">
+                    <div class="panel-title">2. Entregables y Avisos</div>
+                    <div class="grid-2col" style="margin-bottom: 15px;">
+                        <div>
+                            <label class="check-container"><input type="checkbox" id="chk_2dt" checked><span
+                                    class="check-label">Gráfica Tiempo 2D</span></label>
+                            <label class="check-container"><input type="checkbox" id="chk_2df" checked><span
+                                    class="check-label">Gráfica Frecuencia 2D</span></label>
+                            <label class="check-container"><input type="checkbox" id="chk_3d"><span
+                                    class="check-label">Gráfica 3D</span></label>
+                        </div>
+                        <div>
+                            <label class="check-container"><input type="checkbox" id="chk_csv" checked><span
+                                    class="check-label">Archivo CSV</span></label>
+                            <label class="check-container"><input type="checkbox" id="chk_excel" checked><span
+                                    class="check-label">Archivo Excel</span></label>
+                            <label class="check-container"><input type="checkbox" id="chk_word"><span
+                                    class="check-label">Reporte Word Alertas</span></label>
+                        </div>
+                    </div>
+
+                    <div
+                        style="background: rgba(59, 130, 246, 0.1); padding: 15px; border-radius: 8px; border: 1px solid rgba(59, 130, 246, 0.3); margin-top: 15px;">
+                        <label class="check-container" style="margin-bottom: 5px;">
+                            <input type="checkbox" id="chk_email"
+                                onchange="document.getElementById('email_box').style.display = this.checked ? 'block' : 'none'">
+                            <span class="check-label" style="font-weight: bold; color: var(--accent);">Enviar por Email
+                                al terminar</span>
+                        </label>
+                        <div id="email_box" style="display: none; margin-top: 10px;">
+                            <label>Instrucciones: Separa los correos con coma (,)</label>
+                            <textarea id="ext_emails" rows="2" placeholder="ejemplo@dsic.es, jefe@dsic.es"></textarea>
+                        </div>
+                    </div>
+
+                    <div
+                        style="background: rgba(16, 185, 129, 0.1); padding: 15px; border-radius: 8px; border: 1px solid rgba(16, 185, 129, 0.3); margin-top: 15px;">
+                        <label class="check-container" style="margin-bottom: 0;">
+                            <input type="checkbox" id="chk_planificacion" onchange="cambiarPlanificacionAutomatica()">
+                            <span class="check-label" style="font-weight: bold; color: var(--success);">Planificar Extracción Automática (Cada Hora)</span>
+                        </label>
+                    </div>
+
+                    <div
+                        style="background: var(--bg); padding: 12px; border-radius: 8px; margin-top: 15px; border: 1px solid var(--panel-light);">
+                        <label class="check-container" style="margin-bottom: 5px;">
+                            <input type="checkbox" id="chk_dividir" checked
+                                onchange="document.getElementById('div_horas_box').style.display = this.checked ? 'flex' : 'none'">
+                            <span class="check-label" style="font-weight: bold; color: white;">Segmentar gráficas por
+                                tramos de horas</span>
+                        </label>
+                        <div id="div_horas_box" style="display: flex; gap: 10px; align-items: center; margin-top: 5px;">
+                            <span style="font-size: 13px; color: #8b949e;">Duración del tramo:</span>
+                            <select id="sel_horas" style="margin-bottom: 0; width: 100px;">
+                                <option value="1">1 Hora</option>
+                                <option value="2">2 Horas</option>
+                                <option value="3">3 Horas</option>
+                                <option value="4">4 Horas</option>
+                                <option value="6">6 Horas</option>
+                                <option value="8">8 Horas</option>
+                                <option value="12">12 Horas</option>
+                                <option value="24">24 Horas</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <button type="button" class="btn btn-success" style="margin-top: 15px;"
+                        onclick="iniciarExtraccion()">🚀 INICIAR EXTRACCIÓN</button>
+                </div>
+            </div>
+            <div class="panel" style="margin-top: 20px; border-left: 4px solid var(--accent);">
+                <div class="panel-title" style="color: var(--accent);">📥 Procesamiento Rápido de Archivos Externos (CSV / XLSX)</div>
+                <p style="color: #8b949e; font-size: 13px; margin-bottom: 15px;">
+                    ¿Tienes archivos de datos propios? Súbelos en formato <strong>CSV</strong> o <strong>Excel (.xlsx)</strong>. El motor inteligente de Sentinel mapeará automáticamente las columnas de <em>Tiempo</em>, <em>Frecuencia</em> y <em>Nivel</em>, y generará un completo reporte con gráficas 2D/3D y entregables que podrás descargar directamente a tu equipo en un archivo ZIP.
+                </p>
+                <div style="display: flex; flex-wrap: wrap; gap: 20px; align-items: flex-end; background: var(--bg); padding: 20px; border-radius: 8px; border: 1px solid var(--panel-light);">
+                    <div style="flex: 1; min-width: 250px;">
+                        <label style="font-weight: bold; color: white;">Seleccionar Archivo(s) (CSV, Excel)</label>
+                        <input type="file" id="usuario_archivo" accept=".csv, .xlsx" multiple style="background: var(--panel); border: 1px solid var(--panel-light); padding: 10px; width: 100%; border-radius: 6px; box-sizing: border-box;">
+                    </div>
+                    <div style="width: 200px;">
+                        <label style="font-weight: bold; color: white;">Nombre / Prefijo del Reporte</label>
+                        <input type="text" id="usuario_prefijo" placeholder="EJ. MI_REPORTE" value="REPORTE_PERSONALIZADO" style="margin-bottom: 0;">
+                    </div>
+                    <div style="display: flex; gap: 10px; align-items: center; margin-bottom: 5px;">
+                        <label class="check-container" style="margin-bottom: 0;">
+                            <input type="checkbox" id="usuario_chk_3d" checked>
+                            <span class="check-label">Incluir Gráfica 3D</span>
+                        </label>
+                    </div>
+                    <div style="margin-bottom: 0;">
+                        <button type="button" class="btn btn-accent" style="height: 42px; display: flex; align-items: center; gap: 8px;" onclick="procesarArchivoUsuario()">
+                            📤 Subir y Procesar Archivo
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div id="tab-alertas" class="tab-content" style="display: none;">
+            <div class="panel" style="margin-bottom: 0; flex-shrink: 0;">
+                <div style="display: flex; gap: 20px; align-items: center;">
+                    <div style="flex: 1;"><label style="color: var(--warning);">ESTACIÓN A CONFIGURAR</label><select
+                            id="cfg_fuente" onchange="cargarConfigJsonEspecifico()"
+                            style="margin: 0; border-color: var(--warning);"></select></div>
+                    <div style="flex: 2; color: #8b949e; font-size: 13px;">⚠️ Se guardará directamente en el archivo
+                        JSON asignado a esta fuente.</div>
+                </div>
+            </div>
+
+            <div class="grid-2col" id="cfg_workspace" style="display: none;">
+                <div class="panel">
+                    <div class="panel-title">
+                        <span>Horarios y Calendario</span>
+                        <div class="switch-container" style="display: flex; align-items: center; gap: 10px;">
+                            <span style="font-size: 12px; font-weight: bold;">ACTIVAR ALERTAS</span>
+                            <label class="switch"><input type="checkbox" id="cfg_master"><span
+                                    class="slider"></span></label>
+                        </div>
+                    </div>
+                    <div class="input-group">
+                        <div><label>No enviar antes de</label><input type="time" id="cfg_h_ini"></div>
+                        <div><label>No enviar después de</label><input type="time" id="cfg_h_fin"></div>
+                    </div>
+                    <div
+                        style="display: flex; justify-content: space-between; align-items: center; margin-top: 10px; margin-bottom: 10px;">
+                        <button type="button" class="btn btn-outline" onclick="cambiarMes(-1)">&#10094;</button>
+                        <h3 id="mes-display" style="margin: 0; font-size: 16px;">Mes</h3><button type="button"
+                            class="btn btn-outline" onclick="cambiarMes(1)">&#10095;</button>
+                    </div>
+                    <div class="calendar-grid">
+                        <div class="day-name">LU</div>
+                        <div class="day-name">MA</div>
+                        <div class="day-name">MI</div>
+                        <div class="day-name">JU</div>
+                        <div class="day-name">VI</div>
+                        <div class="day-name">SA</div>
+                        <div class="day-name">DO</div>
+                    </div>
+                    <div class="calendar-grid" id="calendar-days"></div>
+                </div>
+                <div class="panel">
+                    <div class="panel-title">Directorio de Contactos JSON</div>
+                    <div class="search-box"><span class="search-icon">🔍</span><input type="text" id="buscador"
+                            placeholder="Buscar por nombre, email o grupo..." onkeyup="renderContactos()"></div>
+                    <div
+                        style="background: rgba(59, 130, 246, 0.1); padding: 12px; border-radius: 8px; margin-bottom: 15px; border: 1px solid rgba(59, 130, 246, 0.3); font-size: 13px; color: var(--accent); line-height: 1.4;">
+                        👥 <strong>Directorio Dinámico SSO:</strong> Los contactos se cargan automáticamente a partir de
+                        los usuarios configurados en esta provincia en el Panel de Administración SSO. Utiliza las
+                        casillas de verificación de abajo para elegir quiénes reciben alertas.
+                    </div>
+                    <div class="group-badges" id="group-badges"></div>
+                    <div class="list-box" id="lista_contactos"
+                        style="max-height: 400px; overflow-y: auto; padding-right: 5px; margin-top: 10px;"></div>
+                </div>
+            </div>
+            <button type="button" id="btn_guardar_json" class="btn btn-success" style="display: none;"
+                onclick="guardarConfigJsonEspecifico()">💾 SOBRESCRIBIR JSON DE LA ESTACIÓN</button>
+        </div>
+
+        <div id="tab-visor" class="tab-content" style="display: none;">
+            <div class="panel" style="margin-bottom: 0; flex-shrink: 0; padding: 10px 20px;">
+                <div style="display:flex; align-items:center; gap: 15px;">
+                    <label style="margin:0; white-space:nowrap; font-size: 13px;">ESTACIÓN / FUENTE A EXPLORAR</label>
+                    <select id="visor_fuente" onchange="cargarRaizVisor()" style="margin:0; flex:1;"></select>
+
+                    <button type="button" class="btn btn-warning" style="color:black; margin:0;"
+                        onclick="abrirModalHistorico()">📦 Mover a Histórico</button>
+
+                </div>
+            </div>
+
+            <div class="visor-container">
+                <div class="panel col-explorer">
+                    <div class="panel-title" style="margin-bottom: 10px;">Archivos<button onclick="visorSubirNivel()"
+                            class="btn btn-outline" style="padding: 4px 8px; font-size:11px;">⬆ Subir</button></div>
+                    <div style="font-size:11px; color:#8b949e; margin-bottom:10px; word-break: break-all;"
+                        id="visor-ruta-actual">/</div>
+                    <div id="visor-lista"></div>
+                </div>
+
+                <div class="panel col-preview">
+                    <div class="panel-title"
+                        style="display: flex; justify-content: space-between; align-items:center; margin-bottom: 10px; flex-shrink:0;">
+                        <span id="visor-titulo-doc"
+                            style="white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 50%;">Previsualización</span>
+                        <div style="display:flex; align-items:center;">
+                            <div class="zoom-controls" id="docx-zoom-bar"><button class="zoom-btn"
+                                    onclick="ajustarZoom(-0.1)">-</button><span id="zoom-label"
+                                    style="font-size:13px; min-width:40px; text-align:center;">100%</span><button
+                                    class="zoom-btn" onclick="ajustarZoom(0.1)">+</button></div>
+                            <a id="btn-descargar-visor" class="btn btn-primary" style="display:none;" href="" download>⬇
+                                Descargar</a>
+                        </div>
+                    </div>
+                    <div id="visor-contenido">
+                        <div
+                            style="height:100%; display:flex; align-items:center; justify-content:center; color:#8b949e; width: 100%;">
+                            Selecciona un archivo a la izquierda.</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div id="modal_fuentes" class="modal-overlay">
+        <div class="modal">
+            <div class="panel-title">Fuentes / Estaciones <button type="button" class="btn"
+                    style="background:transparent; color:white; padding:0;" onclick="cerrarModalFuentes()">✖</button>
+            </div>
+            <div
+                style="background: var(--bg); padding: 15px; border-radius: 8px; margin-bottom: 20px; border: 1px solid var(--panel-light);">
+                <label>Nombre</label><input type="text" id="m_nombre" placeholder="Ej. UMA">
+                <label>Ruta Resultados</label>
+                <div style="display:flex; gap:10px;"><input type="text" id="m_res" style="flex:1;"><button type="button"
+                        class="btn btn-outline" style="height: 42px;" onclick="abrirWebBrowser('m_res', 'folder')">🔍
+                        Buscar</button></div>
+                <label>Ruta Binarios</label>
+                <div style="display:flex; gap:10px;"><input type="text" id="m_bin" style="flex:1;"><button type="button"
+                        class="btn btn-outline" style="height: 42px;" onclick="abrirWebBrowser('m_bin', 'folder')">🔍
+                        Buscar</button></div>
+                <label style="color: var(--warning);">Ruta JSON</label>
+                <div style="display:flex; gap:10px;"><input type="text" id="m_json"
+                        style="border-color: var(--warning); flex:1;"><button type="button" class="btn btn-outline"
+                        style="height: 42px; border-color:var(--warning); color:var(--warning);"
+                        onclick="abrirWebBrowser('m_json', 'file_json')">🔍 Buscar</button></div>
+                <hr style="border:0; border-top:1px solid #30363d; margin:15px 0;">
+                <label style="color: #10b981;">CREDENCIALES DE RED (OPCIONAL)</label>
+                <div style="display:flex; gap:10px; margin-bottom:0;">
+                    <div style="flex:1;"><label>Usuario</label><input type="text" id="m_usr"
+                            placeholder="Ej: DSIC\\usuario" style="margin-bottom:0;"></div>
+                    <div style="flex:1;"><label>Contraseña</label><input type="password" id="m_pwd" placeholder="***"
+                            style="margin-bottom:0;"></div>
+                </div>
+                <button type="button" class="btn btn-primary" style="width: 100%; margin-top:20px;"
+                    onclick="guardarNuevaFuente()">Guardar / Actualizar Fuente</button>
+            </div>
+            <div class="list-box" id="lista_fuentes_modal"></div>
+        </div>
+    </div>
+
+    <!-- Legacy #modal_usuarios removed -->
+
+    <div id="modal_historico" class="modal-overlay">
+        <div class="modal">
+            <div class="panel-title">Mover Carpeta a Histórico <button type="button" class="btn"
+                    style="background:transparent; color:white; padding:0;" onclick="cerrarModalHistorico()">✖</button>
+            </div>
+            <div
+                style="background: var(--bg); padding: 15px; border-radius: 8px; margin-bottom: 20px; border: 1px solid var(--panel-light);">
+                <p style="font-size:13px; color:#8b949e;">Selecciona la carpeta que deseas archivar. Se moverá a la
+                    subcarpeta <strong>/historico</strong>.</p>
+                <label>Carpeta a mover</label><select id="h_carpeta"></select>
+                <button type="button" class="btn btn-warning" style="width: 100%; margin-top:15px; color:black;"
+                    onclick="moverAHistorico()">📦 Confirmar Movimiento</button>
+            </div>
+        </div>
+    </div>
+
+    <div id="modal_browser" class="modal-overlay">
+        <div class="modal" style="width: 600px; max-width: 90%;">
+            <div class="panel-title" id="mb_title">Seleccionar Ruta de Servidor <button type="button" class="btn"
+                    style="background:transparent; color:white; padding:0;"
+                    onclick="document.getElementById('modal_browser').style.display='none'">✖</button></div>
+            <div
+                style="background: var(--bg); padding: 10px; border-radius: 8px; margin-bottom: 10px; border: 1px solid var(--panel-light); display:flex; gap:10px;">
+                <input type="text" id="mb_path" style="margin:0; flex:1;" placeholder="C:\\">
+                <button type="button" class="btn btn-outline" onclick="mbLoadPath()">Ir</button>
+                <button type="button" class="btn btn-outline" onclick="mbUp()">⬆ Subir</button>
+            </div>
+            <div class="list-box" id="mb_list"
+                style="max-height: 400px; overflow-y: auto; background: var(--bg); border: 1px solid var(--panel-light);">
+            </div>
+            <div style="display:flex; justify-content: flex-end; margin-top: 15px; gap: 10px;">
+                <button type="button" class="btn btn-warning" style="margin:0;"
+                    onclick="document.getElementById('modal_browser').style.display='none'">Cancelar</button>
+                <button type="button" class="btn btn-success" id="mb_btn_sel" style="margin:0;" onclick="mbConfirm()">✅
+                    Seleccionar Carpeta Actual</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        document.addEventListener('contextmenu', event => event.preventDefault());
+        document.addEventListener('keydown', function (e) { if (e.key === 'F12' || (e.ctrlKey && e.shiftKey && e.key === 'I')) { e.preventDefault(); } });
+
+        function normalizePath(p) {
+            if (!p) return "";
+            let normalized = p.replace(/\//g, '\\');
+            let isUNC = p.startsWith('\\\\') || p.startsWith('//');
+            if (isUNC) {
+                normalized = '\\\\' + normalized.substring(2).replace(/\\+/g, '\\');
+            } else {
+                normalized = normalized.replace(/\\+/g, '\\');
+            }
+            if (normalized.endsWith('\\') && !normalized.endsWith(':\\')) {
+                normalized = normalized.substring(0, normalized.length - 1);
+            }
+            return normalized;
+        }
+
+        function getParentPath(p) {
+            p = normalizePath(p);
+            let isUNC = p.startsWith('\\\\');
+            let parts = p.split('\\');
+            if (isUNC) {
+                if (parts.length > 4) {
+                    parts.pop();
+                    return parts.join('\\');
+                } else {
+                    return p;
+                }
+            } else {
+                if (parts.length > 2) {
+                    parts.pop();
+                    return parts.join('\\');
+                } else if (parts.length === 2 && parts[1] !== "") {
+                    parts.pop();
+                    return parts[0] + '\\';
+                } else {
+                    return p;
+                }
+            }
+        }
+
+        let fuentesGlobales = []; let usuariosGlobales = {}; let rutaVisorActual = "";
+        let currentVisorFiles = []; let currentImagesList = []; let currentImageIndex = -1; let currentZoom = 1.0;
+
+        window.onload = () => {
+            document.getElementById('ext_f_ini').valueAsDate = new Date();
+            document.getElementById('ext_f_fin').valueAsDate = new Date();
+            verificarRolUsuario();
+            cargarFuentesServidor();
+        };
+
+        function verificarRolUsuario() {
+            fetch('/api/session')
+                .then(r => {
+                    if (!r.ok) throw new Error("No session");
+                    return r.json();
+                })
+                .then(data => {
+                    const nivel = data.nivel_poder;
+                    const hasExtraccion = (nivel >= 80) || !!data.permiso_extraccion;
+                    const hasAlarmas = (nivel >= 80) || !!data.permiso_alarmas;
+                    const hasVisor = (nivel >= 80) || !!data.permiso_visor;
+
+                    // Ocultar / Mostrar pestañas superiores
+                    document.getElementById('btn-tab-extraer').style.display = hasExtraccion ? 'block' : 'none';
+                    document.getElementById('btn-tab-alertas').style.display = hasAlarmas ? 'block' : 'none';
+                    document.getElementById('btn-tab-visor').style.display = hasVisor ? 'block' : 'none';
+
+                    // Ocultar / Mostrar tarjetas en el Inicio (Home)
+                    document.getElementById('card-extraer').style.display = hasExtraccion ? 'flex' : 'none';
+                    document.getElementById('card-alertas').style.display = hasAlarmas ? 'flex' : 'none';
+                    document.getElementById('card-visor').style.display = hasVisor ? 'flex' : 'none';
+
+                    // Calcular cuántas columnas de inicio son visibles y adaptar el grid
+                    const numVisible = [hasExtraccion, hasAlarmas, hasVisor].filter(Boolean).length;
+                    const homeGrid = document.querySelector('#tab-home .grid-3col');
+                    if (homeGrid) {
+                        if (numVisible === 1) {
+                            homeGrid.style.gridTemplateColumns = '1fr';
+                            homeGrid.style.maxWidth = '500px';
+                            homeGrid.style.margin = '0 auto';
+                        } else if (numVisible === 2) {
+                            homeGrid.style.gridTemplateColumns = '1fr 1fr';
+                            homeGrid.style.maxWidth = '800px';
+                            homeGrid.style.margin = '0 auto';
+                        } else {
+                            homeGrid.style.gridTemplateColumns = '1fr 1fr 1fr';
+                            homeGrid.style.maxWidth = '100%';
+                            homeGrid.style.margin = '0';
+                        }
+                    }
+                })
+                .catch(e => {
+                    console.error("Error al verificar sesión:", e);
+                });
+        }
+
+        function cerrarSesion() {
+            fetch('/api/logout', { method: 'POST' })
+                .then(() => {
+                    sessionStorage.removeItem('nivel_poder');
+                    window.location.href = '/sso/';
+                })
+                .catch(e => {
+                    console.error("Error cerrando sesión:", e);
+                    sessionStorage.removeItem('nivel_poder');
+                    window.location.href = '/sso/';
+                });
+        }
+
+        function cambiarPestana(id, btn) {
+            let contenidos = document.getElementsByClassName('tab-content');
+            for (let i = 0; i < contenidos.length; i++) contenidos[i].style.display = 'none';
+            let botones = document.getElementsByClassName('tab-btn');
+            for (let i = 0; i < botones.length; i++) botones[i].classList.remove('active');
+            document.getElementById(id).style.display = 'flex';
+            if (btn) btn.classList.add('active');
+        }
+
+        function cargarFuentesServidor() { fetch('/api/fuentes').then(r => r.json()).then(data => { fuentesGlobales = data; renderSelectoresFuentes(); renderListaModal(); }); }
+
+        function renderSelectoresFuentes() {
+            const s1 = document.getElementById('ext_fuente'); const s2 = document.getElementById('cfg_fuente'); const s3 = document.getElementById('visor_fuente');
+            s1.innerHTML = ''; s2.innerHTML = '<option value="">-- Selecciona Estación --</option>'; s3.innerHTML = '<option value="">-- Selecciona Estación --</option>';
+            fuentesGlobales.forEach((f, i) => {
+                s1.innerHTML += `<option value="${i}">${f.nombre}</option>`;
+                s2.innerHTML += `<option value="${i}">${f.nombre}</option>`;
+                s3.innerHTML += `<option value="${i}">${f.nombre}</option>`;
+            });
+            actualizarPlaceholderSalida();
+        }
+
+        function abrirDialogoCarpetaWindows(targetId) {
+            mostrarLoading("Esperando selección de carpeta en Windows...");
+            fetch('/api/files/select_folder', { method: 'POST' })
+                .then(r => r.json())
+                .then(data => {
+                    ocultarLoading();
+                    if (data.error) {
+                        alert("Error: " + data.error);
+                    } else if (data.path) {
+                        document.getElementById(targetId).value = data.path;
+                    }
+                })
+                .catch(e => {
+                    ocultarLoading();
+                    console.error(e);
+                    alert("Error de red al abrir el selector de carpetas de Windows.");
+                });
+        }
+
+        let mbTargetId = ""; let mbMode = "folder";
+        function abrirWebBrowser(targetId, mode) {
+            mbTargetId = targetId; mbMode = mode;
+            let initialPath = document.getElementById(targetId).value.trim();
+            if (!initialPath) {
+                const s1 = document.getElementById('ext_fuente');
+                if (s1 && s1.value !== "" && fuentesGlobales[s1.value]) initialPath = fuentesGlobales[s1.value].ruta_res || "C:\\\\";
+                else initialPath = "C:\\\\";
+            }
+            document.getElementById('mb_title').innerText = mode === 'folder' ? 'Seleccionar Carpeta (Servidor)' : 'Seleccionar JSON (Servidor)';
+            document.getElementById('mb_btn_sel').style.display = mode === 'folder' ? 'block' : 'none';
+            document.getElementById('modal_browser').style.display = 'flex';
+            document.getElementById('mb_path').value = initialPath;
+            mbLoadPath();
+        }
+        function mbLoadPath() {
+            let pathInput = document.getElementById('mb_path');
+            pathInput.value = normalizePath(pathInput.value);
+            const p = pathInput.value;
+            fetch('/api/files/list', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ path: p }) }).then(r => r.json()).then(data => {
+                const box = document.getElementById('mb_list'); box.innerHTML = '';
+                if (data.error) { box.innerHTML = `<div style="padding:15px; color:var(--danger);">${data.error}</div>`; return; }
+                data.dirs.forEach(d => { box.innerHTML += `<div class="file-item folder" onclick="mbGo('${d.full_path.replace(/\\/g, '\\\\')}')">📁 ${d.name}</div>`; });
+                if (mbMode === 'file_json') {
+                    data.files.forEach(f => {
+                        if (f.name.toLowerCase().endsWith('.json')) box.innerHTML += `<div class="file-item" style="color:#10b981;" onclick="mbSelectFile('${f.full_path.replace(/\\/g, '\\\\')}')">📄 ${f.name}</div>`;
+                        else box.innerHTML += `<div class="file-item" style="color:#8b949e;">📄 ${f.name}</div>`;
+                    });
+                }
+            }).catch(e => { document.getElementById('mb_list').innerHTML = `<div style="padding:15px; color:var(--danger);">Error de red.</div>`; });
+        }
+        function mbGo(newPath) { document.getElementById('mb_path').value = normalizePath(newPath); mbLoadPath(); }
+        function mbUp() { let p = document.getElementById('mb_path').value; document.getElementById('mb_path').value = getParentPath(p); mbLoadPath(); }
+        function mbConfirm() { if (mbMode === 'folder') { document.getElementById(mbTargetId).value = document.getElementById('mb_path').value; document.getElementById('modal_browser').style.display = 'none'; } }
+        function mbSelectFile(fullPath) { document.getElementById(mbTargetId).value = fullPath; document.getElementById('modal_browser').style.display = 'none'; }
+
+        function abrirModalFuentes() { document.getElementById('modal_fuentes').style.display = 'flex'; }
+        function cerrarModalFuentes() { document.getElementById('modal_fuentes').style.display = 'none'; }
+
+        function guardarNuevaFuente() {
+            const f = { nombre: document.getElementById('m_nombre').value.trim(), ruta_res: document.getElementById('m_res').value.trim(), ruta_bin: document.getElementById('m_bin').value.trim(), ruta_json: document.getElementById('m_json').value.trim(), usr_red: document.getElementById('m_usr').value.trim(), pwd_red: document.getElementById('m_pwd').value.trim() };
+            if (!f.nombre || !f.ruta_res) return;
+            fuentesGlobales = fuentesGlobales.filter(x => x.nombre !== f.nombre); fuentesGlobales.push(f);
+            fetch('/api/fuentes', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(fuentesGlobales) }).then(() => { renderSelectoresFuentes(); renderListaModal(); document.querySelectorAll('#modal_fuentes input').forEach(i => i.value = ''); cerrarModalFuentes(); });
+        }
+        function eliminarFuente(nombre) { fuentesGlobales = fuentesGlobales.filter(x => x.nombre !== nombre); fetch('/api/fuentes', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(fuentesGlobales) }).then(() => { renderSelectoresFuentes(); renderListaModal(); }); }
+        function editarFuente(nombre) { const f = fuentesGlobales.find(x => x.nombre === nombre); if (f) { document.getElementById('m_nombre').value = f.nombre; document.getElementById('m_res').value = f.ruta_res; document.getElementById('m_bin').value = f.ruta_bin; document.getElementById('m_json').value = f.ruta_json; document.getElementById('m_usr').value = f.usr_red || ''; document.getElementById('m_pwd').value = f.pwd_red || ''; } }
+        function renderListaModal() { const box = document.getElementById('lista_fuentes_modal'); box.innerHTML = ''; fuentesGlobales.forEach(f => { box.innerHTML += `<div class="fuente-item"><div><strong>${f.nombre}</strong><br><span style="font-size:11px; color:#8b949e;">RES: ${f.ruta_res}</span></div><div><button type="button" class="btn btn-warning" style="padding: 5px 10px; margin-right: 5px; color: black;" onclick="editarFuente('${f.nombre}')">✏️</button><button type="button" class="btn btn-danger" style="padding: 5px 10px;" onclick="eliminarFuente('${f.nombre}')">✖</button></div></div>`; }); }
+        function consultarPlanificacionServidor() {
+            const s1 = document.getElementById('ext_fuente');
+            if (s1.value === "" || !fuentesGlobales[s1.value]) return;
+            const estacion = fuentesGlobales[s1.value].nombre;
+            fetch(`/api/planificacion/status?estacion=${encodeURIComponent(estacion)}`)
+                .then(r => r.json())
+                .then(data => {
+                    document.getElementById('chk_planificacion').checked = data.activo || false;
+                })
+                .catch(e => {
+                    console.error("Error al obtener estado de planificación:", e);
+                });
+        }
+        function cambiarPlanificacionAutomatica() {
+            const s1 = document.getElementById('ext_fuente');
+            if (s1.value === "" || !fuentesGlobales[s1.value]) return;
+            const estacion = fuentesGlobales[s1.value].nombre;
+            const activo = document.getElementById('chk_planificacion').checked;
+            fetch('/api/planificacion/toggle', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ estacion: estacion, activo: activo })
+            })
+            .then(r => r.json())
+            .then(data => {
+                if (data.status !== "ok") {
+                    alert("No se pudo actualizar la planificación en el servidor.");
+                    document.getElementById('chk_planificacion').checked = !activo;
+                }
+            })
+            .catch(e => {
+                console.error("Error al alternar planificación:", e);
+                alert("Error de conexión al actualizar la planificación.");
+                document.getElementById('chk_planificacion').checked = !activo;
+            });
+        }
+        function actualizarPlaceholderSalida() {
+            const s1 = document.getElementById('ext_fuente');
+            if (s1.value !== "") {
+                document.getElementById('ext_salida').placeholder = "Auto: " + fuentesGlobales[s1.value].ruta_res + "\\\\ejecucion_a_peticion_FECHA";
+                consultarPlanificacionServidor();
+            }
+        }
+
+        // Legacy user modal functions removed
+
+        function abrirModalHistorico() {
+            const idx = document.getElementById('visor_fuente').value;
+            if (idx === "") { alert("Selecciona una fuente primero."); return; }
+            document.getElementById('modal_historico').style.display = 'flex';
+            document.getElementById('h_carpeta').innerHTML = '<option>Cargando...</option>';
+            fetch('/api/files/get_folders', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ fuente: fuentesGlobales[idx] }) })
+                .then(r => r.json()).then(data => {
+                    const sel = document.getElementById('h_carpeta'); sel.innerHTML = '';
+                    if (data.error) { sel.innerHTML = `<option value="">Error: ${data.error}</option>`; return; }
+                    if (data.dirs.length === 0) { sel.innerHTML = `<option value="">No hay carpetas</option>`; return; }
+                    data.dirs.forEach(d => { sel.innerHTML += `<option value="${d}">${d}</option>`; });
+                }).catch(e => { document.getElementById('h_carpeta').innerHTML = `<option value="">Error de red</option>`; });
+        }
+        function cerrarModalHistorico() { document.getElementById('modal_historico').style.display = 'none'; }
+        function moverAHistorico() {
+            const idx = document.getElementById('visor_fuente').value; const carpeta = document.getElementById('h_carpeta').value;
+            if (!carpeta) return; if (!confirm(`¿Seguro que quieres mover "${carpeta}" al histórico?`)) return;
+            mostrarLoading("Moviendo carpeta...");
+            fetch('/api/files/move_history', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ fuente: fuentesGlobales[idx], folder_name: carpeta }) })
+                .then(r => r.json()).then(data => { ocultarLoading(); clearInterval(espiaProgreso); if (data.error) alert("Error: " + data.error); else { alert("Carpeta archivada."); cerrarModalHistorico(); cargarRaizVisor(); } }).catch(e => { ocultarLoading(); clearInterval(espiaProgreso); alert("Error de red."); });
+        }
+
+        function cargarRaizVisor() { const idx = document.getElementById('visor_fuente').value; if (idx === "") { document.getElementById('visor-lista').innerHTML = ''; return; } rutaVisorActual = normalizePath(fuentesGlobales[idx].ruta_res); listarDirectorio(rutaVisorActual); }
+        function visorSubirNivel() { const idx = document.getElementById('visor_fuente').value; if (idx === "") return; const raiz = fuentesGlobales[idx].ruta_res; if (rutaVisorActual.length <= raiz.length) return; rutaVisorActual = getParentPath(rutaVisorActual); listarDirectorio(rutaVisorActual); }
+
+        function listarDirectorio(path) {
+            path = normalizePath(path);
+            document.getElementById('visor-ruta-actual').innerText = path; currentVisorFiles = []; currentImagesList = []; currentImageIndex = -1;
+            const idx = document.getElementById('visor_fuente').value; const f_data = fuentesGlobales[idx];
+            fetch('/api/files/list', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ path: path, fuente: f_data }) })
+                .then(r => r.json()).then(data => {
+                    const box = document.getElementById('visor-lista'); box.innerHTML = '';
+                    if (data.error) { box.innerHTML = `<span style="color:var(--danger);">${data.error}</span>`; return; }
+                    data.dirs.forEach(d => { box.innerHTML += `<div class="file-item folder" onclick="navegarACarpeta('${d.full_path.replace(/\\/g, '\\\\')}')">📁 ${d.name}</div>`; });
+                    data.files.forEach(f => {
+                        currentVisorFiles.push(f); let icon = "📄"; let ext = f.name.split('.').pop().toLowerCase();
+                        if (['png', 'jpg', 'jpeg'].includes(ext)) { icon = "🖼️"; currentImagesList.push(f); } if (['csv', 'xlsx'].includes(ext)) icon = "📊"; if (ext === 'pdf') icon = "📕"; if (ext === 'docx') icon = "📘";
+                        box.innerHTML += `<div class="file-item" id="file-${f.name.replace(/[^a-zA-Z0-9]/g, '')}" onclick="verArchivo('${f.full_path.replace(/\\/g, '\\\\')}', '${f.name}')">${icon} ${f.name}</div>`;
+                    });
+                }).catch(e => { document.getElementById('visor-lista').innerHTML = `<span style="color:var(--danger);">Error de conexión.</span>`; });
+        }
+        function navegarACarpeta(newPath) { rutaVisorActual = normalizePath(newPath); listarDirectorio(rutaVisorActual); }
+
+        document.addEventListener('keydown', (e) => { if (document.getElementById('tab-visor').style.display !== 'none' && currentImagesList.length > 0 && currentImageIndex !== -1) { if (e.key === 'ArrowLeft' && currentImageIndex > 0) renderImagePreview(currentImageIndex - 1); if (e.key === 'ArrowRight' && currentImageIndex < currentImagesList.length - 1) renderImagePreview(currentImageIndex + 1); } });
+
+        function renderImagePreview(index) {
+            currentImageIndex = index; let imgData = currentImagesList[index]; document.getElementById('visor-titulo-doc').innerText = imgData.name; document.getElementById('btn-descargar-visor').style.display = 'block'; document.getElementById('btn-descargar-visor').href = `/api/files/download?path=${encodeURIComponent(imgData.full_path)}`; document.getElementById('docx-zoom-bar').style.display = 'none';
+            document.querySelectorAll('.file-item').forEach(el => el.classList.remove('active')); let activeEl = document.getElementById(`file-${imgData.name.replace(/[^a-zA-Z0-9]/g, '')}`); if (activeEl) activeEl.classList.add('active');
+            let html = `<div style="position:relative; width:100%; height:100%; display:flex; justify-content:center; align-items:center;">`; if (currentImageIndex > 0) html += `<button onclick="renderImagePreview(${currentImageIndex - 1})" class="nav-img-btn nav-left">❮</button>`; html += `<img src="/api/files/serve?path=${encodeURIComponent(imgData.full_path)}" style="max-width:100%; max-height:100%; object-fit:contain; border-radius:4px;">`; if (currentImageIndex < currentImagesList.length - 1) html += `<button onclick="renderImagePreview(${currentImageIndex + 1})" class="nav-img-btn nav-right">❯</button>`; html += `</div>`;
+            let cont = document.getElementById('visor-contenido'); cont.style.padding = "0"; cont.style.alignItems = "center"; cont.innerHTML = html;
+        }
+        function ajustarZoom(delta) { currentZoom += delta; if (currentZoom < 0.3) currentZoom = 0.3; if (currentZoom > 3.0) currentZoom = 3.0; document.getElementById('zoom-label').innerText = Math.round(currentZoom * 100) + '%'; let docxContainer = document.getElementById('docx-container'); if (docxContainer) { docxContainer.style.transform = `scale(${currentZoom})`; } }
+
+        function verArchivo(fullPath, fileName) {
+            document.querySelectorAll('.file-item').forEach(el => el.classList.remove('active')); let activeEl = document.getElementById(`file-${fileName.replace(/[^a-zA-Z0-9]/g, '')}`); if (activeEl) activeEl.classList.add('active');
+            let ext = fileName.split('.').pop().toLowerCase(); document.getElementById('docx-zoom-bar').style.display = 'none';
+            if (['png', 'jpg', 'jpeg'].includes(ext)) { let idx = currentImagesList.findIndex(f => f.name === fileName); if (idx !== -1) renderImagePreview(idx); return; }
+            currentImageIndex = -1; document.getElementById('visor-titulo-doc').innerText = fileName; const btnDescarga = document.getElementById('btn-descargar-visor'); btnDescarga.style.display = 'block'; btnDescarga.href = `/api/files/download?path=${encodeURIComponent(fullPath)}`;
+            const cont = document.getElementById('visor-contenido'); cont.innerHTML = '<div style="height:100%; display:flex; align-items:center; justify-content:center;"><div class="loader"></div></div>';
+
+            if (ext === 'pdf') { cont.style.padding = "0"; cont.innerHTML = `<iframe src="/api/files/serve?path=${encodeURIComponent(fullPath)}" style="width:100%; height:100%; border:none;"></iframe>`; }
+            else if (['csv', 'xlsx'].includes(ext)) { fetch('/api/files/preview', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ path: fullPath }) }).then(r => r.json()).then(data => { cont.style.padding = "10px"; cont.style.alignItems = "flex-start"; cont.innerHTML = `<div style="width:100%; background:white; padding:15px; border-radius:8px; overflow:hidden;">${data.html}</div>`; $('#tabla-preview').DataTable({ scrollX: true, pageLength: 25, language: { url: '//cdn.datatables.net/plug-ins/1.13.6/i18n/es-ES.json' } }); }).catch(e => { cont.innerHTML = `<span style="color:var(--danger);">Error al cargar vista previa.</span>`; }); }
+            else if (ext === 'docx') { fetch('/api/files/preview', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ path: fullPath }) }).then(r => r.json()).then(data => { cont.style.padding = "20px"; cont.style.alignItems = "flex-start"; currentZoom = 1.0; document.getElementById('zoom-label').innerText = '100%'; document.getElementById('docx-zoom-bar').style.display = 'flex'; cont.innerHTML = `<div id="docx-container" style="width:100%; background:white; padding:40px; border-radius:4px; color:black; transform-origin: top center; transition: transform 0.2s ease-out;">${data.html}</div>`; }).catch(e => { cont.innerHTML = `<span style="color:var(--danger);">Error al cargar vista previa.</span>`; }); }
+            else { cont.style.padding = "20px"; cont.style.alignItems = "center"; cont.innerHTML = `<div style="height:100%; display:flex; align-items:center; justify-content:center;"><p>Vista previa no disponible para este formato. Descárgalo para verlo.</p></div>`; }
+        }
+
+        // --- EXTRACCIÓN ---
+        function iniciarExtraccion() {
+            const idx = document.getElementById('ext_fuente').value; if (idx === "") { alert("Selecciona una fuente."); return; }
+            const payload = { fuente: fuentesGlobales[idx], origen_datos: document.querySelector('input[name="origen_datos"]:checked').value, f_ini: document.getElementById('ext_f_ini').value, h_ini: document.getElementById('ext_h_ini').value, f_fin: document.getElementById('ext_f_fin').value, h_fin: document.getElementById('ext_h_fin').value, salida_manual: document.getElementById('ext_salida').value, entregables: { graf_2dt: document.getElementById('chk_2dt').checked, graf_2df: document.getElementById('chk_2df').checked, graf_3d: document.getElementById('chk_3d').checked, csv: document.getElementById('chk_csv').checked, excel: document.getElementById('chk_excel').checked, word: document.getElementById('chk_word').checked, dividir: document.getElementById('chk_dividir').checked, horas_div: parseInt(document.getElementById('sel_horas').value) }, enviar_email: document.getElementById('chk_email').checked, emails: document.getElementById('ext_emails').value };
+            
+            mostrarLoading("Invocando a Pitágoras para los cálculos, vamos perezoso...");
+            
+            fetch('/api/extraer', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload) })
+                .then(r => r.json())
+                .then(resp => {
+                    if (resp.status === "error") {
+                        ocultarLoading();
+                        alert("❌ ERROR AL INICIAR:\n" + resp.error);
+                        return;
+                    }
+                    
+                    let espiaProgreso = setInterval(() => {
+                        fetch('/api/progreso')
+                            .then(res => res.json())
+                            .then(data => {
+                                if (data.mensaje) {
+                                    mostrarLoading(data.mensaje);
+                                }
+                                if (!data.executing) {
+                                    clearInterval(espiaProgreso);
+                                    ocultarLoading();
+                                    if (data.error) {
+                                        alert("❌ ERROR EXTRACCIÓN:\n" + data.error);
+                                    } else {
+                                        alert("✅ EXTRACCIÓN COMPLETADA.\nGuardado en:\n" + data.salida);
+                                        if (payload.enviar_email) alert("Emails enviados al servidor de correo.");
+                                        
+                                        if (document.getElementById('chk_descargar_local').checked && data.salida) {
+                                            window.location.href = `/api/files/zip?path=${encodeURIComponent(data.salida)}`;
+                                        }
+                                    }
+                                }
+                            })
+                            .catch(e => {
+                                console.error("Error leyendo progreso:", e);
+                            });
+                    }, 1000);
+                })
+                .catch(e => {
+                    ocultarLoading();
+                    alert("Error de red al conectar con el servidor.");
+                });
+        }
+        function mostrarLoading(txt) { document.getElementById('loading-text').innerHTML = txt; document.getElementById('overlay-loading').style.display = 'flex'; }
+        function ocultarLoading() { document.getElementById('overlay-loading').style.display = 'none'; }
+        function procesarArchivoUsuario() {
+            const fileInput = document.getElementById('usuario_archivo');
+            if (fileInput.files.length === 0) {
+                alert("Por favor, selecciona al menos un archivo CSV o Excel.");
+                return;
+            }
+            
+            const prefijo = document.getElementById('usuario_prefijo').value || "REPORTE_PERSONALIZADO";
+            const incluir3d = document.getElementById('usuario_chk_3d').checked;
+            
+            const formData = new FormData();
+            for (let i = 0; i < fileInput.files.length; i++) {
+                formData.append('archivo', fileInput.files[i]);
+            }
+            formData.append('prefijo', prefijo);
+            formData.append('incluir_3d', incluir3d);
+            
+            mostrarLoading("Subiendo y analizando archivo del usuario...");
+            
+            fetch('/api/extraer/custom', {
+                method: 'POST',
+                body: formData
+            })
+            .then(res => {
+                if (!res.ok) {
+                    const contentType = res.headers.get("content-type");
+                    if (contentType && contentType.includes("application/json")) {
+                        return res.json().then(err => { throw new Error(err.error || "Error al procesar"); });
+                    } else {
+                        return res.text().then(text => {
+                            if (res.status === 413) {
+                                throw new Error("Los archivos seleccionados superan el límite permitido por el servidor.");
+                            }
+                            throw new Error("Error del servidor: " + (text.substring(0, 100) || res.statusText));
+                        });
+                    }
+                }
+                return res.blob();
+            })
+            .then(blob => {
+                ocultarLoading();
+                const url = window.URL.createObjectURL(blob);
+                const a = document.createElement('a');
+                a.style.display = 'none';
+                a.href = url;
+                a.download = `${prefijo}_procesado.zip`;
+                document.body.appendChild(a);
+                a.click();
+                window.URL.revokeObjectURL(url);
+                alert("✅ ¡Procesamiento Exitoso!\nSe ha descargado el archivo ZIP con todos tus entregables.");
+            })
+            .catch(err => {
+                ocultarLoading();
+                alert("❌ ERROR AL PROCESAR ARCHIVO:\n" + err.message);
+            });
+        }
+
+        // --- CONTACTOS DE ALERTA ---
+        function getColorForGroup(g) { const colors = ['#3b82f6', '#ef4444', '#10b981', '#f59e0b', '#8b5cf6', '#ec4899', '#14b8a6', '#f97316']; let hash = 0; for (let i = 0; i < g.length; i++) hash = g.charCodeAt(i) + ((hash << 5) - hash); return colors[Math.abs(hash) % colors.length]; }
+        function addContacto() { const n = document.getElementById('nuevo_nom').value; const e = document.getElementById('nuevo_mail').value.toLowerCase(); let g = document.getElementById('nuevo_grupo').value.trim(); if (!g) g = "General"; if (e && !configJsonActivo.contactos.some(c => c.email === e)) { configJsonActivo.contactos.push({ nombre: n || e.split('@')[0], email: e, grupo: g, activo: true }); document.getElementById('nuevo_nom').value = ''; document.getElementById('nuevo_mail').value = ''; document.getElementById('nuevo_grupo').value = ''; renderContactos(); } }
+        function toggleContacto(email) { let c = configJsonActivo.contactos.find(x => x.email === email); if (c) { c.activo = !c.activo; renderContactos(); } }
+        function delContacto(email) { configJsonActivo.contactos = configJsonActivo.contactos.filter(x => x.email !== email); renderContactos(); }
+        window.toggleGrupoMasivo = function (grupo) { let estado = true; if (grupo === 'ALL') { estado = configJsonActivo.contactos.some(c => !c.activo); configJsonActivo.contactos.forEach(c => c.activo = estado); } else { let miembros = configJsonActivo.contactos.filter(c => c.grupo === grupo); estado = miembros.some(c => !c.activo); configJsonActivo.contactos.forEach(c => { if (c.grupo === grupo) c.activo = estado; }); } renderContactos(); };
+
+        function editarModificarContacto(email) {
+            let c = configJsonActivo.contactos.find(x => x.email === email);
+            if (c) {
+                document.getElementById('nuevo_nom').value = c.nombre;
+                document.getElementById('nuevo_mail').value = c.email;
+                document.getElementById('nuevo_grupo').value = c.grupo;
+                delContacto(email);
+            }
+        }
+        function renderContactos() { const box = document.getElementById('lista_contactos'); const search = document.getElementById('buscador').value.toLowerCase(); const badgesBox = document.getElementById('group-badges'); box.innerHTML = ''; badgesBox.innerHTML = ''; const gruposUnicos = [...new Set(configJsonActivo.contactos.map(c => c.grupo))]; if (gruposUnicos.length > 0) { badgesBox.innerHTML = `<button type="button" class="badge-btn" onclick="window.toggleGrupoMasivo('ALL')" style="border-color:var(--accent);"><span style="width:8px; height:8px; border-radius:50%; background:var(--accent);"></span> TODOS</button>`; gruposUnicos.forEach(g => { const cColor = getColorForGroup(g); badgesBox.innerHTML += `<button type="button" class="badge-btn" onclick="window.toggleGrupoMasivo('${g}')" style="border-color:${cColor};"><span style="width:8px; height:8px; border-radius:50%; background:${cColor};"></span> ${g}</button>`; }); } let filtrados = configJsonActivo.contactos.filter(c => c.nombre.toLowerCase().includes(search) || c.email.toLowerCase().includes(search) || c.grupo.toLowerCase().includes(search)); if (filtrados.length === 0) { box.innerHTML = '<div style="text-align:center; padding:20px; color:#8b949e; font-style:italic;">No hay resultados.</div>'; return; } filtrados.forEach((c) => { const cColor = getColorForGroup(c.grupo); box.innerHTML += `<div class="contact-card ${c.activo ? '' : 'disabled'}"><div style="flex:1;"><div style="display:flex; align-items:center; gap: 10px;"><input type="checkbox" style="width:16px; height:16px;" ${c.activo ? 'checked' : ''} onchange="toggleContacto('${c.email}')"><span style="font-weight:bold; color:white; font-size:14px;">${c.nombre}</span><span class="contact-group" style="color:${cColor}; border-color:${cColor}; margin-left:5px;">${c.grupo}</span></div><div style="font-size:12px; color:#c9d1d9; margin-top:5px; margin-left: 26px;">${c.email}</div></div></div>`; }); }
+
+        // --- CALENDARIO Y CONFIG ---
+        let mesMostrado = new Date().getMonth();
+        let anoMostrado = new Date().getFullYear();
+        let fechasBloqueadas = [];
+
+        function fStr(a, m, d) { return `${a}-${String(m + 1).padStart(2, '0')}-${String(d).padStart(2, '0')}`; }
+        function renderCalendario() { const meses = ["Enero", "Febrero", "Marzo", "Abril", "Mayo", "Junio", "Julio", "Agosto", "Septiembre", "Octubre", "Noviembre", "Diciembre"]; document.getElementById('mes-display').innerText = `${meses[mesMostrado]} ${anoMostrado}`; const grid = document.getElementById('calendar-days'); grid.innerHTML = ''; let pDia = new Date(anoMostrado, mesMostrado, 1).getDay(); pDia = pDia === 0 ? 6 : pDia - 1; let dMes = new Date(anoMostrado, mesMostrado + 1, 0).getDate(); for (let i = 0; i < pDia; i++) grid.innerHTML += `<div class="day empty"></div>`; for (let d = 1; d <= dMes; d++) { let strF = fStr(anoMostrado, mesMostrado, d); let isBlocked = fechasBloqueadas.includes(strF); grid.innerHTML += `<div class="day ${isBlocked ? 'blocked' : 'active'}" onclick="toggleDia('${strF}')">${d}</div>`; } }
+        function cambiarMes(s) { mesMostrado += s; if (mesMostrado < 0) { mesMostrado = 11; anoMostrado--; } else if (mesMostrado > 11) { mesMostrado = 0; anoMostrado++; } renderCalendario(); }
+        function toggleDia(str) { let i = fechasBloqueadas.indexOf(str); if (i === -1) fechasBloqueadas.push(str); else fechasBloqueadas.splice(i, 1); renderCalendario(); }
+
+        let configJsonActivo = {};
+        function cargarConfigJsonEspecifico() {
+            const idx = document.getElementById('cfg_fuente').value;
+            if (idx === "") { document.getElementById('cfg_workspace').style.display = 'none'; document.getElementById('btn_guardar_json').style.display = 'none'; return; }
+            mostrarLoading("Leyendo JSON...");
+            fetch('/api/config', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ ruta_json: fuentesGlobales[idx].ruta_json, fuente: fuentesGlobales[idx] }) })
+                .then(r => r.json()).then(data => {
+                    configJsonActivo = data; document.getElementById('cfg_master').checked = data.alertas_activas || false; document.getElementById('cfg_h_ini').value = data.hora_inicio || "00:00"; document.getElementById('cfg_h_fin').value = data.hora_fin || "23:59"; fechasBloqueadas = data.fechas_bloqueadas || []; if (!configJsonActivo.contactos) configJsonActivo.contactos = []; configJsonActivo.contactos.forEach(c => { if (!c.grupo) c.grupo = "General"; }); document.getElementById('cfg_workspace').style.display = 'grid'; document.getElementById('btn_guardar_json').style.display = 'block'; renderCalendario(); renderContactos(); ocultarLoading(); clearInterval(espiaProgreso);
+                }).catch(e => {
+                    console.error(e);
+                    clearInterval(espiaProgreso);
+                    ocultarLoading();
+                    alert("JS ERROR TRACE:\\n" + e.message + "\\n\\n" + e.stack);
+                });
+        }
+        function guardarConfigJsonEspecifico() { const idx = document.getElementById('cfg_fuente').value; const fuente = fuentesGlobales[idx]; configJsonActivo.alertas_activas = document.getElementById('cfg_master').checked; configJsonActivo.hora_inicio = document.getElementById('cfg_h_ini').value; configJsonActivo.hora_fin = document.getElementById('cfg_h_fin').value; configJsonActivo.fechas_bloqueadas = fechasBloqueadas; mostrarLoading("Guardando..."); fetch('/api/config/save', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ ruta_json: fuente.ruta_json, fuente: fuente, datos: configJsonActivo }) }).then(r => r.json()).then(resp => { ocultarLoading(); clearInterval(espiaProgreso); if (resp.status === "ok") alert("JSON Guardado."); else alert("Error."); }).catch(e => { ocultarLoading(); clearInterval(espiaProgreso); alert("Error conectando al servidor"); }); }
+    </script>
+</body>
+
+</html>

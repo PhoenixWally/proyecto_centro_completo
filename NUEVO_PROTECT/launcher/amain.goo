@@ -1,0 +1,224 @@
+package main
+
+import (
+	"fmt"
+	"io"
+	"log"
+	"os"
+	"os/exec"
+	"os/signal"
+	"path/filepath"
+	"strings"
+	"syscall"
+	"time"
+)
+
+func main() {
+	log.Println("==================================================")
+	log.Println("       INICIANDO LAUNCHER PHOENIX SENTINEL        ")
+	log.Println("==================================================")
+
+	// 1. Obtener la ruta base del bundle
+	exePath, err := os.Executable()
+	if err != nil {
+		log.Fatalf("Error crítico al obtener ruta del ejecutable: %v", err)
+	}
+	bundleDir := filepath.Dir(exePath)
+	log.Printf("[Launcher] Directorio base del BUNDLE detectado: %s", bundleDir)
+
+	// Definir rutas relativas absolutas
+	nginxDir := filepath.Join(bundleDir, "nginx")
+	nginxExe := filepath.Join(nginxDir, "nginx.exe")
+	nginxConfTemplate := filepath.Join(nginxDir, "conf", "nginx.conf.template")
+	nginxConfReal := filepath.Join(nginxDir, "conf", "nginx.conf")
+
+	ssoDir := filepath.Join(bundleDir, "sso_portal")
+	ssoExe := filepath.Join(ssoDir, "sso_portal.exe")
+
+	caDir := filepath.Join(bundleDir, "centro_analitico")
+	caExe := filepath.Join(caDir, "canalitico.exe")
+
+	pythonExe := filepath.Join(bundleDir, "python_embed", "python.exe")
+	pgDir := filepath.Join(bundleDir, "postgresql")
+	pgCtlExe := filepath.Join(pgDir, "bin", "pg_ctl.exe")
+
+	programData := filepath.Join("C:\\", "ProgramData")
+	if programData == "" {
+		log.Fatal("Error crítico: la variable ProgramData no está definida")
+	}
+	pgDataDir := filepath.Join(programData, "Centro_CTER", "postgresql", "data")
+	//pgDataDir := filepath.Join(pgDir, "data")
+
+	log.Printf("[Launcher] Nginx: %s", nginxExe)
+	log.Printf("[Launcher] SSO Portal: %s", ssoExe)
+	log.Printf("[Launcher] Centro Analítico: %s", caExe)
+	log.Printf("[Launcher] Python Embebido: %s", pythonExe)
+	log.Printf("[Launcher] PostgreSQL pg_ctl: %s", pgCtlExe)
+	log.Printf("[Launcher] PostgreSQL Data: %s", pgDataDir)
+
+	// 2. Generar nginx.conf real a partir de la plantilla
+	log.Println("[Launcher] Generando nginx.conf con rutas dinámicas...")
+	if _, err := os.Stat(nginxConfTemplate); os.IsNotExist(err) {
+		log.Fatalf("Error crítico: No existe la plantilla nginx.conf.template en %s", nginxConfTemplate)
+	}
+
+	templateBytes, err := os.ReadFile(nginxConfTemplate)
+	if err != nil {
+		log.Fatalf("Error al leer plantilla nginx.conf.template: %v", err)
+	}
+	templateStr := string(templateBytes)
+
+	// Normalizar las rutas de nginx usando barras normales '/' que Nginx requiere en Windows
+	nginxDirForward := filepath.ToSlash(nginxDir)
+
+	// Reemplazar la ruta C:/nginx de la plantilla por la real del bundle
+	replacedConf := strings.ReplaceAll(templateStr, "C:/nginx", nginxDirForward)
+
+	err = os.WriteFile(nginxConfReal, []byte(replacedConf), 0644)
+	if err != nil {
+		log.Fatalf("Error al escribir nginx.conf final: %v", err)
+	}
+	log.Println("[Launcher] nginx.conf generado con éxito.")
+
+	// Listado de comandos activos para controlarlos
+	var cmds []*exec.Cmd
+
+	// Función para añadir proceso al control
+	registerCmd := func(cmd *exec.Cmd) {
+		cmds = append(cmds, cmd)
+	}
+
+	// 3. Arrancar PostgreSQL Embebido (Debe ser el PRIMERO para que los backends puedan conectarse)
+	log.Println("[Launcher] Arrancando PostgreSQL Embebido...")
+	if _, err := os.Stat(pgDataDir); os.IsNotExist(err) {
+		log.Fatalf("Error crítico: La carpeta de datos de mis huevos PostgreSQL no existe en pgDataDir, %s. Por favor, ejecuta primero db_init\\init_db.bat.", pgDataDir)
+	}
+
+	cmdPG := exec.Command(pgCtlExe, "start", "-D", pgDataDir, "-w")
+	cmdPG.Dir = pgDir
+	cmdPG.Stdout = os.Stdout
+	cmdPG.Stderr = os.Stderr
+	if err := cmdPG.Run(); err != nil {
+		log.Fatalf("Error al arrancar PostgreSQL Embebido: %v", err)
+	}
+	log.Println("[Launcher] PostgreSQL Embebido arrancado y listo para recibir conexiones.")
+
+	// 4. Lanzar SSO Portal (Puerto 8080)
+	log.Println("[Launcher] Arrancando SSO Portal...")
+	cmdSSO := exec.Command(ssoExe)
+	cmdSSO.Dir = ssoDir
+	cmdSSO.Stdout = os.Stdout
+	cmdSSO.Stderr = os.Stderr
+	// Propagar variables de entorno y JWT
+	cmdSSO.Env = os.Environ()
+	if err := cmdSSO.Start(); err != nil {
+		// Parar PostgreSQL antes de morir
+		exec.Command(pgCtlExe, "stop", "-D", pgDataDir, "-m", "fast").Run()
+		log.Fatalf("Error al iniciar SSO Portal: %v", err)
+	}
+	registerCmd(cmdSSO)
+	log.Println("[Launcher] SSO Portal iniciado en segundo plano (PID:", cmdSSO.Process.Pid, ")")
+
+	// 5. Lanzar Centro Analítico (Puerto 8082)
+	log.Println("[Launcher] Arrancando Centro Analítico...")
+	cmdCA := exec.Command(caExe)
+	cmdCA.Dir = caDir
+	cmdCA.Stdout = os.Stdout
+	cmdCA.Stderr = os.Stderr
+	// Propagar PYTHON_EXE para que lo lea el Go del Centro Analítico
+	cmdCA.Env = append(os.Environ(), fmt.Sprintf("PYTHON_EXE=%s", pythonExe))
+	if err := cmdCA.Start(); err != nil {
+		// Parar SSO y PostgreSQL antes de morir
+		cmdSSO.Process.Kill()
+		exec.Command(pgCtlExe, "stop", "-D", pgDataDir, "-m", "fast").Run()
+		log.Fatalf("Error al iniciar Centro Analítico: %v", err)
+	}
+	registerCmd(cmdCA)
+	log.Println("[Launcher] Centro Analítico iniciado en segundo plano (PID:", cmdCA.Process.Pid, ")")
+
+	// Esperar un momento corto antes de arrancar Nginx para asegurar que los backends escuchan
+	time.Sleep(1 * time.Second)
+
+	// 6. Lanzar Nginx (Puerto 80)
+	log.Println("[Launcher] Arrancando Nginx...")
+	cmdNginx := exec.Command(nginxExe)
+	cmdNginx.Dir = nginxDir
+	cmdNginx.Stdout = os.Stdout
+	cmdNginx.Stderr = os.Stderr
+	if err := cmdNginx.Start(); err != nil {
+		// Parar todos los procesos activos antes de morir
+		cmdSSO.Process.Kill()
+		cmdCA.Process.Kill()
+		exec.Command(pgCtlExe, "stop", "-D", pgDataDir, "-m", "fast").Run()
+		log.Fatalf("Error al iniciar Nginx: %v", err)
+	}
+	registerCmd(cmdNginx)
+	log.Println("[Launcher] Nginx iniciado en segundo plano (PID:", cmdNginx.Process.Pid, ")")
+
+	log.Println("==================================================")
+	log.Println(" ✅ SISTEMA COMPLETAMENTE OPERATIVO ONLINE/OFFLINE ")
+	log.Println(" 👉 URL: http://localhost/sso/                     ")
+	log.Println(" Presiona Ctrl+C o cierra la ventana para detener  ")
+	log.Println("==================================================")
+
+	// 7. Capturar señales de parada para apagar todo a la vez
+	sigs := make(chan os.Signal, 1)
+	signal.Notify(sigs, syscall.SIGINT, syscall.SIGTERM)
+
+	// Monitorear si algún proceso hijo se cae de forma imprevista
+	doneChan := make(chan error, 3)
+	go func() { doneChan <- cmdSSO.Wait() }()
+	go func() { doneChan <- cmdCA.Wait() }()
+	go func() { doneChan <- cmdNginx.Wait() }()
+
+	select {
+	case sig := <-sigs:
+		log.Printf("[Launcher] Señal de parada recibida (%v). Apagando procesos...", sig)
+	case err := <-doneChan:
+		log.Printf("[Launcher] Un proceso hijo ha terminado inesperadamente (%v). Apagando sistema...", err)
+	}
+
+	// 8. Apagar procesos hijos
+	// Primero detener Nginx
+	log.Println("[Launcher] Deteniendo Nginx...")
+	stopNginx := exec.Command(nginxExe, "-s", "stop")
+	stopNginx.Dir = nginxDir
+	stopNginx.Run()
+	cmdNginx.Process.Kill()
+
+	// Detener los backends
+	log.Println("[Launcher] Deteniendo SSO Portal...")
+	cmdSSO.Process.Kill()
+
+	log.Println("[Launcher] Deteniendo Centro Analítico...")
+	cmdCA.Process.Kill()
+
+	// Detener PostgreSQL Embebido
+	log.Println("[Launcher] Deteniendo PostgreSQL Embebido...")
+	stopPG := exec.Command(pgCtlExe, "stop", "-D", pgDataDir, "-m", "fast")
+	stopPG.Dir = pgDir
+	stopPG.Run()
+
+	log.Println("[Launcher] Sistema Phoenix Sentinel apagado con éxito.")
+	log.Println("==================================================")
+}
+
+func copyFile(src, dst string) error {
+	in, err := os.Open(src)
+	if err != nil {
+		return err
+	}
+	defer in.Close()
+
+	out, err := os.Create(dst)
+	if err != nil {
+		return err
+	}
+	defer out.Close()
+
+	_, err = io.Copy(out, in)
+	if err != nil {
+		return err
+	}
+	return out.Sync()
+}

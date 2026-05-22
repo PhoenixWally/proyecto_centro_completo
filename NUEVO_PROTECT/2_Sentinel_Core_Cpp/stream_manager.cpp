@@ -264,11 +264,6 @@ void StreamManager::send_init_frame() {
     std::lock_guard<std::mutex> lock(send_mutex_);
     if (conn_) {
       conn_->send_text(out);
-      std::ofstream fEnv(OBF("envio.txt"), std::ios::app);
-      if (fEnv.is_open()) {
-        fEnv << OBF("[INIT_FRAME] ") << out << std::endl;
-        fEnv.close();
-      }
       std::cout << OBF("[StreamManager] init_frame enviado correctamente.")
                 << std::endl;
     }
@@ -348,11 +343,6 @@ void StreamManager::flush_sweep(bool force) {
     std::lock_guard<std::mutex> lock(send_mutex_);
     if (conn_) {
       conn_->send_text(out);
-      std::ofstream fEnv(OBF("envio.txt"), std::ios::app);
-      if (fEnv.is_open()) {
-        fEnv << OBF("[DELTA_FRAME] ") << out << std::endl;
-        fEnv.close();
-      }
       // Log de resumen del barrido enviado
       if (!rx.empty()) {
         std::cout << OBF("[StreamManager] SEND delta_frame: ") << cal_bins_
@@ -450,25 +440,10 @@ void StreamManager::process_new_data(std::uintmax_t current_size) {
   std::vector<ArgusChunk> chunks(chunks_read);
   std::memcpy(chunks.data(), raw.data(), chunks_read * sizeof(ArgusChunk));
 
-  // Imprimir log SOLO para el primer bloque del archivo (cuando last_offset_
-  // era 2)
-  if (last_offset_ == 2 + chunks_read * sizeof(ArgusChunk) && !chunks.empty()) {
-    std::cout << OBF("[StreamManager] DEBUG - Primer punto del archivo: fr=")
-              << chunks[0].fr << OBF(" Hz, lv=") << chunks[0].lv << OBF(" dB")
-              << std::endl;
-  }
-
-  // LOG DE VERDAD ABSOLUTA (Solo 1 por cada lectura para no saturar)
-  if (!chunks.empty()) {
-    std::cout << OBF("[RAW_DEBUG] Fr: ") << chunks[0].fr << OBF(" | Lv: ")
-              << chunks[0].lv << std::endl;
-  }
-
   // Procesador de ráfagas Sentinel (26 bytes)
   uintmax_t old_offset = last_offset_;
   size_t p_idx = 0;
   size_t consecutive_garbage = 0;
-  std::ofstream fProc(OBF("procesamiento.txt"), std::ios::app);
 
   while (p_idx + sizeof(ArgusChunk) <= bytes_read) {
     ArgusChunk c;
@@ -480,7 +455,6 @@ void StreamManager::process_new_data(std::uintmax_t current_size) {
         last_freq_ = c.fr;
         p_idx += sizeof(ArgusChunk);
         consecutive_garbage = 0;
-        if (fProc.is_open()) fProc << OBF("[PUNTO] ") << c.fr << OBF(" | ") << c.lv << std::endl;
     } else {
         // No es una frecuencia -> Buscamos sincronismo
         size_t k = 1;
@@ -514,7 +488,6 @@ void StreamManager::process_new_data(std::uintmax_t current_size) {
         }
     }
   }
-  if (fProc.is_open()) fProc.close();
 
   // Actualizamos el offset final basándonos en lo que realmente hemos consumido
   last_offset_ = old_offset + p_idx;

@@ -4,6 +4,10 @@
 #include <string>
 #include <vector>
 #include <exception>
+//#include <QApplication>
+//#include <QIcon>
+//#include "mainwindow.h"
+
 
 int main(int argc, char *argv[]) {
   // 1. Sistema de Control Criptográfico Activo (HWID + Licencia)
@@ -50,6 +54,6 @@ int main(int argc, char *argv[]) {
     std::cerr << OBF("Error desconocido al decodificar el archivo.") << std::endl;
     return 1;
   }
-
+  
   return 0;
 }
